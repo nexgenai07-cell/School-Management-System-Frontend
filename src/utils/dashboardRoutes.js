@@ -30,7 +30,7 @@ import {
   Settings,
   UserRound,
   Calendar,
-  CreditCard,
+
   ShieldAlert,
 } from "lucide-react";
 
@@ -210,14 +210,14 @@ export const teacherRoutes = [
    Accessible only by Student users
 ====================================================== */
 export const studentRoutes = [
-  // Dashboard Overview
+  // Dashboard
   {
     label: "Dashboard",
     path: "/student/dashboard",
     icon: LayoutDashboard,
   },
 
-  // Academic Information
+  // Academics
   {
     label: "Attendance",
     path: "/student/attendance",
@@ -239,28 +239,18 @@ export const studentRoutes = [
     icon: Clock3,
   },
 
-  // Financial Information
+  // Finance
   {
-    label: "Fees",
+    label: "Fees & Payments",
     path: "/student/fees",
     icon: Wallet,
   },
-  {
-    label: "Payments",
-    path: "/student/payments",
-    icon: CreditCard,
-  },
 
-  // Activities & Records
+  // Activities
   {
     label: "Events",
     path: "/student/events",
     icon: Calendar,
-  },
-  {
-    label: "Behavior Logs",
-    path: "/student/behavior-logs",
-    icon: ShieldAlert,
   },
   {
     label: "Complaints",
@@ -268,15 +258,19 @@ export const studentRoutes = [
     icon: Wrench,
   },
 
-  // Shared Features
+  // Communication
   {
     label: "Notifications",
-    path: "/notifications",
+    path: "/student/notifications",
     icon: Bell,
   },
+
+
+  // Account
+
   {
     label: "Settings",
-    path: "/settings",
+    path: "/student/settings",
     icon: Settings,
   },
 ];

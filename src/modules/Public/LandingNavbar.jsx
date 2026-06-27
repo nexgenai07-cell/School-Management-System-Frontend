@@ -36,7 +36,7 @@ function LandingNavbar() {
             <div className="w-8 h-8 rounded-lg bg-navy-800 flex items-center justify-center">
               <GraduationCap size={16} className="text-white" />
             </div>
-            <span className="font-bold text-lg text-navy-800">School AI</span>
+            <span className="font-bold text-lg text-navy-800">School ERP</span>
           </div>
 
           {/* Desktop nav links */}

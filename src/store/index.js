@@ -1,6 +1,6 @@
 import { configureStore } from "@reduxjs/toolkit";
 import authReducer from "./authSlice";
-
+import studentReducer from "./studentSlice";
 /*
 ======================================================
 Redux Store Configuration
@@ -31,7 +31,7 @@ const store = configureStore({
   reducer: {
     // Authentication state management
     auth: authReducer,
-
+    student: studentReducer,
     // Additional reducers can be added here like:
     // students: studentsReducer,
     // teachers: teachersReducer,
