@@ -17,7 +17,7 @@ const studentService = {
   */
 
   getProfile: async () =>
-    mockData.studentProfile,
+    mockData.profile,
 
   updateProfile: async (
     profileData
@@ -75,39 +75,54 @@ const studentService = {
   =====================================
   */
 
-  getFees: async () =>
-    mockData.fees,
+  /*
+=====================================
+FINANCE
+=====================================
+*/
 
-  getPayments:
-    async (
-      feeId
-    ) =>
-      mockData.payments.filter(
-        (payment) =>
-          payment.fee_id ===
-          feeId
+getFees: async () =>
+  mockData.fees,
+
+getPayments: async () =>
+  mockData.payments,
+
+createPaymentIntent: async (feeId) => {
+  const fee =
+    mockData.fees.find(
+      (item) =>
+        item.id === feeId
+    );
+
+  if (!fee) {
+    throw new Error(
+      "Fee not found."
+    );
+  }
+
+  return {
+    clientSecret:
+      "pi_mock_secret_123456789",
+
+    paymentIntentId:
+      "pi_mock_123456789",
+
+    fee_id: feeId,
+
+    amount:
+      Number(
+        fee.amount
+      ) -
+      Number(
+        fee.amount_paid
       ),
 
-  getFeeHistory:
-    async (
-      feeId
-    ) =>
-      mockData.feeHistory.filter(
-        (payment) =>
-          payment.fee_id ===
-          feeId
-      ),
+    currency: "PKR",
 
-  payFee: async (
-    paymentData
-  ) => {
-    return {
-      success: true,
-      message:
-        "Payment completed successfully.",
-      data: paymentData,
-    };
-  },
+    payment_method:
+      "Stripe",
+  };
+},
 
   /*
   =====================================

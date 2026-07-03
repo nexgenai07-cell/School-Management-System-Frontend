@@ -2,24 +2,16 @@
 // STUDENT PROFILE
 // ======================================
 
-export const studentProfile = {
+export const profile = {
   id: 1,
-  user_id: 3,
   full_name: "Fazail Nadeem",
   email: "student@school.edu",
-
-  roll_number: "2023-IT-101",
-
-  class_section_id: 1,
-  class_name: "BSIT",
-  section: "6A",
-
-  guardian_name: "Nadeem Ahmed",
-  guardian_phone: "03001234567",
-
-  scholarship_percentage: 50,
-
-  date_of_birth: "2003-05-15",
+  role_name: "Student",
+  status: "Active",
+  phone: "0300-1234567",
+  address: "Lahore, Pakistan",
+  avatar: "",
+  created_at: "2025-01-15T09:30:00Z",
 };
 
 
@@ -154,68 +146,63 @@ export const attendance = [
 // ======================================
 
 export const reportCard = {
-  id: 1,
-  student_id: 1,
-
   academic_year: "2025-2026",
-  term: "Mid-Term",
+  published_at: "2026-06-20",
 
-  total_marks: 125,
-  obtained_marks: 84,
-  percentage: 90,
-  grade: "A",
-  gpa: 3.82,
-
-  remarks:
-    "Excellent performance.",
-
-  published_at:
-    "2026-06-20",
-
-  subjects: [
+  grades: [
     {
       id: 1,
-      subject_id: 1,
-      subject_name:
-        "Database Systems",
-
-      teacher_name:
-        "Ali Hassan",
-
-      obtained_marks: 42,
-      total_marks: 50,
-      percentage: 84,
-      grade: "A",
+      subject: 1,
+      subject_name: "Database Systems",
+      teacher_name: "Ali Hassan",
+      exam_type: "Mid Term",
+      obtained_marks: "42.00",
+      total_marks: "50.00",
+      exam_date: "2026-05-20",
     },
 
     {
       id: 2,
-      subject_id: 2,
-      subject_name:
-        "Operating Systems",
-
-      teacher_name:
-        "Ali Hassan",
-
-      obtained_marks: 18,
-      total_marks: 20,
-      percentage: 90,
-      grade: "A+",
+      subject: 2,
+      subject_name: "Operating Systems",
+      teacher_name: "Ali Hassan",
+      exam_type: "Mid Term",
+      obtained_marks: "18.00",
+      total_marks: "20.00",
+      exam_date: "2026-05-20",
     },
 
     {
       id: 3,
-      subject_id: 3,
-      subject_name:
-        "Software Engineering",
+      subject: 3,
+      subject_name: "Software Engineering",
+      teacher_name: "Sara Khan",
+      exam_type: "Final",
+      obtained_marks: "47.00",
+      total_marks: "50.00",
+      exam_date: "2026-06-18",
+    },
 
-      teacher_name:
-        "Sara Khan",
+    {
+      id: 4,
+      subject: 4,
+      subject_name: "Computer Networks",
+      teacher_name: "Ahmed Raza",
+      exam_type: "Quiz",
+      obtained_marks: "19.00",
+      total_marks: "20.00",
+      exam_date: "2026-06-05",
+    },
 
-      obtained_marks: 24,
-      total_marks: 25,
-      percentage: 96,
-      grade: "A+",
+    {
+      id: 5,
+      subject: 5,
+      subject_name: "Artificial Intelligence",
+      teacher_name: "Fatima Noor",
+      exam_type: "Assignment",
+      obtained_marks: "9.00",
+      total_marks: "10.00",
+      exam_date: "2026-06-10",
     },
   ],
 };
@@ -313,38 +300,142 @@ export const assignments = [
 // FEES
 // ======================================
 
+// ======================================
+// STUDENT FEES MOCK DATA
+// Matches GET /api/student/fees
+// ======================================
+
 export const fees = [
   {
     id: 1,
-    month: "June 2026",
-
-    original_amount: 10000,
-
-    amount: 5000,
-
-    amount_paid: 3000,
-
-    due_date: "2026-06-30",
-
-    paid_date: null,
-
-    status: "Partial",
+    month: "2026-01-01",
+    original_amount: "10000.00",
+    amount: "5000.00",
+    amount_paid: "5000.00",
+    due_date: "2026-01-31",
+    paid_date: "2026-01-18",
+    status: "Paid",
   },
+
   {
     id: 2,
-    month: "May 2026",
-
-    original_amount: 10000,
-
-    amount: 5000,
-
-    amount_paid: 5000,
-
-    due_date: "2026-05-30",
-
-    paid_date: "2026-05-15",
-
+    month: "2026-02-01",
+    original_amount: "10000.00",
+    amount: "5000.00",
+    amount_paid: "5000.00",
+    due_date: "2026-02-28",
+    paid_date: "2026-02-20",
     status: "Paid",
+  },
+
+  {
+    id: 3,
+    month: "2026-03-01",
+    original_amount: "10000.00",
+    amount: "5000.00",
+    amount_paid: "5000.00",
+    due_date: "2026-03-31",
+    paid_date: "2026-03-17",
+    status: "Paid",
+  },
+
+  {
+    id: 4,
+    month: "2026-04-01",
+    original_amount: "10000.00",
+    amount: "5000.00",
+    amount_paid: "3000.00",
+    due_date: "2026-04-30",
+    paid_date: null,
+    status: "Partial",
+  },
+
+  {
+    id: 5,
+    month: "2026-05-01",
+    original_amount: "10000.00",
+    amount: "5000.00",
+    amount_paid: "0.00",
+    due_date: "2026-05-31",
+    paid_date: null,
+    status: "Pending",
+  },
+
+  {
+    id: 6,
+    month: "2026-06-01",
+    original_amount: "10000.00",
+    amount: "5000.00",
+    amount_paid: "0.00",
+    due_date: "2026-06-30",
+    paid_date: null,
+    status: "Pending",
+  },
+
+  {
+    id: 7,
+    month: "2026-07-01",
+    original_amount: "10000.00",
+    amount: "5000.00",
+    amount_paid: "0.00",
+    due_date: "2026-07-31",
+    paid_date: null,
+    status: "Pending",
+  },
+
+  {
+    id: 8,
+    month: "2026-08-01",
+    original_amount: "10000.00",
+    amount: "5000.00",
+    amount_paid: "0.00",
+    due_date: "2026-08-31",
+    paid_date: null,
+    status: "Pending",
+  },
+
+  {
+    id: 9,
+    month: "2026-09-01",
+    original_amount: "10000.00",
+    amount: "5000.00",
+    amount_paid: "0.00",
+    due_date: "2026-09-30",
+    paid_date: null,
+    status: "Pending",
+  },
+
+  {
+    id: 10,
+    month: "2026-10-01",
+    original_amount: "10000.00",
+    amount: "5000.00",
+    amount_paid: "0.00",
+    due_date: "2026-10-31",
+    paid_date: null,
+    status: "Pending",
+  },
+
+  {
+    id: 11,
+    month: "2026-11-01",
+    original_amount: "10000.00",
+    amount: "5000.00",
+    amount_paid: "0.00",
+    due_date: "2026-11-30",
+    paid_date: null,
+    status: "Pending",
+  },
+
+  {
+    id: 12,
+    month: "2026-12-01",
+    original_amount: "10000.00",
+    amount: "5000.00",
+    amount_paid: "0.00",
+    due_date: "2026-12-31",
+    paid_date: null,
+    status: "Pending",
   },
 ];
 
@@ -353,30 +444,46 @@ export const fees = [
 // PAYMENTS
 // ======================================
 
+// ======================================
+// STUDENT PAYMENTS MOCK DATA
+// Matches GET /api/student/payments
+// ======================================
+
 export const payments = [
   {
     id: 1,
-    fee_id: 1,
-
-    amount_paid: 3000,
-
-    payment_method: "Online",
-
-    transaction_id: "TXN123456",
-
-    payment_date: "2026-06-10",
+    fee: 1,
+    amount_paid: "5000.00",
+    payment_method: "Stripe",
+    transaction_id: "pi_3QAbCDeFgH123456",
+    payment_date: "2026-01-18",
   },
+
   {
     id: 2,
-    fee_id: 2,
+    fee: 2,
+    amount_paid: "5000.00",
+    payment_method: "Stripe",
+    transaction_id: "pi_3QAbCDeFgH123457",
+    payment_date: "2026-02-20",
+  },
 
-    amount_paid: 5000,
+  {
+    id: 3,
+    fee: 3,
+    amount_paid: "5000.00",
+    payment_method: "Stripe",
+    transaction_id: "pi_3QAbCDeFgH123458",
+    payment_date: "2026-03-17",
+  },
 
-    payment_method: "Bank Transfer",
-
-    transaction_id: "TXN789123",
-
-    payment_date: "2026-05-15",
+  {
+    id: 4,
+    fee: 4,
+    amount_paid: "3000.00",
+    payment_method: "Stripe",
+    transaction_id: "pi_3QAbCDeFgH123459",
+    payment_date: "2026-04-15",
   },
 ];
 

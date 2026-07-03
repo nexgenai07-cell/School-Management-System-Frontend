@@ -9,6 +9,9 @@ import Assignments from "../modules/student/pages/Assignments";
 import Timetable from "../modules/student/pages/Timetable";
 import FeesPayments from "../modules/student/pages/FeesPayments";
 import Events from "../modules/student/pages/Events";
+import StudentComplaint from "../modules/student/pages/StudentComplaint";
+import StudentNotification from "../modules/student/pages/StudentNotification";
+import StudentSettings from "../modules/student/pages/StudentSettings";
 
 const StudentRoutes = (
   <Route
@@ -51,6 +54,18 @@ const StudentRoutes = (
     <Route
       path="/student/events"
       element={<Events />}
+    />
+    <Route
+      path="/student/complaints"
+      element={<StudentComplaint />}
+    />
+      <Route
+      path="/student/notifications"
+      element={<StudentNotification />}
+    />
+     <Route
+      path="/student/settings"
+      element={<StudentSettings />}
     />
   </Route>
 );

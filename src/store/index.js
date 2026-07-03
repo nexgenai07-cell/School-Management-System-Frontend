@@ -1,6 +1,7 @@
 import { configureStore } from "@reduxjs/toolkit";
 import authReducer from "./authSlice";
 import studentReducer from "./studentSlice";
+import parentReducer from "./parentSlice"; // Import the parent reducer
 /*
 ======================================================
 Redux Store Configuration
@@ -26,6 +27,13 @@ reducer: {
 }
 ======================================================
 */
+import complaintReducer from "./complaint/complaintSlice";
+import notificationReducer from "./notification/notificationSlice";
+import settingsReducer from "./setting/settingSlice";
+
+
+
+
 
 const store = configureStore({
   reducer: {
@@ -36,6 +44,14 @@ const store = configureStore({
     // students: studentsReducer,
     // teachers: teachersReducer,
     // notifications: notificationsReducer,
+
+
+
+
+     complaints: complaintReducer,
+     notifications: notificationReducer,
+     settings: settingsReducer,
+     parent: parentReducer, // Added parent reducer for managing parent-related state
   
   },
 });

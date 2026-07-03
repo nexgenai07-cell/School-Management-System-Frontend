@@ -1,6 +1,6 @@
-import {
-  ChevronRight,
-} from "lucide-react";
+
+// export default PageHeader;
+import { ChevronRight, Home } from "lucide-react";
 
 /*
 ======================================================
@@ -18,6 +18,9 @@ Props:
 - subtitle     : Additional description text
 - breadcrumbs  : Array of breadcrumb items
 - action       : JSX displayed on the right side
+- icon         : Optional lucide icon component shown in a badge next to the title
+- bgColor      : Tailwind background class for the header (e.g. "bg-student-light").
+                 Falls back to a neutral gradient when omitted.
 - className    : Additional custom classes
 
 Examples:
@@ -31,55 +34,31 @@ Examples:
 
 ------------------------------------------------------
 
-2. With Breadcrumbs
+2. With Breadcrumbs + Theme
 ------------------------------------------------------
 <PageHeader
   title="Attendance"
   subtitle="Manage student attendance"
-  breadcrumbs={[
-    "Dashboard",
-    "Students",
-    "Attendance",
-  ]}
+  bgColor="bg-student-light"
+  breadcrumbs={["Dashboard", "Students", "Attendance"]}
 />
 
 ------------------------------------------------------
 
-3. With Action Button
+3. With Icon + Action Button
 ------------------------------------------------------
 <PageHeader
   title="Students"
   subtitle="Manage all students"
-  action={
-    <Button>
-      Add Student
-    </Button>
-  }
-/>
-
-------------------------------------------------------
-
-4. Complete Example
-------------------------------------------------------
-<PageHeader
-  title="Assignments"
-  subtitle="Create and manage assignments"
-  breadcrumbs={[
-    "Dashboard",
-    "Teacher",
-    "Assignments",
-  ]}
-  action={
-    <Button>
-      Create Assignment
-    </Button>
-  }
+  icon={Users}
+  action={<Button>Add Student</Button>}
 />
 
 Features:
 - Responsive layout
-- Breadcrumb navigation
-- Optional subtitle
+- Themeable background per dashboard (student/teacher/admin)
+- Breadcrumb navigation with a home marker
+- Optional icon badge and subtitle
 - Custom action section
 - Custom styling support
 ======================================================
@@ -90,97 +69,89 @@ function PageHeader({
   subtitle,
   breadcrumbs = [],
   action,
+  icon: Icon,
+  bgColor,
   className = "",
 }) {
+  const background = bgColor || "bg-gradient-to-r from-white via-slate-50 to-blue-50";
+
   return (
-    /*
-    ======================================================
-    Main Header Container
-    Responsive layout with title section
-    and optional action section
-    ======================================================
-    */
     <div
       className={`
+        relative
         flex
         flex-col
-        gap-4
+        gap-5
+        overflow-hidden
         rounded-card
         border
         border-slate-200
-        bg-gradient-to-r
-        from-white
-        via-slate-50
-        to-blue-50
         p-6
         shadow-soft
+        opacity-0
+        [animation-fill-mode:forwards]
+        animate-[pageheader-in_0.5s_ease-out]
 
         md:flex-row
         md:items-center
         md:justify-between
 
+        ${background}
         ${className}
       `}
     >
+      {/* Decorative depth layer — a soft highlight and a faint dot grid,
+          both neutral so they sit on top of any theme color. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-14 -top-14 h-48 w-48 rounded-full bg-white/40 blur-3xl"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-[0.35]"
+        style={{
+          backgroundImage:
+            "radial-gradient(currentColor 1px, transparent 1px)",
+          backgroundSize: "16px 16px",
+          color: "rgba(15, 23, 42, 0.06)",
+        }}
+      />
+
       {/* ==================================================
           Left Section
           Breadcrumbs, Title, and Subtitle
       ================================================== */}
-      <div>
-        {/* Breadcrumb Navigation */}
+      <div className="relative">
         {breadcrumbs.length > 0 && (
-          <div
-            className="
-              mb-3
-              flex
-              flex-wrap
-              items-center
-              gap-2
-              text-sm
-              text-text-secondary
-            "
-          >
-            {breadcrumbs.map(
-              (
-                item,
-                index
-              ) => (
-                <div
-                  key={index}
-                  className="
-                    flex
-                    items-center
-                    gap-2
-                  "
-                >
-                  {/* Breadcrumb Item */}
-                  <span>
+          <div className="mb-3 flex flex-wrap items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-text-secondary">
+            <Home size={12} className="shrink-0 opacity-60" />
+            {breadcrumbs.map((item, index) => {
+              const isLast = index === breadcrumbs.length - 1;
+              return (
+                <div key={index} className="flex items-center gap-1.5">
+                  <ChevronRight size={12} className="opacity-40" />
+                  <span className={isLast ? "text-text-primary" : "opacity-70"}>
                     {item}
                   </span>
-
-                  {/* Separator Icon */}
-                  {index !==
-                    breadcrumbs.length - 1 && (
-                    <ChevronRight
-                      size={14}
-                    />
-                  )}
                 </div>
-              )
-            )}
+              );
+            })}
           </div>
         )}
 
-        {/* Page Title */}
-        <h1 className="text-3xl font-bold text-text-primary">
-          {title}
-        </h1>
+        <div className="flex items-center gap-3">
+          {Icon && (
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/70 text-text-primary shadow-sm backdrop-blur-sm">
+              <Icon size={20} strokeWidth={2.25} />
+            </div>
+          )}
+          <h1 className="text-3xl font-bold tracking-tight text-text-primary">
+            {title}
+          </h1>
+        </div>
 
-        {/* Page Subtitle */}
         {subtitle && (
-          <p className="mt-2 text-text-secondary">
-            {subtitle}
-          </p>
+          <p className="mt-2 max-w-xl text-text-secondary">{subtitle}</p>
         )}
       </div>
 
@@ -189,9 +160,17 @@ function PageHeader({
           Usually contains buttons, filters,
           search bars, or other actions
       ================================================== */}
-      {action && (
-        <div>{action}</div>
-      )}
+      {action && <div className="relative shrink-0">{action}</div>}
+
+      <style>{`
+        @keyframes pageheader-in {
+          from { opacity: 0; transform: translateY(-6px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .animate-\\[pageheader-in_0\\.5s_ease-out\\] { animation: none !important; opacity: 1 !important; transform: none !important; }
+        }
+      `}</style>
     </div>
   );
 }

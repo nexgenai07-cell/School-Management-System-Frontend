@@ -41,9 +41,10 @@ const initialState = {
   Finance
   ======================================================
   */
-  fees: [],
-  payments: [],
-  feeHistory: [],
+fees: [],
+payments: [],
+selectedFee: null,
+paymentIntent: null,
 
   /*
   ======================================================
@@ -105,6 +106,9 @@ const studentSlice = createSlice({
     AI Chat Reducers
     ======================================================
     */
+   setSelectedFee(state, action) {
+    state.selectedFee = action.payload;
+},
 
     setActiveSession(
       state,
@@ -285,18 +289,7 @@ const studentSlice = createSlice({
         }
       )
 
-      .addCase(
-        studentThunks
-          .fetchFeeHistory
-          .fulfilled,
-        (
-          state,
-          action
-        ) => {
-          state.feeHistory =
-            action.payload;
-        }
-      )
+     
 
       /*
       ======================================================
@@ -489,18 +482,15 @@ const studentSlice = createSlice({
       Fee Payment
       ======================================================
       */
+.addCase(
+    studentThunks.createPaymentIntent.fulfilled,
+    (state, action) => {
+        state.paymentIntent = action.payload;
 
-      .addCase(
-        studentThunks
-          .payFee
-          .fulfilled,
-        (
-          state
-        ) => {
-          state.successMessage =
-            "Fee payment completed successfully.";
-        }
-      )
+        state.successMessage =
+            "Payment initialized successfully.";
+    }
+)
 
       /*
       ======================================================
@@ -718,12 +708,13 @@ Exports
 */
 
 export const {
-  setActiveSession,
-  appendMessage,
-  clearChatMessages,
-  clearStudentState,
-  clearStudentError,
-  clearSuccessMessage,
+    setSelectedFee,
+    setActiveSession,
+    appendMessage,
+    clearChatMessages,
+    clearStudentState,
+    clearStudentError,
+    clearSuccessMessage,
 } = studentSlice.actions;
 
 export default studentSlice.reducer;

@@ -1,5 +1,6 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import studentService from "../services/studentService";
+import paymentService from "../services/paymentService";
 
 /*
 =====================================================
@@ -147,91 +148,35 @@ export const fetchFees =
     }
   );
 
-export const fetchPayments =
-  createAsyncThunk(
-    "student/fetchPayments",
-    async (
-      feeId,
-      thunkAPI
-    ) => {
-      try {
-        return await studentService.getPayments(
-          feeId
-        );
-      } catch (error) {
-        return thunkAPI.rejectWithValue(
-          error.response?.data
-            ?.message ||
-            error.message
-        );
-      }
+export const fetchPayments = createAsyncThunk(
+  "student/fetchPayments",
+  async (_, thunkAPI) => {
+    try {
+      return await studentService.getPayments();
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message
+      );
     }
-  );
+  }
+);
 
-export const fetchFeeHistory =
-  createAsyncThunk(
-    "student/fetchFeeHistory",
-    async (
-      feeId,
-      thunkAPI
-    ) => {
-      try {
-        return await studentService.getFeeHistory(
-          feeId
-        );
-      } catch (error) {
-        return thunkAPI.rejectWithValue(
-          error.response?.data
-            ?.message ||
-            error.message
-        );
-      }
+
+
+export const createPaymentIntent = createAsyncThunk(
+  "student/createPaymentIntent",
+  async (feeId, thunkAPI) => {
+    try {
+      return await paymentService.createPaymentIntent({
+        fee_id: feeId,
+      });
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message
+      );
     }
-  );
-
-export const payFee =
-  createAsyncThunk(
-    "student/payFee",
-    async (
-      paymentData,
-      thunkAPI
-    ) => {
-      try {
-        const response =
-          await studentService.payFee(
-            paymentData
-          );
-
-        thunkAPI.dispatch(
-          fetchFees()
-        );
-
-        if (
-          paymentData?.feeId
-        ) {
-          thunkAPI.dispatch(
-            fetchPayments(
-              paymentData.feeId
-            )
-          );
-
-          thunkAPI.dispatch(
-            fetchFeeHistory(
-              paymentData.feeId
-            )
-          );
-        }
-
-        return response;
-      } catch (error) {
-        return thunkAPI.rejectWithValue(
-          error.response?.data
-            ?.message ||
-            error.message
-        );
-      }
-    }
-  );
+  }
+);
 
 /*
 =====================================================
