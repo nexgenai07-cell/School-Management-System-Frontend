@@ -28,7 +28,7 @@ import {
   NotebookPen,
   Bell,
   Settings,
-  UserRound,
+
   Calendar,
 
   ShieldAlert,
@@ -206,11 +206,11 @@ export const studentRoutes = [
     path: "/student/assignments",
     icon: NotebookPen,
   },
-  {
-    label: "Timetable",
-    path: "/student/timetable",
-    icon: Clock3,
-  },
+  // {
+  //   label: "Timetable",
+  //   path: "/student/timetable",
+  //   icon: Clock3,
+  // },
 
   // Finance
   {
@@ -261,11 +261,7 @@ export const parentRoutes = [
   },
 
   // Child Information
-  {
-    label: "Children",
-    path: "/parent/children",
-    icon: UserRound,
-  },
+ 
   {
     label: "Attendance",
     path: "/parent/attendance",
@@ -289,12 +285,7 @@ export const parentRoutes = [
     icon: Wallet,
   },
 
-  // Activities
-  {
-    label: "Timetable",
-    path: "/parent/timetable",
-    icon: Clock3,
-  },
+
   {
     label: "Events",
     path: "/parent/events",
@@ -309,12 +300,12 @@ export const parentRoutes = [
   // Shared Features
   {
     label: "Notifications",
-    path: "/notifications",
+    path: "/parent/notifications",
     icon: Bell,
   },
   {
     label: "Settings",
-    path: "/settings",
+    path: "/parent/settings",
     icon: Settings,
   },
 ];
