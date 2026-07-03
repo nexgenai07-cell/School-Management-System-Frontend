@@ -60,19 +60,9 @@ export const adminRoutes = [
 
   // Academic Management
   {
-    label: "Classes & Sections",
-    path: "/admin/classes-sections",
+    label: "Academic Sructure",
+    path: "/admin/academics",
     icon: GraduationCap,
-  },
-  {
-    label: "Subjects",
-    path: "/admin/subjects",
-    icon: BookOpen,
-  },
-  {
-    label: "Rooms",
-    path: "/admin/rooms",
-    icon: Building2,
   },
   {
     label: "Timetable Builder",
@@ -85,11 +75,6 @@ export const adminRoutes = [
     label: "Fees Management",
     path: "/admin/fees-management",
     icon: Wallet,
-  },
-  {
-    label: "Expense Tracker",
-    path: "/admin/expense-tracker",
-    icon: Receipt,
   },
 
   // Operations Management
@@ -106,21 +91,9 @@ export const adminRoutes = [
 
   // Certificates & Events
   {
-    label: "Certificates",
-    path: "/admin/certificates",
-    icon: Award,
-  },
-  {
     label: "Events",
     path: "/admin/events",
     icon: Calendar,
-  },
-
-  // Logs & Communication
-  {
-    label: "Behavior Logs",
-    path: "/admin/behavior-logs",
-    icon: ClipboardList,
   },
   {
     label: "Campaign Logs",
