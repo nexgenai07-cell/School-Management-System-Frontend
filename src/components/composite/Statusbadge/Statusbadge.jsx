@@ -32,8 +32,10 @@ const STATUS_COLOR_MAP = {
 
   // Fees
   Paid: 'success',
-  Unpaid: 'danger',
-  Partial: 'warning',
+  Pending: 'warning',
+  Overdue: 'danger',
+  Partial: 'student',
+  Waived: 'parent',
 
   // Attendance
   Present: 'success',
@@ -41,10 +43,10 @@ const STATUS_COLOR_MAP = {
   Leave: 'neutral',
 
   // Complaints
-  Open: 'warning',
-  'In Progress': 'neutral',
+  Open: 'danger',
+  'In Progress': 'warning',
   Resolved: 'success',
-
+  Escalated: 'danger',
   // Scholarship
   'Under Review': 'warning',
 };

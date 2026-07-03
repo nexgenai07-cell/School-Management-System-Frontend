@@ -4,7 +4,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Menu,
-  X,
+  GraduationCap,
+  LogOut,
 } from "lucide-react";
 
 /*
@@ -17,12 +18,17 @@ Purpose:
 - Allows collapsing and expanding on desktop.
 - Provides a slide-in sidebar on mobile devices.
 - Automatically highlights the active route.
+- Shows a hardcoded Logout button at the bottom.
 
 Props:
 - title     : Sidebar heading text
 - subtitle  : Small description below title
-- logo      : Logo or icon displayed in header
 - items     : Array of navigation items
+- tone      : "brand" | "admin" | "teacher" | "student" | "parent"
+              Controls active item color, hover indicator, logo bg.
+              Defaults to "brand".
+- onLogout  : Callback fired when Logout button is clicked.
+              Handled in DashboardLayout (dispatch + navigate).
 
 Navigation Item Structure:
 {
@@ -34,26 +40,83 @@ Navigation Item Structure:
 Features:
 - Collapsible desktop sidebar
 - Mobile drawer sidebar
-- Active route highlighting
+- Active route highlighting with tone color
+- GraduationCap logo consistent across all roles
+- Logout button hardcoded at bottom (not in items array)
 - Hidden scrollbar with scrolling support
 - Responsive design
 ======================================================
 */
 
+/*
+======================================================
+SIDEBAR_THEME
+
+Maps each tone to explicit Tailwind classes.
+No dynamic class building — all classes pre-defined.
+
+Structure per tone:
+- activeBg   : Background of active nav item
+- indicator  : Left accent shown on hover
+- logoBg     : Gradient on logo container
+======================================================
+*/
+const SIDEBAR_THEME = {
+  brand: {
+    activeBg:  'bg-brand-primary',
+    indicator: 'bg-brand-primary',
+    logoBg:    'bg-brand-primary/20',
+    iconcolor:  'text-brand-primary',
+  },
+  admin: {
+    activeBg:  'bg-admin-primary',
+    indicator: 'bg-admin-primary',
+    logoBg:    'bg-admin-primary/20',
+    iconcolor:  'text-admin-primary',
+  },
+  teacher: {
+    activeBg:  'bg-teacher-primary',
+    indicator: 'bg-teacher-primary',
+    logoBg:    'bg-teacher-primary/20',
+    iconcolor:  'text-teacher-primary',
+  },
+  student: {
+    activeBg:  'bg-student-primary',
+    indicator: 'bg-student-primary',
+    logoBg:    'bg-student-primary/20',
+    iconcolor:  'text-student-primary',
+  },
+  parent: {
+    activeBg:  'bg-parent-primary',
+    indicator: 'bg-parent-primary',
+    logoBg:    'bg-parent-primary/20',
+    iconcolor:  'text-parent-primary',
+  },
+};
+
+
 function Sidebar({
-  title = "School AI",
-  subtitle = "Let AI Assist",
-  logo,
-  items = [],
+  title    = "School AI",
+  subtitle = "Personalized Assistant",
+  items    = [],
+  tone     = "brand",
+  onLogout,
 }) {
   /*
   ======================================================
-  Local State
-  - collapsed : Controls desktop sidebar width
-  - mobileOpen: Controls mobile sidebar visibility
+  Resolve theme — fallback to brand if unknown tone
   ======================================================
   */
-  const [collapsed, setCollapsed] = useState(false);
+  const theme = SIDEBAR_THEME[tone] || SIDEBAR_THEME.brand;
+
+  /*
+  ======================================================
+  Local State
+  - collapsed  : Controls desktop sidebar width
+  - mobileOpen : Controls mobile sidebar visibility
+  ======================================================
+  */
+  const [collapsed,  setCollapsed]  = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   /*
@@ -63,140 +126,77 @@ function Sidebar({
   ======================================================
   */
   const sidebarContent = (
-    <div
-      className="
-        flex h-screen flex-col
-        rounded-r-3xl
-        border-r border-white/10
-        bg-gradient-to-b
-        from-[#07112B]
-        via-[#071B47]
-        to-[#020617]
-        text-white
-        backdrop-blur-xl
-        shadow-2xl
-      "
-    >
-      {/* ==================================================
-          Sidebar Header
-          Displays logo, title, subtitle,
-          and collapse button
-      ================================================== */}
-      <div className="flex items-center justify-between p-6">
+    <div className="flex h-screen flex-col bg-gradient-to-b from-[#111827] via-[#0f172a] to-[#080d16] text-white rounded-r-2xl border-r border-white/5 shadow-2xl">
+
+      {/* ================================================
+          Header — logo + title + collapse button
+      ================================================ */}
+      <div className={`flex items-center border-b border-white/5 ${collapsed ? 'justify-center px-3 py-4' : 'justify-between px-4 py-4'}`}>
         {!collapsed && (
-          <div className="flex items-center gap-4">
-            {/* Logo */}
-            <div
-              className="
-                flex h-14 w-14 items-center justify-center
-                rounded-full
-                bg-gradient-to-br
-                from-brand-primary
-                to-parent-primary
-                shadow-lg shadow-brand-primary/30
-              "
-            >
-              {logo}
+          <div className="flex items-center gap-3 min-w-0">
+            {/* Logo — GraduationCap with light role-based background */}
+            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl shadow-lg ${theme.logoBg}`}>
+              <GraduationCap size={20} className={theme.iconcolor} aria-hidden="true" />
             </div>
 
             {/* Title & Subtitle */}
-            <div>
-              <h2 className="text-2xl font-bold">
+            <div className="min-w-0">
+              <p className="text-sm font-bold tracking-tight text-white leading-tight truncate">
                 {title}
-              </h2>
-
-              <p className="text-sm text-slate-300">
+              </p>
+              <p className="text-[11px] text-white/40 font-medium leading-tight mt-0.5 truncate">
                 {subtitle}
               </p>
             </div>
           </div>
         )}
 
-        {/* Collapse / Expand Button */}
+        {/* Collapse / Expand Button – always visible */}
         <button
+          type="button"
           onClick={() => setCollapsed(!collapsed)}
-          className="
-            hidden rounded-xl
-            bg-white/10 p-2
-            transition
-            hover:bg-white/20
-            lg:block
-          "
+          className="rounded-lg bg-white/5 p-1.5 text-white/40 transition hover:bg-white/10 hover:text-white"
         >
-          {collapsed ? (
-            <ChevronRight size={20} />
-          ) : (
-            <ChevronLeft size={20} />
-          )}
+          {collapsed ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}
         </button>
       </div>
 
-      {/* ==================================================
-          Navigation Links
-          Scrollable area containing menu items
-      ================================================== */}
-      <nav className="flex-1 overflow-y-auto px-4 py-2 scrollbar-hide">
-        <ul className="space-y-3">
+      {/* ================================================
+          Navigation Links — scrollable
+      ================================================ */}
+      <nav className="flex-1 overflow-y-auto px-2.5 py-3 scrollbar-hide">
+        <ul className="space-y-2">
           {items.map((item) => {
             const Icon = item.icon;
-
             return (
               <li key={item.path}>
-                {/* Navigation Link */}
                 <NavLink
                   to={item.path}
                   onClick={() => setMobileOpen(false)}
                   className={({ isActive }) =>
-                    `
-                    group relative flex items-center gap-4
-                    overflow-hidden rounded-2xl
-                    px-5 py-4
-                    transition-all duration-300
-                    ${
-                      isActive
-                        ? `
-                          bg-gradient-to-r
-                          from-[#5B5CF6]
-                          via-[#7C3AED]
-                          to-[#D946EF]
-                          text-white
-                          shadow-lg shadow-violet-500/30
-                        `
-                        : `
-                          text-slate-300
-                          hover:bg-white/10
-                          hover:text-white
-                        `
+                    `group relative flex items-center gap-3 overflow-hidden rounded-xl px-3 py-3 transition-all duration-200
+                    ${isActive
+                      ? `${theme.activeBg} text-white shadow-md`
+                      : 'text-white/50 hover:text-white/90 hover:bg-white/5'
                     }
-                  `
-                  }
+                    ${collapsed ? 'justify-center' : ''}
+                  `}
                 >
                   {({ isActive }) => (
                     <>
-                      {/* Left indicator shown on hover */}
-                      {!isActive && (
+                      {/* Hover indicator — left accent, hidden when collapsed */}
+                      {!isActive && !collapsed && (
                         <span
-                          className="
-                            absolute left-0 top-0
-                            h-full w-1
-                            rounded-r-full
-                            bg-violet-500
-                            opacity-0
-                            transition-all
-                            group-hover:opacity-100
-                          "
+                          className={`absolute left-0 top-0 bottom-0 w-0.5 rounded-full ${theme.indicator} opacity-0 transition-all group-hover:opacity-100`}
                         />
                       )}
 
-                      {/* Navigation Icon */}
-                      <Icon
-                        size={22}
-                        className="shrink-0"
-                      />
+                      {/* Icon */}
+                      <Icon size={17} className="shrink-0" aria-hidden="true" />
 
-                      {/* Navigation Label */}
+                      {/* Label — hidden when collapsed */}
                       {!collapsed && (
-                        <span className="font-medium">
+                        <span className="text-sm font-medium leading-none">
                           {item.label}
                         </span>
                       )}
@@ -208,93 +208,64 @@ function Sidebar({
           })}
         </ul>
       </nav>
+
+      {/* ================================================
+          Logout — hardcoded at bottom
+          Not in items array. Fires onLogout prop.
+          Red color on hover to signal destructive action.
+      ================================================ */}
+      <div className="px-2.5 pb-4 pt-2 border-t border-white/5">
+        <button
+          type="button"
+          onClick={onLogout}
+          className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-white/40 transition-all duration-200 hover:bg-danger-bg hover:text-danger ${collapsed ? 'justify-center' : ''}`}
+        >
+          <LogOut size={17} className="shrink-0" aria-hidden="true" />
+          {!collapsed && (
+            <span className="text-sm font-medium leading-none">Logout</span>
+          )}
+        </button>
+      </div>
+
     </div>
   );
 
   return (
     <>
-      {/* ==================================================
-          Mobile Menu Button
-          Visible only on small screens
-      ================================================== */}
+      {/* ================================================
+          Mobile Menu Button — visible only on small screens
+          Background colour now matches the role
+      ================================================ */}
       <button
+        type="button"
         onClick={() => setMobileOpen(true)}
-        className="
-          fixed left-5 top-5 z-50
-          rounded-xl
-          bg-brand-primary p-3
-          text-white
-          shadow-lg
-          lg:hidden
-        "
+        className={`fixed left-4 top-4 z-50 rounded-xl p-2.5 text-white shadow-lg lg:hidden ${theme.activeBg}`}
       >
-        <Menu size={22} />
+        <Menu size={20} />
       </button>
 
-      {/* ==================================================
-          Desktop Sidebar
-          Fixed sidebar shown on large screens
-      ================================================== */}
-      <aside
-        className={`
-          hidden lg:block
-          sticky top-0
-          h-screen
-          shrink-0
-          overflow-hidden
-          transition-all duration-300
-          ${collapsed ? "w-24" : "w-72"}
-        `}
-      >
+      {/* ================================================
+          Desktop Sidebar — sticky, large screens only
+      ================================================ */}
+      <aside className={`hidden lg:block sticky top-0 h-screen shrink-0 overflow-hidden transition-all duration-300 ${collapsed ? 'w-16' : 'w-56'}`}>
         {sidebarContent}
       </aside>
 
-      {/* ==================================================
-          Mobile Sidebar
-          Slide-in drawer shown on small screens
-      ================================================== */}
+      {/* ================================================
+          Mobile Sidebar — slide-in drawer, small screens
+          Cross (X) button removed
+      ================================================ */}
       {mobileOpen && (
         <>
-          {/* Dark Backdrop */}
+          {/* Dark backdrop */}
           <div
-            className="
-              fixed inset-0 z-40
-              bg-black/60
-              backdrop-blur-sm
-              lg:hidden
-            "
+            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
             onClick={() => setMobileOpen(false)}
           />
 
-          {/* Sidebar Drawer */}
-          <div
-            className="
-              fixed left-0 top-0
-              z-50 h-screen
-              lg:hidden
-            "
-          >
-            {/* Close Button */}
-            <button
-              onClick={() => setMobileOpen(false)}
-              className="
-                absolute right-5 top-5
-                rounded-xl
-                bg-white/10 p-2
-                text-white
-              "
-            >
-              <X size={22} />
-            </button>
-
-            {/* Sidebar Width Container */}
-            <div
-              className={`
-                h-screen
-                transition-all duration-300
-                ${collapsed ? "w-24" : "w-72"}
-              `}
-            >
+          {/* Drawer – no close button, sidebar fills the width according to collapsed state */}
+          <div className="fixed left-0 top-0 z-50 h-screen lg:hidden">
+            <div className={`h-screen transition-all duration-300 ${collapsed ? 'w-16' : 'w-56'}`}>
               {sidebarContent}
             </div>
           </div>

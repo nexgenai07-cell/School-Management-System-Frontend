@@ -1,344 +1,454 @@
-/**
- * USER APPROVALS PAGE
- *
- * Admin reviews all registered accounts and approves or rejects them.
- * Only "pending" rows show action buttons.
- *
- * DB Tables : User, Roles
- * Mock data : src/mocks/adminMock.js → MOCK_USERS
- *
- * State     : all local useState — no Redux needed
- * Auth token: from Redux (for future API calls)
- *
- * API (replace mock when backend ready):
- *   GET  /api/admin/users              → all users list
- *   POST /api/admin/users/{id}/approve → approve user
- *   POST /api/admin/users/{id}/reject  → reject user
- */
+import { useState, useEffect ,useMemo } from "react";
+import { CheckCircle, XCircle, Clock, TrendingUp, AlertCircle, Timer, ChevronLeft, ChevronRight } from "lucide-react";
 
-import { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
-import { CheckCircle, XCircle, Users, Clock } from 'lucide-react';
+// Reusable components
+import { PageHeader } from "../../../components/global/pageheader";
+import { SearchBar } from "../../../components/global/Searchbar";
+import { StatCard } from "../../../components/composite/Statcard";
+import { Table } from "../../../components/ui/table";
+import { StatusBadge } from "../../../components/composite/Statusbadge";
+import { Badge } from "../../../components/ui/Badge";
+import { Button } from "../../../components/ui/Button";
 
-import { MOCK_USERS } from '../../../mocks/adminMock';
+// Admin-scoped Drawer
+import Drawer from "../components/Drawer";
 
-// ─── Role style lookup — no dynamic class building ────────────────────────────
-const ROLE_STYLE = {
-  admin:   { bg: 'bg-admin-light',   text: 'text-admin-primary',   border: 'border-admin-border'   },
-  teacher: { bg: 'bg-teacher-light', text: 'text-teacher-primary', border: 'border-teacher-border' },
-  student: { bg: 'bg-student-light', text: 'text-student-primary', border: 'border-student-border' },
-  parent:  { bg: 'bg-parent-light',  text: 'text-parent-primary',  border: 'border-parent-border'  },
-};
+// Mock data
+import { MOCK_USERS } from "../../../mocks/Adminmock";
 
-// ─── Status style lookup ──────────────────────────────────────────────────────
-const STATUS_STYLE = {
-  pending:  { bg: 'bg-yellow-50',  text: 'text-yellow-700',  border: 'border-yellow-200', dot: 'bg-yellow-400'  },
-  approved: { bg: 'bg-teacher-light', text: 'text-teacher-primary', border: 'border-teacher-border', dot: 'bg-teacher-primary' },
-  rejected: { bg: 'bg-red-50',     text: 'text-red-600',     border: 'border-red-200',    dot: 'bg-red-400'     },
-};
+// ─── helpers ────────────────────────────────────────────────────────────────
+const getInitials = (name) =>
+  name
+    .split(" ")
+    .slice(0, 2)
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase();
 
-// ─── Tab config ───────────────────────────────────────────────────────────────
-const TABS = ['all', 'pending', 'approved', 'rejected'];
-
-// ─── Utility — time ago ───────────────────────────────────────────────────────
-function timeAgo(dateStr) {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const mins  = Math.floor(diff / 60000);
-  const hours = Math.floor(mins / 60);
-  const days  = Math.floor(hours / 24);
-  if (days > 0)  return `${days}d ago`;
-  if (hours > 0) return `${hours}h ago`;
-  return `${mins}m ago`;
-}
-
-// ─── Confirm Dialog ───────────────────────────────────────────────────────────
-function ConfirmDialog({ open, action, userName, onConfirm, onCancel }) {
-  if (!open) return null;
-  const isApprove = action === 'approve';
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-      <div className="bg-white rounded-2xl shadow-soft border border-surface-muted w-full max-w-sm p-6">
-        <div className={`w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4 ${isApprove ? 'bg-teacher-light' : 'bg-red-50'}`}>
-          {isApprove
-            ? <CheckCircle size={22} className="text-teacher-primary" />
-            : <XCircle    size={22} className="text-red-500" />
-          }
-        </div>
-        <h3 className="text-base font-bold text-text-primary text-center mb-1">
-          {isApprove ? 'Approve Account' : 'Reject Account'}
-        </h3>
-        <p className="text-sm text-text-secondary text-center mb-6">
-          {isApprove
-            ? `"${userName}" will be able to log in immediately.`
-            : `"${userName}" will be notified of the rejection.`
-          }
-        </p>
-        <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="flex-1 px-4 py-2.5 rounded-xl border border-surface-muted text-text-secondary text-sm font-medium hover:bg-surface-dim transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={onConfirm}
-            className={`flex-1 px-4 py-2.5 rounded-xl text-white text-sm font-semibold transition-colors ${
-              isApprove
-                ? 'bg-teacher-primary hover:opacity-90'
-                : 'bg-red-500 hover:bg-red-600'
-            }`}
-          >
-            {isApprove ? 'Yes, Approve' : 'Yes, Reject'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Main component ───────────────────────────────────────────────────────────
-function UserApprovals() {
-  // Auth token — will be used in real API calls
-  const token = useSelector((state) => state.auth.token);
-
-  // ── Page state ──────────────────────────────────────────────────────────────
-  const [users,    setUsers]    = useState([]);
-  const [loading,  setLoading]  = useState(true);
-  const [search,   setSearch]   = useState('');
-  const [activeTab, setActiveTab] = useState('pending');
-  const [confirm,  setConfirm]  = useState({ open: false, userId: null, userName: '', action: '' });
-
-  // ── Load data ───────────────────────────────────────────────────────────────
-  // MOCK — replace with real API when backend ready:
-  // const res = await fetch('/api/admin/users', {
-  //   headers: { Authorization: `Bearer ${token}` }
-  // });
-  // const data = await res.json();
-  // setUsers(data);
-  useEffect(() => {
-    setTimeout(() => {
-      setUsers(MOCK_USERS);
-      setLoading(false);
-    }, 500); // simulate network delay
-  }, []);
-
-  // ── Filtered list ───────────────────────────────────────────────────────────
-  const filtered = users.filter((u) => {
-    const matchTab    = activeTab === 'all' || u.status === activeTab;
-    const matchSearch = u.full_name.toLowerCase().includes(search.toLowerCase())
-                     || u.email.toLowerCase().includes(search.toLowerCase());
-    return matchTab && matchSearch;
+const formatDate = (iso) =>
+  new Date(iso).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
   });
 
-  // ── Tab counts ──────────────────────────────────────────────────────────────
-  const counts = {
-    all:      users.length,
-    pending:  users.filter((u) => u.status === 'pending').length,
-    approved: users.filter((u) => u.status === 'approved').length,
-    rejected: users.filter((u) => u.status === 'rejected').length,
-  };
+const ROLE_STYLES = {
+  student: {
+    avatar: "bg-[var(--color-student-light)] text-[var(--color-student-primary)]",
+    tone: "student",
+  },
+  teacher: {
+    avatar: "bg-[var(--color-teacher-light)] text-[var(--color-teacher-primary)]",
+    tone: "teacher",
+  },
+  parent: {
+    avatar: "bg-[var(--color-parent-light)] text-[var(--color-parent-primary)]",
+    tone: "parent",
+  },
+};
 
-  // ── Actions ─────────────────────────────────────────────────────────────────
-  function handleAction(user, action) {
-    setConfirm({ open: true, userId: user.id, userName: user.full_name, action });
-  }
+const TABS = ["All", "Pending", "Approved", "Rejected"];
+const ITEMS_PER_PAGE = 5;
 
-  function handleConfirm() {
-    // MOCK — update locally
-    // REAL API:
-    // await fetch(`/api/admin/users/${confirm.userId}/${confirm.action}`, {
-    //   method: 'POST',
-    //   headers: { Authorization: `Bearer ${token}` }
-    // });
-    setUsers((prev) =>
-      prev.map((u) =>
-        u.id === confirm.userId
-          ? { ...u, status: confirm.action === 'approve' ? 'approved' : 'rejected' }
-          : u
-      )
-    );
-    setConfirm({ open: false, userId: null, userName: '', action: '' });
-  }
-
-  function handleCancel() {
-    setConfirm({ open: false, userId: null, userName: '', action: '' });
-  }
-
-  // ── Render ──────────────────────────────────────────────────────────────────
-  return (
-    <div className="space-y-6">
-
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold text-text-primary">User Approvals</h1>
-          <p className="text-sm text-text-secondary mt-0.5">
-            Review and approve new account registration requests
-          </p>
-        </div>
-        <div className="flex items-center gap-2 bg-admin-light border border-admin-border rounded-xl px-4 py-2.5">
-          <Clock size={15} className="text-admin-primary" />
-          <span className="text-sm font-semibold text-admin-primary">
-            {counts.pending} pending
+// ─── Table columns ───────────────────────────────────────────────────────────
+const buildColumns = (onViewDetails) => [
+  {
+    key: "full_name",
+    label: "Name",
+    render: (row) => {
+      const style = ROLE_STYLES[row.role] ?? ROLE_STYLES.student;
+      return (
+        <div className="flex items-center gap-3">
+          <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${style.avatar}`}>
+            {getInitials(row.full_name)}
+          </div>
+          <span className="text-sm font-medium text-[var(--color-text-primary)]">
+            {row.full_name}
           </span>
         </div>
+      );
+    },
+  },
+  {
+    key: "role",
+    label: "Role",
+    render: (row) => (
+      <Badge tone={ROLE_STYLES[row.role]?.tone ?? "brand"}>
+        {row.role.charAt(0).toUpperCase() + row.role.slice(1)}
+      </Badge>
+    ),
+  },
+  {
+    key: "email",
+    label: "Email",
+    render: (row) => (
+      <span className="text-sm text-[var(--color-text-secondary)]">{row.email}</span>
+    ),
+  },
+  {
+    key: "created_at",
+    label: "Submitted",
+    render: (row) => (
+      <span className="text-sm text-[var(--color-text-secondary)]">{formatDate(row.created_at)}</span>
+    ),
+  },
+  {
+    key: "status",
+    label: "Status",
+    render: (row) => (
+      <StatusBadge status={row.status.charAt(0).toUpperCase() + row.status.slice(1)} />
+    ),
+  },
+  {
+    key: "actions",
+    label: "",
+    render: (row) => (
+      <div className="flex justify-end">
+        <Button
+          variant={row.status === "pending" ? "outline" : "ghost"}
+          size="sm"
+          tone="admin"
+          onClick={() => onViewDetails(row)}
+        >
+          {row.status === "pending" ? "View Details" : "View"}
+        </Button>
       </div>
+    ),
+  },
+];
 
-      {/* Search */}
-      <div className="relative max-w-sm">
-        <Users size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
-        <input
-          type="text"
-          placeholder="Search by name or email..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-9 pr-4 py-2.5 text-sm border border-surface-muted rounded-xl bg-white text-text-primary placeholder:text-text-muted focus:outline-none focus:border-admin-primary focus:ring-2 focus:ring-admin-primary/10 transition-all"
-        />
-      </div>
-
-      {/* Tabs */}
-      <div className="flex gap-1 bg-surface-dim border border-surface-muted rounded-xl p-1 w-fit">
-        {TABS.map((tab) => (
-          <button
-            key={tab}
-            type="button"
-            onClick={() => setActiveTab(tab)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all capitalize ${
-              activeTab === tab
-                ? 'bg-white text-admin-primary shadow-sm border border-admin-border'
-                : 'text-text-muted hover:text-text-primary'
-            }`}
-          >
-            {tab}
-            <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-full ${
-              activeTab === tab ? 'bg-admin-light text-admin-primary' : 'bg-surface-muted text-text-muted'
-            }`}>
-              {counts[tab]}
-            </span>
-          </button>
-        ))}
-      </div>
-
-      {/* Table card */}
-      <div className="bg-white border border-surface-muted rounded-2xl overflow-hidden">
-        {loading ? (
-          <div className="flex items-center justify-center py-20 text-text-muted text-sm gap-3">
-            <div className="w-5 h-5 border-2 border-admin-primary border-t-transparent rounded-full animate-spin" />
-            Loading users...
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-3">
-            <div className="w-12 h-12 rounded-xl bg-admin-light flex items-center justify-center">
-              <Users size={20} className="text-admin-primary" />
-            </div>
-            <p className="text-sm font-medium text-text-primary">No users found</p>
-            <p className="text-xs text-text-muted">
-              {search ? 'Try a different search term' : `No ${activeTab === 'all' ? '' : activeTab} requests right now`}
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-surface-muted bg-surface-dim">
-                  <th className="text-left text-xs font-semibold text-text-muted uppercase tracking-wider px-5 py-3.5">
-                    Name
-                  </th>
-                  <th className="text-left text-xs font-semibold text-text-muted uppercase tracking-wider px-5 py-3.5">
-                    Role
-                  </th>
-                  <th className="text-left text-xs font-semibold text-text-muted uppercase tracking-wider px-5 py-3.5">
-                    Requested
-                  </th>
-                  <th className="text-left text-xs font-semibold text-text-muted uppercase tracking-wider px-5 py-3.5">
-                    Status
-                  </th>
-                  <th className="text-left text-xs font-semibold text-text-muted uppercase tracking-wider px-5 py-3.5">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-surface-muted">
-                {filtered.map((user) => {
-                  const roleStyle   = ROLE_STYLE[user.role]   || ROLE_STYLE.student;
-                  const statusStyle = STATUS_STYLE[user.status] || STATUS_STYLE.pending;
-                  const isPending   = user.status === 'pending';
-
-                  return (
-                    <tr key={user.id} className="hover:bg-surface-dim/50 transition-colors">
-
-                      {/* Name + Email */}
-                      <td className="px-5 py-4">
-                        <p className="font-semibold text-text-primary">{user.full_name}</p>
-                        <p className="text-xs text-text-muted mt-0.5">{user.email}</p>
-                      </td>
-
-                      {/* Role badge */}
-                      <td className="px-5 py-4">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold border capitalize ${roleStyle.bg} ${roleStyle.text} ${roleStyle.border}`}>
-                          {user.role}
-                        </span>
-                      </td>
-
-                      {/* Time ago */}
-                      <td className="px-5 py-4">
-                        <span className="text-text-secondary text-xs">{timeAgo(user.created_at)}</span>
-                      </td>
-
-                      {/* Status badge */}
-                      <td className="px-5 py-4">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border capitalize ${statusStyle.bg} ${statusStyle.text} ${statusStyle.border}`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${statusStyle.dot}`} />
-                          {user.status}
-                        </span>
-                      </td>
-
-                      {/* Actions */}
-                      <td className="px-5 py-4">
-                        {isPending ? (
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => handleAction(user, 'approve')}
-                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teacher-light border border-teacher-border text-teacher-primary text-xs font-semibold hover:opacity-80 transition-opacity"
-                            >
-                              <CheckCircle size={13} />
-                              Approve
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleAction(user, 'reject')}
-                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 border border-red-200 text-red-600 text-xs font-semibold hover:opacity-80 transition-opacity"
-                            >
-                              <XCircle size={13} />
-                              Reject
-                            </button>
-                          </div>
-                        ) : (
-                          <span className="text-xs text-text-muted">—</span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      {/* Confirm Dialog */}
-      <ConfirmDialog
-        open={confirm.open}
-        action={confirm.action}
-        userName={confirm.userName}
-        onConfirm={handleConfirm}
-        onCancel={handleCancel}
-      />
+// ─── Drawer content ──────────────────────────────────────────────────────────
+function DrawerRow({ label, value }) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
+        {label}
+      </span>
+      <div className="text-sm text-[var(--color-text-primary)]">{value ?? "—"}</div>
     </div>
   );
 }
 
-export default UserApprovals;
+function UserDrawerContent({ user }) {
+  const style = ROLE_STYLES[user.role] ?? ROLE_STYLES.student;
+
+  return (
+    <div className="space-y-7">
+      {/* Avatar + name */}
+      <div className="flex flex-col items-center gap-3 text-center">
+        <div className={`w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold ${style.avatar}`}>
+          {getInitials(user.full_name)}
+        </div>
+        <div>
+          <p className="text-lg font-semibold text-[var(--color-text-primary)]">
+            {user.full_name}
+          </p>
+          <div className="mt-1.5">
+            <Badge tone={style.tone}>
+              {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+            </Badge>
+          </div>
+        </div>
+      </div>
+
+      {/* Divider */}
+      <hr className="border-gray-100" />
+
+      {/* Account info */}
+      <div className="space-y-5">
+        <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-widest">
+          Account Info
+        </p>
+        <DrawerRow label="Full Name" value={user.full_name} />
+        <DrawerRow label="Email Address" value={user.email} />
+        <DrawerRow label="Submitted On" value={formatDate(user.created_at)} />
+        <DrawerRow
+          label="Current Status"
+          value={
+            <StatusBadge
+              status={user.status.charAt(0).toUpperCase() + user.status.slice(1)}
+            />
+          }
+        />
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Page ───────────────────────────────────────────────────────────────
+export default function UserApprovals() {
+  const [requests, setRequests] = useState(MOCK_USERS);
+  const [activeTab, setActiveTab] = useState("All");
+  const [search, setSearch] = useState("");
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const stats = useMemo(() => ({
+    total: requests.length,
+    pending: requests.filter((r) => r.status === "pending").length,
+    approved: requests.filter((r) => r.status === "approved").length,
+    rejected: requests.filter((r) => r.status === "rejected").length,
+  }), [requests]);
+
+  const filtered = useMemo(() => {
+    let list = requests;
+    if (activeTab !== "All")
+      list = list.filter((r) => r.status === activeTab.toLowerCase());
+    if (search.trim())
+      list = list.filter(
+        (r) =>
+          r.full_name.toLowerCase().includes(search.toLowerCase()) ||
+          r.email.toLowerCase().includes(search.toLowerCase()) ||
+          r.role.toLowerCase().includes(search.toLowerCase())
+      );
+    return list;
+  }, [requests, activeTab, search]);
+
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const paginated = filtered.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  // Reset page on filter change
+useEffect(() => {
+  setCurrentPage(1);
+}, [activeTab, search]);
+
+  const handleApprove = (id) => {
+    setRequests((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, status: "approved" } : r))
+    );
+    setSelectedUser(null);
+  };
+
+  const handleReject = (id) => {
+    setRequests((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, status: "rejected" } : r))
+    );
+    setSelectedUser(null);
+  };
+
+  const columns = buildColumns(setSelectedUser);
+
+  return (
+    <div className="p-6 md:p-0 flex flex-col gap-7 min-h-screen bg-[var(--color-surface-dim)]">
+
+      {/* ── Page Header ── */}
+      <PageHeader
+        title="User Approvals"
+        subtitle="Review and manage registration requests"
+        breadcrumbs={["Dashboard", "Admin", "User Approvals"]}
+        action={
+          <SearchBar
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onSearch={(val) => setSearch(val)}
+            placeholder="Search by name, email, role…"
+            tone="admin"
+            size="md"
+          />
+        }
+      />
+
+      {/* ── Stat Cards ── */}
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          label="Total Requests"
+          value={stats.total.toLocaleString()}
+          tone="admin"
+          footerText="+12% this month"
+          footerColor="success"
+          footerIcon={<TrendingUp size={13} />}
+        />
+        <StatCard
+          label="Pending"
+          value={stats.pending}
+          tone="student"
+          footerText="Awaiting review"
+          footerColor="warning"
+          footerIcon={<Clock size={13} />}
+        />
+        <StatCard
+          label="Approved"
+          value={stats.approved}
+          tone="teacher"
+          footerText="Active accounts"
+          footerColor="success"
+          footerIcon={<CheckCircle size={13} />}
+        />
+        <StatCard
+          label="Rejected"
+          value={stats.rejected}
+          tone="parent"
+          footerText="Inactive requests"
+          footerColor="danger"
+          footerIcon={<XCircle size={13} />}
+        />
+      </section>
+
+      {/* ── Tabs + Table ── */}
+      <div className="flex flex-col">
+        <nav className="flex border-b border-gray-200 overflow-x-auto scrollbar-hide">
+          {TABS.map((tab) => {
+            const count =
+              tab === "Pending" ? stats.pending
+              : tab === "Approved" ? stats.approved
+              : tab === "Rejected" ? stats.rejected
+              : null;
+
+            return (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-6 py-3 text-sm font-medium whitespace-nowrap transition-colors border-b-2 -mb-px flex items-center gap-2 ${
+                  activeTab === tab
+                    ? "border-[var(--color-admin-primary)] text-[var(--color-admin-primary)]"
+                    : "border-transparent text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                }`}
+              >
+                {tab}
+                {count !== null && (
+                  <span className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${
+                    tab === "Pending" ? "bg-amber-100 text-amber-700"
+                    : tab === "Approved" ? "bg-[var(--color-success-bg)] text-[var(--color-success-text)]"
+                    : "bg-[var(--color-danger-bg)] text-[var(--color-danger-text)]"
+                  }`}>
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </nav>
+
+        <div className="bg-white rounded-b-xl rounded-tr-xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] border border-gray-100 border-t-0 overflow-hidden">
+          <Table
+            columns={columns}
+            data={paginated}
+            emptyMessage="No requests found."
+          />
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="px-5 py-4 border-t border-gray-100 bg-gray-50/50 flex items-center justify-between">
+              <span className="text-sm text-[var(--color-text-secondary)]">
+                Showing {Math.min((currentPage - 1) * ITEMS_PER_PAGE + 1, filtered.length)}–
+                {Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)} of {filtered.length} requests
+              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="p-1.5 rounded-lg border border-gray-200 hover:bg-white disabled:opacity-30 transition-colors"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`w-8 h-8 rounded-lg text-sm font-semibold transition-colors ${
+                      currentPage === page
+                        ? "bg-[var(--color-admin-primary)] text-white"
+                        : "hover:bg-gray-100 text-[var(--color-text-primary)]"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="p-1.5 rounded-lg border border-gray-200 hover:bg-white disabled:opacity-30 transition-colors"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Bottom Insights ── */}
+      <div className="bg-white rounded-xl p-6 shadow-[0_1px_4px_rgba(0,0,0,0.06)] border border-gray-100">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="space-y-4">
+            <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-widest">
+              Insights
+            </p>
+            <div className="space-y-3">
+              {[
+                { icon: <TrendingUp size={16} className="text-[var(--color-teacher-primary)]" />, text: "18 requests processed today" },
+                { icon: <AlertCircle size={16} className="text-[var(--color-warning)]" />, text: `${stats.pending} pending over 24 hrs` },
+                { icon: <Timer size={16} className="text-[var(--color-admin-primary)]" />, text: "Avg. approval time: 4.2 hrs" },
+              ].map((item) => (
+                <div key={item.text} className="flex items-center gap-3">
+                  {item.icon}
+                  <span className="text-sm text-[var(--color-text-primary)]">{item.text}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-widest">
+              Recent Activity
+            </p>
+            <div className="space-y-2">
+              {[
+                { name: "Fatima Malik", action: "approved", time: "2m ago", color: "bg-[var(--color-success)]" },
+                { name: "Ayesha Siddiqui", action: "rejected", time: "15m ago", color: "bg-[var(--color-danger)]" },
+                { name: "Usman Khan", action: "approved", time: "1h ago", color: "bg-[var(--color-success)]" },
+              ].map((item) => (
+                <div key={item.name} className="flex items-center justify-between p-2.5 rounded-lg bg-gray-50">
+                  <div className="flex items-center gap-2.5">
+                    <span className={`w-2 h-2 rounded-full ${item.color}`} />
+                    <span className="text-sm text-[var(--color-text-primary)]">
+                      {item.name}{" "}
+                      <span className="text-[var(--color-text-secondary)]">{item.action}</span>
+                    </span>
+                  </div>
+                  <span className="text-xs text-[var(--color-text-muted)]">{item.time}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Drawer ── */}
+      <Drawer
+        open={!!selectedUser}
+        onClose={() => setSelectedUser(null)}
+        title="Registration Details"
+        footer={
+          selectedUser?.status === "pending" ? (
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                variant="outline"
+                tone="admin"
+                fullWidth
+                leftIcon={<XCircle size={16} />}
+                onClick={() => handleReject(selectedUser.id)}
+              >
+                Reject
+              </Button>
+              <Button
+                variant="primary"
+                tone="admin"
+                fullWidth
+                leftIcon={<CheckCircle size={16} />}
+                onClick={() => handleApprove(selectedUser.id)}
+              >
+                Approve
+              </Button>
+            </div>
+          ) : null
+        }
+      >
+        {selectedUser && <UserDrawerContent user={selectedUser} />}
+      </Drawer>
+    </div>
+  );
+}

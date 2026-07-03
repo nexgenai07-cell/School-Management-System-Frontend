@@ -79,7 +79,7 @@ function StatCard({
       </p>
 
       <p
-        className={`mt-2 text-3xl font-bold ${VALUE_TONE_CLASSES[tone] || VALUE_TONE_CLASSES.brand}`}
+        className={`mt-2 text-2xl font-bold ${VALUE_TONE_CLASSES[tone] || VALUE_TONE_CLASSES.brand}`}
       >
         {value}
       </p>

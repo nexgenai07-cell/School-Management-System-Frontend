@@ -30,6 +30,8 @@ const COLOR_CLASSES = {
   warning: 'bg-warning-bg text-warning-text',
   danger: 'bg-danger-bg text-danger-text',
   neutral: 'bg-gray-100 text-gray-600',
+  student: 'bg-student-light text-student-text',  
+  parent: 'bg-parent-light text-parent-text', 
 };
 
 const TONE_CLASSES = {
