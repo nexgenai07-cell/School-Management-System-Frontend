@@ -9,7 +9,7 @@ import { Table } from "../../../components/ui/table";
 import { StatusBadge } from "../../../components/composite/Statusbadge";
 import { Badge } from "../../../components/ui/Badge";
 import { Button } from "../../../components/ui/Button";
-
+import ResponsiveTable from "../components/ResponsiveTable";
 // Admin-scoped Drawer
 import Drawer from "../components/Drawer";
 
@@ -68,6 +68,7 @@ const buildColumns = (onViewDetails) => [
         </div>
       );
     },
+    mobile: { role: "title" },
   },
   {
     key: "role",
@@ -77,6 +78,7 @@ const buildColumns = (onViewDetails) => [
         {row.role.charAt(0).toUpperCase() + row.role.slice(1)}
       </Badge>
     ),
+    mobile: { role: "badge" },
   },
   {
     key: "email",
@@ -84,6 +86,7 @@ const buildColumns = (onViewDetails) => [
     render: (row) => (
       <span className="text-sm text-[var(--color-text-secondary)]">{row.email}</span>
     ),
+     mobile: { role: "detail", label: "Email" },
   },
   {
     key: "created_at",
@@ -91,6 +94,7 @@ const buildColumns = (onViewDetails) => [
     render: (row) => (
       <span className="text-sm text-[var(--color-text-secondary)]">{formatDate(row.created_at)}</span>
     ),
+    mobile: { role: "detail", label: "Submitted" },
   },
   {
     key: "status",
@@ -98,6 +102,7 @@ const buildColumns = (onViewDetails) => [
     render: (row) => (
       <StatusBadge status={row.status.charAt(0).toUpperCase() + row.status.slice(1)} />
     ),
+    mobile: { role: "detail", label: "Status" },
   },
   {
     key: "actions",
@@ -114,6 +119,7 @@ const buildColumns = (onViewDetails) => [
         </Button>
       </div>
     ),
+    mobile: { role: "hidden" },
   },
 ];
 
@@ -323,11 +329,23 @@ useEffect(() => {
         </nav>
 
         <div className="bg-white rounded-b-xl rounded-tr-xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] border border-gray-100 border-t-0 overflow-hidden">
-          <Table
+          <ResponsiveTable
             columns={columns}
             data={paginated}
+            keyField="id"
             emptyMessage="No requests found."
-          />
+            mobileActions={(row) => (
+              <Button
+                variant={row.status === "pending" ? "outline" : "ghost"}
+                size="sm"
+                tone="admin"
+                fullWidth
+                onClick={() => setSelectedUser(row)}
+              >
+                {row.status === "pending" ? "View Details" : "View"}
+              </Button>
+            )}
+            />
 
           {/* Pagination */}
           {totalPages > 1 && (

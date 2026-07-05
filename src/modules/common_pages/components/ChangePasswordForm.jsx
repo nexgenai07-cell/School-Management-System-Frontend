@@ -111,7 +111,7 @@ const ChangePasswordForm = ({ role }) => {
   };
 
   return (
-    <Card>
+    <Card tone={role}>
       <div className="mb-6">
         <h2 className="text-xl font-semibold text-text-primary">
           Change Password

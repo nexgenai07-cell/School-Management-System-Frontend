@@ -20,7 +20,7 @@ const DangerZone = ({ role }) => {
   };
 
   return (
-    <Card>
+    <Card tone={role}>
       <div className="mb-6 flex items-center gap-3">
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-danger/10">
           <TriangleAlert

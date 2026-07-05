@@ -208,31 +208,35 @@ const Select = ({
 
       {/* Select Button */}
       <button
-        ref={buttonRef}
-        id={id || name}
-        type="button"
-        onClick={handleToggle}
-        disabled={disabled}
-        className={`
-          w-full flex items-center justify-between
-          rounded-lg border bg-white
-          transition-all duration-200 ease-out
-          ${SIZE_CLASSES[size]}
-          ${disabled
-            ? 'bg-[var(--color-surface-muted)] text-[var(--color-text-muted)] cursor-not-allowed'
-            : 'cursor-pointer hover:border-[var(--color-' + tone + '-primary)]'
-          }
-          ${hasError
-            ? 'border-[var(--color-danger)] focus:ring-[var(--color-danger)]/20'
-            : isOpen
-              ? 'border-[var(--color-' + tone + '-primary)] ring-2 ring-[var(--color-' + tone + '-primary)]/20'
-              : 'border-[var(--color-' + tone + '-border)]'
-          }
-          ${className}
-        `}
-        aria-haspopup="listbox"
-        aria-expanded={isOpen}
-      >
+  ref={buttonRef}
+  id={id || name}
+  type="button"
+  onClick={handleToggle}
+  disabled={disabled}
+  className={`
+    w-full flex items-center justify-between
+    rounded-lg bg-white
+    transition-all duration-200 ease-out
+    ${SIZE_CLASSES[size]}
+    ${disabled
+      ? 'bg-[var(--color-surface-muted)] text-[var(--color-text-muted)] cursor-not-allowed'
+      : 'cursor-pointer hover:bg-[var(--color-' + tone + '-light)]'
+    }
+    ${className}
+  `}
+  style={{
+    border: `1px solid ${
+      disabled
+        ? 'var(--color-surface-muted)'
+        : hasError
+          ? 'var(--color-danger)'
+          : isOpen
+            ? `var(--color-${tone}-primary)/10`
+            : `var(--color-${tone}-border)`  
+    }`,
+    boxShadow: isOpen ? `0 0 0 2px var(--color-${tone}-primary)` : 'none',
+  }}
+>
         <span className={`truncate ${!selectedOption ? 'text-[var(--color-text-muted)]' : ''}`}>
           {displayLabel}
         </span>

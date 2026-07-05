@@ -633,3 +633,116 @@ export const MOCK_INVENTORY = [
   },
 ];
 
+// ─── Admin Notifications ─────────────────────────────────
+export const MOCK_ADMIN_NOTIFICATIONS = [
+  {
+    id: 1,
+    sender: {
+      id: 5,
+      name: 'John Doe',
+      role: 'teacher',
+    },
+    receiver: {
+      id: 1,
+      name: 'Admin',
+      role: 'admin',
+    },
+    type: 'complaint',
+    message: 'New complaint submitted by Teacher Sarah Jenkins regarding Class 10-A discipline issue.',
+    reference_type: 'complaint',
+    reference_id: 101,
+    is_read: false,
+    created_at: '2026-07-05T10:30:00Z',
+  },
+  {
+    id: 2,
+    sender: null, // system notification
+    receiver: { id: 1, name: 'Admin', role: 'admin' },
+    type: 'approval',
+    message: 'Teacher Michael Brown has requested approval for grade publication of Class 12-B.',
+    reference_type: 'grade_approval',
+    reference_id: 45,
+    is_read: false,
+    created_at: '2026-07-05T09:15:00Z',
+  },
+  {
+    id: 3,
+    sender: { id: 8, name: 'Emma Wilson', role: 'teacher' },
+    receiver: { id: 1, name: 'Admin', role: 'admin' },
+    type: 'approval',
+    message: 'Substitution request for Class 10-C - Mathematics period on Friday.',
+    reference_type: 'substitution',
+    reference_id: 32,
+    is_read: true,
+    created_at: '2026-07-04T16:45:00Z',
+  },
+  {
+    id: 4,
+    sender: null,
+    receiver: { id: 1, name: 'Admin', role: 'admin' },
+    type: 'system',
+    message: 'System backup completed successfully. Storage usage: 67%.',
+    reference_type: null,
+    reference_id: null,
+    is_read: true,
+    created_at: '2026-07-04T14:00:00Z',
+  },
+  {
+    id: 5,
+    sender: { id: 12, name: 'Parent Liaison', role: 'parent' },
+    receiver: { id: 1, name: 'Admin', role: 'admin' },
+    type: 'complaint',
+    message: 'Parent of Ryan Anderson has raised a concern about the recent exam schedule.',
+    reference_type: 'complaint',
+    reference_id: 108,
+    is_read: false,
+    created_at: '2026-07-04T11:20:00Z',
+  },
+  {
+    id: 6,
+    sender: { id: 3, name: 'Dr. Sarah Jenkins', role: 'admin' },
+    receiver: { id: 1, name: 'Admin', role: 'admin' },
+    type: 'system',
+    message: 'New user registration request: John Parker (Parent) requires approval.',
+    reference_type: 'user_approval',
+    reference_id: 56,
+    is_read: true,
+    created_at: '2026-07-03T18:30:00Z',
+  },
+  {
+    id: 7,
+    sender: { id: 1, name: 'Admin', role: 'admin' },
+    receiver: { id: 1, name: 'Admin', role: 'admin' },
+    type: 'system',
+    message: 'You have successfully sent a broadcast notification to all teachers.',
+    reference_type: null,
+    reference_id: null,
+    is_read: false,
+    created_at: '2026-07-03T09:00:00Z',
+  },
+];
+
+// ─── Notification Types (for filter) ──────────────────────
+export const NOTIFICATION_TYPES = [
+  { value: 'all', label: 'All' },
+  { value: 'complaint', label: 'Complaints' },
+  { value: 'approval', label: 'Approvals' },
+  { value: 'system', label: 'System' },
+];
+
+// ─── Notification Type Badge Config ──────────────────────
+export const TYPE_BADGE_CONFIG = {
+  complaint: { label: 'Complaint', tone: 'admin' },
+  approval: { label: 'Approval', tone: 'teacher' },
+  system: { label: 'System', tone: 'student' },
+};
+
+// ─── Recipient Options for Send Notification ─────────────
+export const RECIPIENT_OPTIONS = [
+  { value: 'all_teachers', label: 'All Teachers' },
+  { value: 'all_parents', label: 'All Parents' },
+  { value: 'all_students', label: 'All Students' },
+  { value: 'specific_teacher', label: 'Specific Teacher' },
+  { value: 'specific_parent', label: 'Specific Parent' },
+  { value: 'specific_student', label: 'Specific Student' },
+];

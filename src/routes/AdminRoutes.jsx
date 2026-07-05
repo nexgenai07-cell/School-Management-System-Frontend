@@ -11,7 +11,8 @@ import EventManagement from "../modules/admin/pages/EventManagement";
 import FeeManagement from "../modules/admin/pages/FeeManagement";
 import TimetableManagement from "../modules/admin/pages/Timetablemanage";
 import CampaignLogs from "../modules/admin/pages/CampaignLogs";
-
+import NotificationManagement from "../modules/admin/pages/NotificationManagement";
+import Settings from "../modules/admin/pages/Settings"
 const AdminRoutes = (
   <Route
     element={
@@ -60,7 +61,14 @@ const AdminRoutes = (
        path="/admin/campaign-logs"
        element={<CampaignLogs/>}
     />
-  
+    <Route
+       path="/admin/notifications"
+       element={<NotificationManagement/>}
+    />
+    <Route
+       path="/admin/settings"
+       element={<Settings/>}
+    />
   </Route>
   
 );

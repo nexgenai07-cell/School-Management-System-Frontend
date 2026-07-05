@@ -9,7 +9,7 @@ import {
   CircleAlert,
 } from "lucide-react";
 
-const NotificationStats = () => {
+const NotificationStats = ({role}) => {
   const { notifications } = useSelector(
     (state) => state.notifications
   );
@@ -69,7 +69,7 @@ const NotificationStats = () => {
         const Icon = item.icon;
 
         return (
-          <Card
+          <Card tone={role}
             key={item.title}
             className="transition-shadow hover:shadow-md"
           >

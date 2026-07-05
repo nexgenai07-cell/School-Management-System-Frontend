@@ -11,7 +11,7 @@ import { Table } from "../../../components/ui/table";
 import { Badge } from "../../../components/ui/Badge";
 import { Button } from "../../../components/ui/Button";
 import { Select } from "../../../components/ui/Select";
-
+import ResponsiveTable from "../components/ResponsiveTable";
 // Mock data
 import { 
   MOCK_STUDENTS, 
@@ -108,19 +108,19 @@ function EditDrawer({ isOpen, onClose, student, onSave }) {
                 Class & Section
               </label>
               <Select
-  value={formData.class_section_id}
-  onChange={(val) => setFormData({ 
-    ...formData, 
-    class_section_id: Number(val) 
-  })}
-  options={MOCK_CLASS_SECTIONS.map(cs => ({ 
-    value: cs.id, 
-    label: cs.display 
-  }))}
-  tone="admin"
-  size="md"
-  placeholder="Select class..."
-/>
+                value={formData.class_section_id}
+                onChange={(val) => setFormData({ 
+                  ...formData, 
+                  class_section_id: Number(val) 
+                })}
+                options={MOCK_CLASS_SECTIONS.map(cs => ({ 
+                  value: cs.id, 
+                  label: cs.display 
+                }))}
+                tone="admin"
+                size="md"
+                placeholder="Select class..."
+              />
             </div>
 
             {/* Guardian Name - Read Only */}
@@ -287,6 +287,7 @@ export default function UserProfileManagement() {
           </div>
         </div>
       ),
+      mobile: { role: "title" },
     },
     {
       key: "email",
@@ -294,9 +295,10 @@ export default function UserProfileManagement() {
       render: (row) => (
         <div>
           <p className="text-sm text-[var(--color-text-secondary)]">{row.email}</p>
-          <p className="text-xs text-[var(--color-text-muted)]">{row.guardian_phone}</p>
+          <p className="text-xs text-[var(--color-text-muted)] hidden lg:block">{row.guardian_phone} </p>
         </div>
       ),
+      mobile: { role: "detail", label: "Contact" },
     },
     {
       key: "class_display",
@@ -306,6 +308,7 @@ export default function UserProfileManagement() {
           {row.class_display}
         </span>
       ),
+       mobile: { role: "detail", label: "Class" },
     },
     {
       key: "guardian_name",
@@ -315,6 +318,7 @@ export default function UserProfileManagement() {
           {row.guardian_name}
         </span>
       ),
+       mobile: { role: "detail", label: "Guardian" }, 
     },
     {
       key: "scholarship_percentage",
@@ -332,10 +336,11 @@ export default function UserProfileManagement() {
           </span>
         );
       },
+       mobile: { role: "badge" },
     },
     {
       key: "actions",
-      label: "",
+      label: "Actions",
       render: (row) => (
         <div className="flex justify-end gap-2">
           <button
@@ -353,6 +358,7 @@ export default function UserProfileManagement() {
           </button>
         </div>
       ),
+       mobile: { role: "hidden" },
     },
   ];
 
@@ -421,10 +427,28 @@ export default function UserProfileManagement() {
 
       {/* ── Table ── */}
       <div className="bg-white rounded-xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] border border-gray-100 overflow-hidden">
-        <Table
+        <ResponsiveTable
           columns={columns}
           data={paginated}
+          keyField="id"
           emptyMessage="No students found matching your criteria."
+          mobileActions={(row) => (
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                onClick={() => setSelectedStudent(row)}
+                className="text-sm font-medium text-[var(--color-admin-primary)] hover:underline flex items-center gap-1.5 px-3 py-1.5 bg-[var(--color-admin-light)] rounded-lg"
+              >
+                <Edit size={14} />
+                Edit Profile
+              </button>
+              <button
+                className="text-sm font-medium text-[var(--color-text-muted)] hover:text-[var(--color-danger)] flex items-center gap-1.5 px-3 py-1.5 hover:bg-[var(--color-danger-bg)] rounded-lg transition-colors"
+              >
+                <History size={14} />
+                History
+              </button>
+            </div>
+          )}
         />
 
         {/* Pagination */}

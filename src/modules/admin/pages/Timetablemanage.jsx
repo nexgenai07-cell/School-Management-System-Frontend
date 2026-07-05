@@ -258,7 +258,7 @@ export default function TimetableManagement() {
     return !conflictResult.teacher && !conflictResult.room && !conflictResult.class;
   };
 
-  // ── Render Grid ────────────────────────────────────────────────────────────
+  // ─── Responsive Grid Render ─────────────────────────────────────────────
   const renderGrid = () => {
     const grid = {};
     TIME_SLOTS.forEach(time => {
@@ -282,52 +282,64 @@ export default function TimetableManagement() {
     });
 
     return (
-      <div className="overflow-x-auto">
-        <div className="grid grid-cols-[80px_repeat(6,1fr)] min-w-[700px]">
-          {/* Header */}
-          <div className="p-3 bg-[var(--color-surface-dim)] border-b border-gray-200 font-semibold text-xs text-[var(--color-text-muted)] uppercase tracking-wider text-center">
-            Time
-          </div>
-          {DAYS.map(day => (
-            <div key={day} className="p-3 bg-[var(--color-surface-dim)] border-b border-gray-200 font-semibold text-xs text-[var(--color-text-muted)] uppercase tracking-wider text-center">
-              {day}
+      <div className="overflow-x-auto scrollbar-hide">
+        <div className="min-w-[700px] md:min-w-0">
+          {/* ── Header ── */}
+          <div className="grid grid-cols-[60px_repeat(6,1fr)] md:grid-cols-[80px_repeat(6,1fr)] border-b border-gray-200 bg-[var(--color-surface-dim)]/30">
+            <div className="p-2 md:p-3 text-center text-[10px] md:text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
+              Time
             </div>
-          ))}
+            {DAYS.map(day => (
+              <div key={day} className="p-2 md:p-3 text-center text-[10px] md:text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
+                {day}
+              </div>
+            ))}
+          </div>
 
-          {/* Time Slots */}
+          {/* ── Body ── */}
           {TIME_SLOTS.map(time => {
-            // Check if this is a recess period (10:00 AM)
-            const isRecess = time === '10:00';
+            const isRecess = time === '10:00'; // NOTE: Recess logic remains as original
             return (
-              <>
-                <div key={`time-${time}`} className="p-3 border-b border-gray-200 text-xs font-medium text-[var(--color-text-muted)] text-center bg-[var(--color-surface-dim)]/50">
+              <div
+                key={`row-${time}`}
+                className={`grid grid-cols-[60px_repeat(6,1fr)] md:grid-cols-[80px_repeat(6,1fr)] border-b border-gray-100 last:border-0 ${
+                  isRecess ? 'bg-[var(--color-surface-dim)]/20' : ''
+                }`}
+              >
+                {/* Time Label */}
+                <div className="p-2 md:p-3 flex items-center justify-center text-[10px] md:text-xs font-medium text-[var(--color-text-muted)] bg-[var(--color-surface-dim)]/30">
                   {time}
                 </div>
+
                 {DAYS.map(day => {
                   const entry = grid[time]?.[day];
                   const isEmpty = !entry;
-                  
+
                   if (isRecess) {
-                    return (
-                      <div key={`${time}-${day}`} className="p-2 border-b border-gray-200 bg-[var(--color-surface-dim)]/30 flex items-center justify-center">
-                        <span className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Recess</span>
-                      </div>
-                    );
+                    if (day === DAYS[0]) {
+                      return (
+                        <div key={`${time}-${day}`} className="col-span-6 p-1 md:p-2 flex items-center justify-center text-[10px] md:text-xs text-[var(--color-text-muted)] italic gap-1 md:gap-2">
+                          <span className="material-symbols-outlined text-sm md:text-base">restaurant</span>
+                          <span className="font-medium uppercase tracking-wider">Recess</span>
+                        </div>
+                      );
+                    }
+                    return null;
                   }
 
                   return (
                     <div
                       key={`${time}-${day}`}
-                      className={`p-1.5 border-b border-gray-200 min-h-[80px] cursor-pointer transition-colors hover:bg-[var(--color-admin-light)]/30 ${
+                      className={`p-0.5 md:p-1.5 min-h-[55px] md:min-h-[80px] cursor-pointer transition-colors hover:bg-[var(--color-admin-light)]/30 ${
                         isEmpty ? 'bg-white' : ''
                       }`}
                       onClick={() => isEmpty && handleSlotClick(day, time)}
                     >
                       {entry ? (
                         <div
-                          className="h-full rounded-lg p-2 border-l-4 cursor-pointer hover:shadow-md transition-all"
+                          className="h-full rounded-lg p-1.5 md:p-2 border-l-4 cursor-pointer hover:shadow-md transition-all"
                           style={{
-                            borderLeftColor: 
+                            borderLeftColor:
                               entry.subject_id === 1 ? 'var(--color-admin-primary)' :
                               entry.subject_id === 2 ? 'var(--color-teacher-primary)' :
                               entry.subject_id === 3 ? 'var(--color-parent-primary)' :
@@ -340,25 +352,31 @@ export default function TimetableManagement() {
                             handleEdit(entry);
                           }}
                         >
-                          <p className="text-xs font-bold text-[var(--color-text-primary)] truncate">{entry.subject}</p>
-                          <p className="text-[10px] text-[var(--color-text-muted)] truncate">{entry.teacher}</p>
-                          <div className="flex items-center gap-0.5 mt-0.5">
+                          <p className="text-[10px] md:text-xs font-bold text-[var(--color-text-primary)] truncate">
+                            {entry.subject}
+                          </p>
+                          <p className="text-[8px] md:text-[10px] text-[var(--color-text-muted)] truncate hidden sm:block">
+                            {entry.teacher}
+                          </p>
+                          <div className="flex items-center gap-0.5 mt-0.5 hidden md:flex">
                             <Building size={10} className="text-[var(--color-text-muted)]" />
-                            <span className="text-[9px] text-[var(--color-text-muted)] truncate">{entry.room}</span>
+                            <span className="text-[8px] md:text-[9px] text-[var(--color-text-muted)] truncate">
+                              {entry.room}
+                            </span>
                           </div>
                         </div>
                       ) : (
                         <div className="h-full flex items-center justify-center border-2 border-dashed border-gray-200 rounded-lg hover:border-[var(--color-admin-primary)] hover:bg-[var(--color-admin-light)]/20 transition-all">
                           <div className="flex flex-col items-center opacity-30 hover:opacity-70 transition-opacity">
-                            <Plus size={16} className="text-[var(--color-admin-primary)]" />
-                            <span className="text-[8px] font-bold uppercase text-[var(--color-admin-primary)]">Add</span>
+                            <Plus size={14} className="md:size-4 text-[var(--color-admin-primary)]" />
+                            <span className="text-[6px] md:text-[8px] font-bold uppercase text-[var(--color-admin-primary)] hidden sm:block">Add</span>
                           </div>
                         </div>
                       )}
                     </div>
                   );
                 })}
-              </>
+              </div>
             );
           })}
         </div>
@@ -366,7 +384,7 @@ export default function TimetableManagement() {
     );
   };
 
-  // ── Render ──────────────────────────────────────────────────────────────
+  // ─── Render ──────────────────────────────────────────────────────────────
   return (
     <div className="p-4 md:p-6 flex flex-col gap-5 min-h-screen bg-[var(--color-surface-dim)]">
 
@@ -389,8 +407,8 @@ export default function TimetableManagement() {
         </Button>
       </div>
 
-      {/* ── Stats Cards ── */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* ── Responsive Stats Cards ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         <div className="bg-white rounded-xl p-4 shadow-[0_1px_4px_rgba(0,0,0,0.06)] border border-gray-100">
           <div className="flex items-center justify-between mb-2">
             <Calendar size={18} className="text-[var(--color-admin-primary)]" />
@@ -417,20 +435,20 @@ export default function TimetableManagement() {
         </div>
       </div>
 
-      {/* ── Class Selector ── */}
-      <div className="flex flex-wrap items-center gap-4">
-        <div className="flex items-center gap-2">
-          <label className="text-sm font-medium text-[var(--color-text-primary)]">Class:</label>
+      {/* ── Class Selector & Search (stack on mobile) ── */}
+      <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-4">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <label className="text-sm font-medium text-[var(--color-text-primary)] whitespace-nowrap">Class:</label>
           <Select
             value={selectedClass}
             onChange={(val) => setSelectedClass(Number(val))}
             options={MOCK_CLASS_SECTIONS.map(c => ({ value: c.id, label: c.name }))}
             tone="admin"
             size="sm"
-            className="min-w-[180px]"
+            className="min-w-[150px] sm:min-w-[180px] w-full sm:w-auto"
           />
         </div>
-        <div className="flex-1 min-w-[200px]">
+        <div className="flex-1 min-w-[200px] w-full sm:w-auto">
           <div className="relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" />
             <input
@@ -438,18 +456,17 @@ export default function TimetableManagement() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search by subject, teacher, or room..."
-              className="w-full pl-9 pr-4 py-1.5 bg-[var(--color-surface-dim)] border-none rounded-lg text-sm focus:ring-2 focus:ring-[var(--color-admin-primary)]"
+              className="w-full pl-9 pr-4 py-1.5 bg-[var(--color-surface-dim)] border-none rounded-lg text-sm focus:ring-2 focus:ring-[var(--color-admin-primary)] outline-none"
             />
           </div>
         </div>
       </div>
 
-      {/* ── Timetable Grid ── */}
+      {/* ── Timetable Grid (responsive) ── */}
       <div className="bg-white rounded-xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] border border-gray-100 overflow-hidden">
         {renderGrid()}
       </div>
 
-    
       {/* ── Add/Edit Drawer ── */}
       <Drawer
         open={isDrawerOpen}
@@ -640,7 +657,7 @@ export default function TimetableManagement() {
         isOpen={isDeleteDialogOpen}
         onClose={() => setIsDeleteDialogOpen(false)}
         title="Confirm Delete"
-        message={`Are you sure you want to delete this timetable entry?`}
+        message="Are you sure you want to delete this timetable entry?"
         variant="danger"
         confirmText="Delete"
         onConfirm={confirmDelete}

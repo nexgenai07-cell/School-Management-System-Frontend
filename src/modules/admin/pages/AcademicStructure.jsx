@@ -7,13 +7,15 @@ import {
 // Reusable Components
 import { PageHeader } from '../../../components/global/pageheader';
 import { SearchBar } from '../../../components/global/Searchbar';
-import { Table } from '../../../components/ui/table';
 import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
 import { Select } from '../../../components/ui/Select';
 import Drawer from '../../admin/components/Drawer';
 import ConfirmDialog from '../../../components/global/ConfirmDialog/ConfirmDialog';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+
+// ─── NEW Import ──────────────────────────────────────────────
+import ResponsiveTable from "../components/ResponsiveTable"; 
 
 // Mock Data & Helpers
 import {
@@ -54,7 +56,7 @@ const TABS = [
   { id: 'assignments', label: 'Teacher Assignments', icon: Users, color: 'parent' },
 ];
 
-// ─── Stats Donut Chart ──────────────────────────────────────────────────────
+// ─── Stats Donut Chart (unchanged) ──────────────────────────────────────────
 function StatsDonut({ data }) {
   const COLORS = [
     'var(--color-admin-primary)',
@@ -117,7 +119,7 @@ function StatsDonut({ data }) {
   );
 }
 
-// ─── Recent Activity Component ──────────────────────────────────────────────
+// ─── Recent Activity Component (unchanged) ──────────────────────────────────
 function RecentActivity({ activities }) {
   const iconMap = {
     'class_added': { icon: <Grid size={14} />, color: 'text-[var(--color-admin-primary)]', bg: 'bg-[var(--color-admin-light)]' },
@@ -194,7 +196,7 @@ export default function AcademicStructure() {
     subjects: subjects.length,
     rooms: rooms.length,
     assigned: subjects.filter(s => s.assigned_teacher_id !== null).length,
-     unassigned: subjects.filter(s => s.assigned_teacher_id === null).length,
+    unassigned: subjects.filter(s => s.assigned_teacher_id === null).length,
   }), [classSections, subjects, rooms]);
 
   const statsData = [
@@ -202,7 +204,7 @@ export default function AcademicStructure() {
     { label: 'Subjects', value: stats.subjects },
     { label: 'Rooms', value: stats.rooms },
     { label: 'Assigned', value: stats.assigned },
-     { label: 'Teachers Unassigned', value: stats.unassigned },
+    { label: 'Teachers Unassigned', value: stats.unassigned },
   ];
 
   // ── Filtered Data ──────────────────────────────────────────────────────────
@@ -312,7 +314,7 @@ export default function AcademicStructure() {
     }
   };
 
-  // ── Render Drawer Content ────────────────────────────────────────────────
+  // ── Render Drawer Content (unchanged) ─────────────────────────────────────
   const renderDrawerContent = () => {
     switch (activeTab) {
       case 'classes':
@@ -483,96 +485,176 @@ export default function AcademicStructure() {
     }
   };
 
-  // ── Table Columns ──────────────────────────────────────────────────────────
+  // ─── Table Columns with Mobile Metadata ──────────────────────────────────
   const getColumns = () => {
     switch (activeTab) {
       case 'classes':
         return [
-          { key: 'name', label: 'Class & Section', render: (row) => (
-            <span className="font-medium text-[var(--color-text-primary)]">{row.class_name}-{row.section}</span>
-          )},
-          { key: 'default_room', label: 'Default Room', render: (row) => (
-            <Badge tone="admin" className="text-[10px]">{getRoomName(row.default_room_id)}</Badge>
-          )},
-          { key: 'created_at', label: 'Created', render: (row) => formatDate(row.created_at) },
-          { key: 'actions', label: '', render: (row) => (
-            <div className="flex justify-end gap-1">
-              <button onClick={() => handleEdit(row)} className="p-1.5 rounded-lg text-gray-400 hover:text-[var(--color-admin-primary)] hover:bg-[var(--color-admin-light)] transition-colors" title="Edit">
-                <Edit size={15} />
-              </button>
-              <button onClick={() => handleDelete(row)} className="p-1.5 rounded-lg text-gray-400 hover:text-[var(--color-danger)] hover:bg-[var(--color-danger-bg)] transition-colors" title="Delete">
-                <Trash2 size={15} />
-              </button>
-            </div>
-          )},
+          {
+            key: 'name',
+            label: 'Class & Section',
+            render: (row) => (
+              <span className="font-medium text-[var(--color-text-primary)]">{row.class_name}-{row.section}</span>
+            ),
+            mobile: { role: 'title' },
+          },
+          {
+            key: 'default_room',
+            label: 'Default Room',
+            render: (row) => (
+              <Badge tone="admin" className="text-[10px]">{getRoomName(row.default_room_id)}</Badge>
+            ),
+            mobile: { role: 'badge' },
+          },
+          {
+            key: 'created_at',
+            label: 'Created',
+            render: (row) => formatDate(row.created_at),
+            mobile: { role: 'detail', label: 'Created' },
+          },
+          {
+            key: 'actions',
+            label: '',
+            render: (row) => (
+              <div className="flex justify-end gap-1">
+                <button onClick={() => handleEdit(row)} className="p-1.5 rounded-lg text-gray-400 hover:text-[var(--color-admin-primary)] hover:bg-[var(--color-admin-light)] transition-colors" title="Edit">
+                  <Edit size={15} />
+                </button>
+                <button onClick={() => handleDelete(row)} className="p-1.5 rounded-lg text-gray-400 hover:text-[var(--color-danger)] hover:bg-[var(--color-danger-bg)] transition-colors" title="Delete">
+                  <Trash2 size={15} />
+                </button>
+              </div>
+            ),
+            mobile: { role: 'hidden' },
+          },
         ];
       case 'subjects':
         return [
-          { key: 'subject_name', label: 'Subject Name', render: (row) => (
-            <span className="font-medium text-[var(--color-text-primary)]">{row.subject_name}</span>
-          )},
-          { key: 'class', label: 'Class & Section', render: (row) => getClassDisplay(row.class_section_id) },
-          { key: 'teacher', label: 'Assigned Teacher', render: (row) => row.assigned_teacher_id ? (
-            <Badge tone="teacher" className="text-[10px]">{getTeacherName(row.assigned_teacher_id)}</Badge>
-          ) : (
-            <Badge color="neutral" className="text-[10px]">Unassigned</Badge>
-          )},
-          { key: 'actions', label: '', render: (row) => (
-            <div className="flex justify-end gap-1">
-              <button onClick={() => handleEdit(row)} className="p-1.5 rounded-lg text-gray-400 hover:text-[var(--color-admin-primary)] hover:bg-[var(--color-admin-light)] transition-colors" title="Edit">
-                <Edit size={15} />
-              </button>
-              <button onClick={() => handleDelete(row)} className="p-1.5 rounded-lg text-gray-400 hover:text-[var(--color-danger)] hover:bg-[var(--color-danger-bg)] transition-colors" title="Delete">
-                <Trash2 size={15} />
-              </button>
-            </div>
-          )},
+          {
+            key: 'subject_name',
+            label: 'Subject Name',
+            render: (row) => (
+              <span className="font-medium text-[var(--color-text-primary)]">{row.subject_name}</span>
+            ),
+            mobile: { role: 'title' },
+          },
+          {
+            key: 'class',
+            label: 'Class & Section',
+            render: (row) => getClassDisplay(row.class_section_id),
+            mobile: { role: 'detail', label: 'Class' },
+          },
+          {
+            key: 'teacher',
+            label: 'Assigned Teacher',
+            render: (row) => row.assigned_teacher_id ? (
+              <Badge tone="teacher" className="text-[10px]">{getTeacherName(row.assigned_teacher_id)}</Badge>
+            ) : (
+              <Badge color="neutral" className="text-[10px]">Unassigned</Badge>
+            ),
+            mobile: { role: 'badge' },
+          },
+          {
+            key: 'actions',
+            label: '',
+            render: (row) => (
+              <div className="flex justify-end gap-1">
+                <button onClick={() => handleEdit(row)} className="p-1.5 rounded-lg text-gray-400 hover:text-[var(--color-admin-primary)] hover:bg-[var(--color-admin-light)] transition-colors" title="Edit">
+                  <Edit size={15} />
+                </button>
+                <button onClick={() => handleDelete(row)} className="p-1.5 rounded-lg text-gray-400 hover:text-[var(--color-danger)] hover:bg-[var(--color-danger-bg)] transition-colors" title="Delete">
+                  <Trash2 size={15} />
+                </button>
+              </div>
+            ),
+            mobile: { role: 'hidden' },
+          },
         ];
       case 'rooms':
         return [
-          { key: 'name', label: 'Room Name', render: (row) => (
-            <span className="font-medium text-[var(--color-text-primary)]">{row.name}</span>
-          )},
-          { key: 'location', label: 'Location', render: (row) => (
-            <span className="text-sm text-[var(--color-text-secondary)]">{row.location}</span>
-          )},
-          { key: 'capacity', label: 'Capacity', render: (row) => (
-            <Badge tone="admin" className="text-[10px]">{row.capacity} students</Badge>
-          )},
-          { key: 'actions', label: '', render: (row) => (
-            <div className="flex justify-end gap-1">
-              <button onClick={() => handleEdit(row)} className="p-1.5 rounded-lg text-gray-400 hover:text-[var(--color-admin-primary)] hover:bg-[var(--color-admin-light)] transition-colors" title="Edit">
-                <Edit size={15} />
-              </button>
-              <button onClick={() => handleDelete(row)} className="p-1.5 rounded-lg text-gray-400 hover:text-[var(--color-danger)] hover:bg-[var(--color-danger-bg)] transition-colors" title="Delete">
-                <Trash2 size={15} />
-              </button>
-            </div>
-          )},
+          {
+            key: 'name',
+            label: 'Room Name',
+            render: (row) => (
+              <span className="font-medium text-[var(--color-text-primary)]">{row.name}</span>
+            ),
+            mobile: { role: 'title' },
+          },
+          {
+            key: 'location',
+            label: 'Location',
+            render: (row) => (
+              <span className="text-sm text-[var(--color-text-secondary)]">{row.location}</span>
+            ),
+            mobile: { role: 'detail', label: 'Location' },
+          },
+          {
+            key: 'capacity',
+            label: 'Capacity',
+            render: (row) => (
+              <Badge tone="admin" className="text-[10px]">{row.capacity} students</Badge>
+            ),
+            mobile: { role: 'badge' },
+          },
+          {
+            key: 'actions',
+            label: '',
+            render: (row) => (
+              <div className="flex justify-end gap-1">
+                <button onClick={() => handleEdit(row)} className="p-1.5 rounded-lg text-gray-400 hover:text-[var(--color-admin-primary)] hover:bg-[var(--color-admin-light)] transition-colors" title="Edit">
+                  <Edit size={15} />
+                </button>
+                <button onClick={() => handleDelete(row)} className="p-1.5 rounded-lg text-gray-400 hover:text-[var(--color-danger)] hover:bg-[var(--color-danger-bg)] transition-colors" title="Delete">
+                  <Trash2 size={15} />
+                </button>
+              </div>
+            ),
+            mobile: { role: 'hidden' },
+          },
         ];
       case 'assignments':
         return [
-          { key: 'subject', label: 'Subject', render: (row) => (
-            <span className="font-medium text-[var(--color-text-primary)]">{row.subject_name}</span>
-          )},
-          { key: 'class', label: 'Class & Section', render: (row) => getClassDisplay(row.class_section_id) },
-          { key: 'teacher', label: 'Assigned Teacher', render: (row) => row.assigned_teacher_id ? (
-            <Badge tone="teacher" className="text-[10px]">{getTeacherName(row.assigned_teacher_id)}</Badge>
-          ) : (
-            <Badge color="neutral" className="text-[10px]">Unassigned</Badge>
-          )},
-          { key: 'actions', label: '', render: (row) => (
-            <div className="flex justify-end gap-1">
-              <button onClick={() => handleEdit(row)} className="p-1.5 rounded-lg text-gray-400 hover:text-[var(--color-teacher-primary)] hover:bg-[var(--color-teacher-light)] transition-colors" title="Assign">
-                <UserPlus size={15} />
-              </button>
-              {row.assigned_teacher_id && (
-                <button onClick={() => handleDelete(row)} className="p-1.5 rounded-lg text-gray-400 hover:text-[var(--color-danger)] hover:bg-[var(--color-danger-bg)] transition-colors" title="Unassign">
-                  <X size={15} />
+          {
+            key: 'subject',
+            label: 'Subject',
+            render: (row) => (
+              <span className="font-medium text-[var(--color-text-primary)]">{row.subject_name}</span>
+            ),
+            mobile: { role: 'title' },
+          },
+          {
+            key: 'class',
+            label: 'Class & Section',
+            render: (row) => getClassDisplay(row.class_section_id),
+            mobile: { role: 'detail', label: 'Class' },
+          },
+          {
+            key: 'teacher',
+            label: 'Assigned Teacher',
+            render: (row) => row.assigned_teacher_id ? (
+              <Badge tone="teacher" className="text-[10px]">{getTeacherName(row.assigned_teacher_id)}</Badge>
+            ) : (
+              <Badge color="neutral" className="text-[10px]">Unassigned</Badge>
+            ),
+            mobile: { role: 'badge' },
+          },
+          {
+            key: 'actions',
+            label: '',
+            render: (row) => (
+              <div className="flex justify-end gap-1">
+                <button onClick={() => handleEdit(row)} className="p-1.5 rounded-lg text-gray-400 hover:text-[var(--color-teacher-primary)] hover:bg-[var(--color-teacher-light)] transition-colors" title="Assign">
+                  <UserPlus size={15} />
                 </button>
-              )}
-            </div>
-          )},
+                {row.assigned_teacher_id && (
+                  <button onClick={() => handleDelete(row)} className="p-1.5 rounded-lg text-gray-400 hover:text-[var(--color-danger)] hover:bg-[var(--color-danger-bg)] transition-colors" title="Unassign">
+                    <X size={15} />
+                  </button>
+                )}
+              </div>
+            ),
+            mobile: { role: 'hidden' },
+          },
         ];
       default: return [];
     }
@@ -593,12 +675,9 @@ export default function AcademicStructure() {
       {/* ── Stats Card with Donut + Recent Activity ── */}
       <div className="bg-white rounded-xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] border border-gray-100 overflow-hidden">
         <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Left: Donut + Stats */}
           <div className="flex items-center justify-center">
             <StatsDonut data={statsData} />
           </div>
-
-          {/* Right: Recent Activity */}
           <div className="border-t lg:border-t-0 lg:border-l border-gray-100 pt-4 lg:pt-0 lg:pl-6">
             <RecentActivity activities={activities} />
           </div>
@@ -642,7 +721,7 @@ export default function AcademicStructure() {
 
         {/* Controls */}
         <div className="p-4 flex flex-wrap items-center justify-between gap-3 border-b border-gray-100">
-          <div className="flex items-center gap-3 flex-1 min-w-[250px]">
+          <div className="flex items-center gap-3 flex-1 min-w-[100px]">
             <div className="relative flex-1 max-w-xs">
               <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" />
               <input
@@ -650,12 +729,9 @@ export default function AcademicStructure() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search..."
-                className="w-full pl-9 pr-4 py-1.5 bg-[var(--color-surface-dim)] border-none rounded-lg text-sm focus:ring-2 focus:ring-[var(--color-admin-primary)]"
+                className="w-full pl-9 pr-4 py-1.5 bg-[var(--color-surface-dim)] border-none shadow-none outline-none rounded-lg text-sm focus:ring-2 focus:ring-[var(--color-admin-primary)]"
               />
             </div>
-            <Button variant="outline" tone="admin" size="sm" leftIcon={<Filter size={14} />}>
-              Filter
-            </Button>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" tone="admin" size="sm" leftIcon={<Download size={14} />}>
@@ -667,38 +743,58 @@ export default function AcademicStructure() {
           </div>
         </div>
 
-        {/* Table with hover */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead className="bg-[var(--color-surface-dim)]">
-              <tr>
-                {getColumns().map((col, idx) => (
-                  <th key={idx} className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
-                    {col.label}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {paginatedData.length === 0 ? (
-                <tr>
-                  <td colSpan={getColumns().length} className="px-4 py-8 text-center text-[var(--color-text-muted)] text-sm">
-                    No {activeTab} found
-                  </td>
-                </tr>
-              ) : (
-                paginatedData.map((row, idx) => (
-                  <tr key={idx} className="hover:bg-[var(--color-admin-light)]/40 transition-colors">
-                    {getColumns().map((col, colIdx) => (
-                      <td key={colIdx} className="px-4 py-3 text-sm text-[var(--color-text-secondary)]">
-                        {col.render ? col.render(row) : row[col.key]}
-                      </td>
-                    ))}
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+        {/* ── Responsive Table ── */}
+        <div className="px-2 pb-2">
+          <ResponsiveTable
+            columns={getColumns()}
+            data={paginatedData}
+            keyField="id"
+            emptyMessage={`No ${activeTab} found`}
+            mobileActions={(row) => {
+              // If assignments tab, show Assign / Unassign
+              if (activeTab === 'assignments') {
+                return (
+                  <div className="flex items-center justify-end gap-2 pt-2">
+                    <button
+                      onClick={() => handleEdit(row)}
+                      className="px-3 py-1.5 text-sm font-medium text-[var(--color-teacher-primary)] bg-[var(--color-teacher-light)] rounded-lg hover:bg-[var(--color-teacher-light)]/70 transition-colors flex items-center gap-1.5"
+                    >
+                      <UserPlus size={14} />
+                      Assign
+                    </button>
+                    {row.assigned_teacher_id && (
+                      <button
+                        onClick={() => handleDelete(row)}
+                        className="px-3 py-1.5 text-sm font-medium text-[var(--color-danger)] bg-[var(--color-danger-bg)] rounded-lg hover:bg-[var(--color-danger-bg)]/70 transition-colors flex items-center gap-1.5"
+                      >
+                        <X size={14} />
+                        Unassign
+                      </button>
+                    )}
+                  </div>
+                );
+              }
+              // For other tabs: Edit + Delete
+              return (
+                <div className="flex items-center justify-end gap-2 pt-2">
+                  <button
+                    onClick={() => handleEdit(row)}
+                    className="px-3 py-1.5 text-sm font-medium text-[var(--color-admin-primary)] bg-[var(--color-admin-light)] rounded-lg hover:bg-[var(--color-admin-light)]/70 transition-colors flex items-center gap-1.5"
+                  >
+                    <Edit size={14} />
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(row)}
+                    className="px-3 py-1.5 text-sm font-medium text-[var(--color-danger)] bg-[var(--color-danger-bg)] rounded-lg hover:bg-[var(--color-danger-bg)]/70 transition-colors flex items-center gap-1.5"
+                  >
+                    <Trash2 size={14} />
+                    Delete
+                  </button>
+                </div>
+              );
+            }}
+          />
         </div>
 
         {/* Pagination */}

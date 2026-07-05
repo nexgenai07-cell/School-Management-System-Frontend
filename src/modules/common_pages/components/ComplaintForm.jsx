@@ -152,7 +152,7 @@ const ComplaintForm = ( { role } ) => {
   };
 
   return (
-    <Card hover={false}>
+    <Card hover={false} tone={role}>
       <div className="mb-6">
         <h2 className="text-xl font-semibold text-text-primary">
           Submit Complaint
