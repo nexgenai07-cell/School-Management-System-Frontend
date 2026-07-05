@@ -104,12 +104,12 @@ export const adminRoutes = [
   // Shared Features
   {
     label: "Notifications",
-    path: "/notifications",
+    path: "admin/notifications",
     icon: Bell,
   },
   {
     label: "Settings",
-    path: "/settings",
+    path: "admin/settings",
     icon: Settings,
   },
 ];
@@ -143,37 +143,30 @@ export const teacherRoutes = [
     icon: NotebookPen,
   },
   {
-    label: "Submissions",
-    path: "/teacher/submissions",
-    icon: FileText,
-  },
-  {
     label: "Timetable",
     path: "/teacher/timetable",
     icon: Clock3,
-  },
-
-  // Student Management
-  {
-    label: "Behavior Logs",
-    path: "/teacher/behavior-logs",
-    icon: ShieldAlert,
   },
   {
     label: "Complaints",
     path: "/teacher/complaints",
     icon: Wrench,
   },
+  {
+    label: "Events",
+    path: "/teacher/events",
+    icon: Calendar,
+  },
 
   // Shared Features
   {
     label: "Notifications",
-    path: "/notifications",
+    path: "teacher/notifications",
     icon: Bell,
   },
   {
     label: "Settings",
-    path: "/settings",
+    path: "teacher/settings",
     icon: Settings,
   },
 ];

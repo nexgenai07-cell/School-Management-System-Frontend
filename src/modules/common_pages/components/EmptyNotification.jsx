@@ -3,9 +3,9 @@ import { BellOff } from "lucide-react";
 import Card from "../../../components/ui/Card/Card";
 import Button from "../../../components/ui/Button/Button";
 
-const EmptyNotification = () => {
+const EmptyNotification = ({role}) => {
   return (
-    <Card className="flex flex-col items-center justify-center py-20">
+    <Card className="flex flex-col items-center justify-center py-20" tone={role}>
       {/* Icon */}
       <div className="flex h-20 w-20 items-center justify-center rounded-full bg-surface-muted">
         <BellOff

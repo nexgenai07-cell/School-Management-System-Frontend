@@ -31,7 +31,7 @@ const NotificationFilters = ({
   };
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl border border-border bg-surface p-4 shadow-sm md:flex-row md:items-center md:justify-between">
+    <div className="flex flex-col gap-4 rounded-xl bg-surface p-4 shadow-sm md:flex-row md:items-center md:justify-between">
       {/* Filter Buttons */}
       <div className="flex flex-wrap gap-3">
         {filters.map((item) => (

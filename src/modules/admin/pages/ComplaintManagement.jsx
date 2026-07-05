@@ -22,6 +22,8 @@ import { Badge } from "../../../components/ui/Badge";
 import { StatusBadge } from "../../../components/composite/Statusbadge";
 import {Select} from "../../../components/ui/Select";
 import Drawer from "../../admin/components/Drawer";
+import { Button } from '../../../components/ui/Button';
+import ResponsiveTable from "../components/ResponsiveTable"; 
 
 // Mock data
 import {
@@ -192,10 +194,11 @@ export default function ComplaintManagement() {
   };
 
   // ─── Table Columns ────────────────────────────────────────────────────────
-  const columns = [
+    const columns = [
     {
       key: "reporter",
       label: "User / ID",
+      mobile: { role: "title" },
       render: (row) => (
         <div className="flex items-center gap-3">
           <div
@@ -223,11 +226,13 @@ export default function ComplaintManagement() {
     {
       key: "complaint_type",
       label: "Category",
+      mobile: { role: "badge" }, 
       render: (row) => <Badge tone="neutral">{row.complaint_type}</Badge>,
     },
     {
       key: "description",
       label: "Complaint Description",
+      mobile: { role: "detail", label: "Description" },
       render: (row) => (
         <p className="text-sm text-[var(--color-text-secondary)] max-w-[200px] truncate">
           {row.description}
@@ -237,14 +242,16 @@ export default function ComplaintManagement() {
     {
       key: "status",
       label: "Status",
+      mobile: { role: "detail", label: "Status" },
       render: (row) => {
         const displayStatus = statusDisplayMap[row.status] || row.status;
-    return <StatusBadge status={displayStatus} />;
+        return <StatusBadge status={displayStatus} />;
       },
     },
     {
       key: "created_at",
       label: "Date",
+      mobile: { role: "detail", label: "Date" },
       render: (row) => (
         <span className="text-sm text-[var(--color-text-secondary)]">
           {formatDate(row.created_at)}
@@ -253,7 +260,8 @@ export default function ComplaintManagement() {
     },
     {
       key: "actions",
-      label: "",
+      label: "Actions",               
+      mobile: { role: "hidden" }, 
       render: (row) => (
         <button
           onClick={() => setSelectedComplaint(row)}
@@ -538,10 +546,22 @@ export default function ComplaintManagement() {
         ref={tableRef}
         className="bg-white rounded-xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] border border-gray-100 overflow-hidden"
       >
-        <Table
+        <ResponsiveTable
           columns={columns}
           data={paginated}
           emptyMessage="No complaints found matching your criteria."
+          mobileActions={(row) => (
+          <Button
+          variant="secondary"      
+          tone="admin"            
+          size="sm"                
+          fullWidth                
+          leftIcon={<Eye size={16} />}
+          onClick={() => setSelectedComplaint(row)}
+        >
+          View Details
+        </Button>
+           )}
         />
 
         {/* Pagination */}

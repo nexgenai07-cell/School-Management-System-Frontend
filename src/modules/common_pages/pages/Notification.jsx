@@ -10,7 +10,7 @@ const Notification = ({ role }) => {
 
     <div className="space-y-8">
       {/* Header */}
-      <div className="rounded-2xl border border-border bg-surface p-8 shadow-sm">
+      <div className="rounded-2xl bg-surface p-8 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-text-primary">
@@ -25,7 +25,7 @@ const Notification = ({ role }) => {
       </div>
 
       {/* Statistics */}
-      <NotificationStats />
+      <NotificationStats role={role}/>
 
       {/* Filters */}
     <NotificationFilters

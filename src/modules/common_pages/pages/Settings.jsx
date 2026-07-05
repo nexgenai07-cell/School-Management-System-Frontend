@@ -21,7 +21,7 @@ const Settings = ({ role }) => {
           Header
       ========================================== */}
 
-      <SettingsHeader />
+      <SettingsHeader role={role}/>
 
       {/* ==========================================
           Profile Information

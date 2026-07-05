@@ -22,11 +22,11 @@ const Complaint = ( {role }) => {
     <div className="mx-auto max-w-full space-y-6">
       {/* Header */}
 
-      <ComplaintHeader />
+      <ComplaintHeader role={role}/>
 
       {/* Stats */}
 
-      <ComplaintStats />
+      <ComplaintStats role={role}/>
 
       {/* Main Content */}
 

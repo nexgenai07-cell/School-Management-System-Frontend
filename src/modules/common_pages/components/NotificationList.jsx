@@ -73,7 +73,7 @@ const NotificationList = ({
 
   if (loading) {
     return (
-      <Card className="py-20 text-center">
+      <Card className="py-20 text-center" tone={role}>
         Loading notifications...
       </Card>
     );
@@ -81,19 +81,19 @@ const NotificationList = ({
 
   if (error) {
     return (
-      <Card className="py-20 text-center text-danger">
+      <Card className="py-20 text-center text-danger" tone={role}>
         {error}
       </Card>
     );
   }
 
   if (!filteredNotifications.length) {
-    return <EmptyNotification />;
+    return <EmptyNotification role={role}/>;
   }
 
   return (
     <>
-      <Card className="space-y-4">
+      <Card className="space-y-4" tone={role}>
         {filteredNotifications.map(
           (notification) => (
             <NotificationCard

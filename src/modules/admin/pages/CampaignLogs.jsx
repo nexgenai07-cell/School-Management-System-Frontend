@@ -283,7 +283,7 @@ export default function CampaignLogs() {
             </div>
 
             {/* ── Stats Cards ── */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <StatCard
                     label="Total Posts"
                     value={stats.total}

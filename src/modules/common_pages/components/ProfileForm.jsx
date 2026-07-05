@@ -153,16 +153,18 @@ const ProfileForm = ({ role }) => {
       })
     );
   };
+ const primaryColor = `var(--color-${role?.toLowerCase() || 'brand'}-primary)`;
+  const lightColor = `var(--color-${role?.toLowerCase() || 'brand'}-light)`;
 
   return (
-    <Card hover={false}>
+    <Card hover={false} tone={role}>
       {/* Header */}
 
       <div className="mb-8 flex flex-col items-center">
-        <div className="flex h-24 w-24 items-center justify-center rounded-full bg-parent-primary/10">
+        <div className="flex h-24 w-24 items-center justify-center rounded-full" style={{ background: lightColor }}>
           <User
             size={42}
-            className="text-parent-primary"
+            style={{ color: primaryColor }}
           />
         </div>
 

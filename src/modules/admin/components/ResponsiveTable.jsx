@@ -84,6 +84,7 @@ export function ResponsiveTable({
                 {columns.map((col) => (
                   <td key={col.key} className="px-3 py-2 align-middle text-sm">
                     {col.render ? col.render(row) : row[col.key]}
+                    
                   </td>
                 ))}
               </tr>

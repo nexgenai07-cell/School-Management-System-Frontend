@@ -20,10 +20,18 @@ import { TrendingUp, TrendingDown } from 'lucide-react';
  *  (footerIcon/footerText/footerColor are all optional — leave them out
  *  and the card just shows label + value with no footer row)
  * 
- * * Example:
+ * Example:
  *   <StatCard label="Classes Today" value="5" tone="teacher"
  *     footerColor="success" footerText="All scheduled" />
  */
+
+const BG_TONE_CLASSES = {
+  brand: 'bg-[var(--color-brand-primary)]/10',
+  admin: 'bg-[var(--color-admin-primary)]/10',
+  teacher: 'bg-[var(--color-teacher-primary)]/10',
+  student: 'bg-[var(--color-student-primary)]/10',
+  parent: 'bg-[var(--color-parent-primary)]/10',
+};
 
 const VALUE_TONE_CLASSES = {
   brand: 'text-brand-primary',
@@ -48,9 +56,6 @@ const FOOTER_COLOR_CLASSES = {
   neutral: 'text-text-secondary',
 };
 
-// If footerIcon isn't passed in, pick one automatically based on
-// footerColor — success gets an up arrow, warning/danger get a down
-// arrow, neutral gets nothing. Pass footerIcon yourself to override.
 const DEFAULT_FOOTER_ICONS = {
   success: <TrendingUp size={14} />,
   warning: <TrendingDown size={14} />,
@@ -66,20 +71,26 @@ function StatCard({
   footerText,
   footerColor = 'neutral',
   className = '',
+  glow = false,
 }) {
   const resolvedIcon = footerIcon !== undefined ? footerIcon : DEFAULT_FOOTER_ICONS[footerColor];
   const hasFooter = Boolean(resolvedIcon || footerText);
 
+  // Resolve background class based on tone
+  const bgClass = BG_TONE_CLASSES[tone] || 'bg-surface';
+
   return (
     <div
-      className={`relative overflow-hidden rounded-card bg-surface p-5 shadow-soft ${className}`}
+      className={`relative overflow-hidden rounded-card ${bgClass} p-5 shadow-soft transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 ${className} ${
+        glow ? 'before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-[var(--color-teacher-primary)] before:to-transparent before:opacity-20 before:blur-2xl before:-z-10' : ''
+      }`}
     >
       <p className="text-xs font-medium uppercase tracking-wide text-text-secondary">
         {label}
       </p>
 
       <p
-        className={`mt-2 text-2xl font-bold ${VALUE_TONE_CLASSES[tone] || VALUE_TONE_CLASSES.brand}`}
+        className={`mt-2 text-3xl font-bold ${VALUE_TONE_CLASSES[tone] || VALUE_TONE_CLASSES.brand}`}
       >
         {value}
       </p>
@@ -93,7 +104,7 @@ function StatCard({
         </div>
       )}
 
-      {/* subtle glow line at the bottom, colored by tone */}
+      {/* Glow line at bottom */}
       <div
         className={`absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent ${GLOW_TONE_CLASSES[tone] || GLOW_TONE_CLASSES.brand} to-transparent`}
       />

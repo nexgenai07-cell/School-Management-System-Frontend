@@ -15,6 +15,7 @@ import { Select } from '../../../components/ui/Select';
 import { StatCard } from '../../../components/composite/Statcard';
 import Drawer from '../../admin/components/Drawer';
 import ConfirmDialog from '../../../components/global/ConfirmDialog/ConfirmDialog';
+import ResponsiveTable from '../components/ResponsiveTable';
 
 // Mock Data
 import {
@@ -228,96 +229,103 @@ export default function EventManagement() {
 
   // ── Table Columns ──────────────────────────────────────────────────────────
   const columns = [
-    {
-      key: 'event',
-      label: 'Event Details',
-      render: (row) => (
-        <div>
-          <p className="text-sm font-medium text-[var(--color-text-primary)]">{row.event_name}</p>
-          <p className="text-xs text-[var(--color-text-muted)]">{row.venue}</p>
-        </div>
-      ),
+  {
+    key: 'event',
+    label: 'Event Details',
+    mobile: { role: 'title' },
+    render: (row) => (
+      <div>
+        <p className="text-sm font-medium text-[var(--color-text-primary)]">{row.event_name}</p>
+        <p className="text-xs text-[var(--color-text-muted)]">{row.venue}</p>
+      </div>
+    ),
+  },
+  {
+    key: 'venue',
+    label: 'Venue',
+    mobile: { role: 'detail', label: 'Venue' },
+    render: (row) => (
+      <div className="flex items-center gap-2">
+        <MapPin size={14} className="text-[var(--color-text-muted)]" />
+        <span className="text-sm text-[var(--color-text-secondary)]">{row.venue}</span>
+      </div>
+    ),
+  },
+  {
+    key: 'date',
+    label: 'Date & Time',
+    mobile: { role: 'detail', label: 'Date & Time' },
+    render: (row) => (
+      <div className="flex flex-col">
+        <span className="text-sm font-medium text-[var(--color-text-primary)]">{formatDate(row.event_date)}</span>
+        <span className="text-xs text-[var(--color-text-muted)]">
+          {new Date(row.event_date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+        </span>
+      </div>
+    ),
+  },
+  {
+    key: 'status',
+    label: 'Status',
+    mobile: { role: 'badge' },
+    render: (row) => {
+      const status = getStatus(row.event_date);
+      const colorMap = {
+        Completed: { bg: 'bg-gray-100 text-gray-500' },
+        Upcoming: { bg: 'bg-[var(--color-warning-bg)] text-[var(--color-warning)]' },
+        Scheduled: { bg: 'bg-[var(--color-success-bg)] text-[var(--color-success)]' },
+      };
+      const color = colorMap[status.label] || colorMap.Scheduled;
+      return (
+        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${color.bg} ${color.text}`}>
+          {status.label}
+        </span>
+      );
     },
-    {
-      key: 'venue',
-      label: 'Venue',
-      render: (row) => (
-        <div className="flex items-center gap-2">
-          <MapPin size={14} className="text-[var(--color-text-muted)]" />
-          <span className="text-sm text-[var(--color-text-secondary)]">{row.venue}</span>
-        </div>
-      ),
+  },
+  {
+    key: 'participants',
+    label: 'Participants',
+    mobile: { role: 'detail', label: 'Participants' },
+    render: (row) => {
+      const count = participants.filter(p => p.event_id === row.id).length;
+      return (
+        <span className="text-sm font-medium text-[var(--color-text-primary)]">{count}</span>
+      );
     },
-    {
-      key: 'date',
-      label: 'Date & Time',
-      render: (row) => (
-        <div className="flex flex-col">
-          <span className="text-sm font-medium text-[var(--color-text-primary)]">{formatDate(row.event_date)}</span>
-          <span className="text-xs text-[var(--color-text-muted)]">
-            {new Date(row.event_date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
-          </span>
-        </div>
-      ),
-    },
-    {
-      key: 'status',
-      label: 'Status',
-      render: (row) => {
-        const status = getStatus(row.event_date);
-        const colorMap = {
-          Completed: { bg: 'bg-gray-100 text-gray-500' },
-          Upcoming: { bg: 'bg-[var(--color-warning-bg)] text-[var(--color-warning)]' },
-          Scheduled: { bg: 'bg-[var(--color-success-bg)] text-[var(--color-success)]' },
-        };
-        const color = colorMap[status.label] || colorMap.Scheduled;
-        return (
-          <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${color.bg} ${color.text}`}>
-            {status.label}
-          </span>
-        );
-      },
-    },
-    {
-      key: 'participants',
-      label: 'Participants',
-      render: (row) => {
-        const count = participants.filter(p => p.event_id === row.id).length;
-        return (
-          <span className="text-sm font-medium text-[var(--color-text-primary)]">{count}</span>
-        );
-      },
-    },
-    {
-      key: 'actions',
-      label: 'Actions',
-      render: (row) => (
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => handleEditEvent(row)}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-[var(--color-admin-primary)] hover:bg-[var(--color-admin-light)] transition-colors"
-            title="Edit Event"
-          >
-            <Edit size={15} />
-          </button>
-          <button
-            onClick={() => handleDeleteEvent(row)}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-[var(--color-danger)] hover:bg-[var(--color-danger-bg)] transition-colors"
-            title="Delete Event"
-          >
-            <Trash2 size={15} />
-          </button>
-          <button
-            onClick={() => handleOpenParticipants(row)}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-[var(--color-teacher-primary)] hover:bg-[var(--color-teacher-light)] transition-colors"
-            title="Manage Participants"
-          >
-            <Users size={15} />
-          </button>
-        </div>
-      ),
-    },
-  ];
+  },
+  {
+    key: 'actions',
+    label: 'Actions',
+    mobile: { role: 'hidden' }, 
+    render: (row) => (
+      <div className="flex items-center gap-1">
+        {/* desktop icons remain unchanged */}
+        <button
+          onClick={() => handleEditEvent(row)}
+          className="p-1.5 rounded-lg text-gray-400 hover:text-[var(--color-admin-primary)] hover:bg-[var(--color-admin-light)] transition-colors"
+          title="Edit Event"
+        >
+          <Edit size={15} />
+        </button>
+        <button
+          onClick={() => handleDeleteEvent(row)}
+          className="p-1.5 rounded-lg text-gray-400 hover:text-[var(--color-danger)] hover:bg-[var(--color-danger-bg)] transition-colors"
+          title="Delete Event"
+        >
+          <Trash2 size={15} />
+        </button>
+        <button
+          onClick={() => handleOpenParticipants(row)}
+          className="p-1.5 rounded-lg text-gray-400 hover:text-[var(--color-teacher-primary)] hover:bg-[var(--color-teacher-light)] transition-colors"
+          title="Manage Participants"
+        >
+          <Users size={15} />
+        </button>
+      </div>
+    ),
+  },
+];
 
   // ── Render ──────────────────────────────────────────────────────────────
   return (
@@ -420,11 +428,46 @@ export default function EventManagement() {
         </div>
 
         {/* Table */}
-        <Table
-          columns={columns}
-          data={paginated}
-          emptyMessage="No events found."
-        />
+        <ResponsiveTable
+        columns={columns}
+        data={paginated}
+        emptyMessage="No events found."
+        mobileActions={(row) => (
+          <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
+            {/* Edit */}
+            <Button
+              variant="outline"
+              tone="admin"
+              size="sm"
+              leftIcon={<Edit size={14} />}
+              onClick={() => handleEditEvent(row)}
+              title="Edit Event"
+              aria-label="Edit Event"
+              className="flex-1 justify-center"
+            />
+            {/* Delete */}
+            <Button
+              variant="outline"
+              tone="danger"
+              size="sm"
+              leftIcon={<Trash2 size={14} />}
+              onClick={() => handleDeleteEvent(row)}
+              title="Delete Event"
+              className="flex-1 justify-center"
+            />
+            {/* Manage Participants */}
+            <Button
+              variant="outline"
+              tone="teacher"
+              size="sm"
+              leftIcon={<Users size={14} />}
+              onClick={() => handleOpenParticipants(row)}
+              title="Manage Participants"
+              className="flex-1 justify-center"
+            />
+          </div>
+        )}
+      />
 
         {/* Pagination */}
         {totalPages > 1 && (

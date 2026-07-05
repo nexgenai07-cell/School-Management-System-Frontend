@@ -23,7 +23,7 @@ const ComplaintCard = ({
   } = complaint;
 
   return (
-    <Card
+    <Card tone={role}
       hover={false}
       className="
         border

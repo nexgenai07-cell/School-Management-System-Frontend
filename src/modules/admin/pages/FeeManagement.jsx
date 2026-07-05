@@ -9,13 +9,13 @@ import {
 } from 'recharts';
 
 // Reusable Components
-import { Table } from '../../../components/ui/table';
 import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
 import { Select } from '../../../components/ui/Select';
 import Drawer from '../../admin/components/Drawer';
 import ConfirmDialog from '../../../components/global/ConfirmDialog/ConfirmDialog';
 import { StatusBadge } from '../../../components/composite/Statusbadge';
+import ResponsiveTable from '../components/ResponsiveTable'; 
 
 // Mock Data
 import {
@@ -43,17 +43,6 @@ const formatDate = (iso) => {
     day: 'numeric',
     year: 'numeric',
   });
-};
-
-const getStatusColors = (status) => {
-  switch (status) {
-    case 'paid': return { bg: 'bg-[var(--color-success-bg)]', text: 'text-[var(--color-success)]', dot: 'bg-[var(--color-success)]' };
-    case 'pending': return { bg: 'bg-[var(--color-warning-bg)]', text: 'text-[var(--color-warning)]', dot: 'bg-[var(--color-warning)]' };
-    case 'overdue': return { bg: 'bg-[var(--color-danger-bg)]', text: 'text-[var(--color-danger)]', dot: 'bg-[var(--color-danger)]' };
-    case 'partial': return { bg: 'bg-[var(--color-student-light)]', text: 'text-[var(--color-student-primary)]', dot: 'bg-[var(--color-student-primary)]' };
-    case 'waived': return { bg: 'bg-[var(--color-parent-light)]', text: 'text-[var(--color-parent-primary)]', dot: 'bg-[var(--color-parent-primary)]' };
-    default: return { bg: 'bg-gray-100', text: 'text-gray-500', dot: 'bg-gray-400' };
-  }
 };
 
 const ITEMS_PER_PAGE = 5;
@@ -195,7 +184,7 @@ export default function FeeManagement() {
     URL.revokeObjectURL(url);
   };
 
-  // ── Table Columns ──────────────────────────────────────────────────────────
+  // ── Table Columns with Mobile Metadata ────────────────────────────────────
   const columns = [
     {
       key: 'student',
@@ -206,6 +195,7 @@ export default function FeeManagement() {
           <p className="text-xs text-[var(--color-text-muted)]">{row.roll_number}</p>
         </div>
       ),
+      mobile: { role: 'title' },
     },
     {
       key: 'class',
@@ -213,6 +203,7 @@ export default function FeeManagement() {
       render: (row) => (
         <span className="text-sm text-[var(--color-text-secondary)]">{row.class_section}</span>
       ),
+      mobile: { role: 'detail', label: 'Class' },
     },
     {
       key: 'original',
@@ -220,6 +211,7 @@ export default function FeeManagement() {
       render: (row) => (
         <span className="text-sm text-[var(--color-text-primary)]">{formatCurrency(row.original_amount)}</span>
       ),
+      mobile: { role: 'detail', label: 'Original Fee' },
     },
     {
       key: 'scholarship',
@@ -227,6 +219,7 @@ export default function FeeManagement() {
       render: (row) => (
         <Badge tone="parent" className="text-[10px]">{row.scholarship_percentage}%</Badge>
       ),
+      mobile: { role: 'badge' },
     },
     {
       key: 'payable',
@@ -234,21 +227,23 @@ export default function FeeManagement() {
       render: (row) => (
         <span className="text-sm font-bold text-[var(--color-admin-primary)]">{formatCurrency(row.amount)}</span>
       ),
+      mobile: { role: 'detail', label: 'Final Payable' },
     },
-   {
-  key: 'status',
-  label: 'Status',
-  render: (row) => (
-    <StatusBadge status={
-      row.status === 'overdue' ? 'Overdue' :
-      row.status === 'paid' ? 'Paid' :
-      row.status === 'pending' ? 'Pending' :
-      row.status === 'partial' ? 'Partial' :
-      row.status === 'waived' ? 'Waived' :
-      row.status
-    } />
-  ),
-},
+    {
+      key: 'status',
+      label: 'Status',
+      render: (row) => (
+        <StatusBadge status={
+          row.status === 'overdue' ? 'Overdue' :
+          row.status === 'paid' ? 'Paid' :
+          row.status === 'pending' ? 'Pending' :
+          row.status === 'partial' ? 'Partial' :
+          row.status === 'waived' ? 'Waived' :
+          row.status
+        } />
+      ),
+      mobile: { role: 'detail', label: 'Status' },
+    },
     {
       key: 'actions',
       label: 'Actions',
@@ -270,6 +265,7 @@ export default function FeeManagement() {
           </button>
         </div>
       ),
+      mobile: { role: 'hidden' },
     },
   ];
 
@@ -415,7 +411,7 @@ export default function FeeManagement() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search name/roll..."
-                className="w-full pl-8 pr-3 py-1.5 bg-[var(--color-surface-dim)] border-none rounded-lg text-sm focus:ring-2 focus:ring-[var(--color-admin-primary)]"
+                className="w-full pl-8 pr-3 py-1.5 bg-[var(--color-surface-dim)] border-none rounded-lg text-sm focus:ring-2 focus:ring-[var(--color-admin-primary)] outline-none"
               />
             </div>
             <Select
@@ -444,11 +440,30 @@ export default function FeeManagement() {
             />
           </div>
 
-          {/* Table */}
-          <Table
+          {/* ── Responsive Table ── */}
+          <ResponsiveTable
             columns={columns}
             data={paginated}
+            keyField="id"
             emptyMessage="No fee records found."
+            mobileActions={(row) => (
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  onClick={() => handleView(row)}
+                  className="text-sm font-medium text-[var(--color-admin-primary)] hover:underline flex items-center gap-1.5 px-3 py-1.5 bg-[var(--color-admin-light)] rounded-lg transition-colors"
+                >
+                  <Eye size={14} />
+                  View
+                </button>
+                <button
+                  onClick={() => handleNotify(row)}
+                  className="text-sm font-medium text-[var(--color-parent-primary)] hover:underline flex items-center gap-1.5 px-3 py-1.5 bg-[var(--color-parent-light)] rounded-lg transition-colors"
+                >
+                  <Mail size={14} />
+                  Notify
+                </button>
+              </div>
+            )}
           />
 
           {/* Pagination */}

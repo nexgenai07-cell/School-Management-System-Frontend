@@ -11,7 +11,7 @@ import {
 
 import Card from "../../../components/ui/Card/Card";
 
-const ComplaintStats = () => {
+const ComplaintStats = ({role}) => {
  const { complaints } = useSelector((state) => state.complaints);
 
 console.log("Complaints:", complaints);
@@ -88,6 +88,7 @@ console.log("Complaints:", complaints);
 
         return (
           <Card
+            tone={role}
             key={card.title}
             hover={false}
             className="border"

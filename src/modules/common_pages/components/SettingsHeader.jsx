@@ -1,15 +1,18 @@
 import { Settings } from "lucide-react";
 
-const SettingsHeader = () => {
+const SettingsHeader = ({role}) => {
+   const primaryColor = `var(--color-${role?.toLowerCase() || 'brand'}-primary)`;
+  const lightColor = `var(--color-${role?.toLowerCase() || 'brand'}-light)`;
+
   return (
-    <div className="rounded-2xl border border-border bg-surface p-8 shadow-sm">
+    <div className="rounded-2xl bg-surface p-8 shadow-sm">
       <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
         {/* Left */}
         <div className="flex items-center gap-5">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-light">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl " style={{ background: lightColor }}>
             <Settings
               size={32}
-              className="text-brand-primary"
+              style={{ color: primaryColor }}
             />
           </div>
 
@@ -26,7 +29,7 @@ const SettingsHeader = () => {
         </div>
 
         {/* Right */}
-        <div className="rounded-xl border border-border bg-surface-muted px-6 py-4">
+        <div className="rounded-xl bg-surface-muted px-6 py-4">
           <p className="text-sm font-semibold text-text-primary">
             Keep Your Profile Updated
           </p>
