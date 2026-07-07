@@ -37,7 +37,7 @@ function RoleRoute({
   // Redirect if user's role is not allowed
   if (
     !allowedRoles.includes(
-      user?.role
+      user?.role_name
     )
   ) {
     return (

@@ -4,7 +4,7 @@ import { useSelector } from "react-redux";
 import { Navbar, Sidebar } from '../components';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { logout } from '../store/authSlice';
+import { logout } from '../store/auth/authSlice';
 
 
 
@@ -141,7 +141,7 @@ function DashboardLayout() {
     dispatch(logout());
     navigate('/login');
 }
-  const config = rolePortalConfig[user?.role] || defaultConfig;
+  const config = rolePortalConfig[user?.role_name] || defaultConfig;
   /*
   ======================================================
   Map each user role to its corresponding
@@ -149,10 +149,10 @@ function DashboardLayout() {
   ======================================================
   */
   const routesMap = {
-    admin: adminRoutes,
-    teacher: teacherRoutes,
-    student: studentRoutes,
-    parent: parentRoutes,
+    Admin: adminRoutes,
+    Teacher: teacherRoutes,
+    Student: studentRoutes,
+    Parent: parentRoutes,
   };
 
   /*
@@ -170,7 +170,7 @@ function DashboardLayout() {
   ======================================================
   */
   const sidebarItems =
-    routesMap[user?.role] || [];
+    routesMap[user?.role_name] || [];
 
   return (
     /*

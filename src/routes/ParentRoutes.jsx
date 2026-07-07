@@ -15,7 +15,7 @@ const ParentRoutes = (
   <Route
     element={
       <RoleRoute
-        allowedRoles={["parent"]}
+        allowedRoles={["Parent"]}
       />
     }
   >

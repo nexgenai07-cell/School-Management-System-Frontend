@@ -17,7 +17,7 @@ const AdminRoutes = (
   <Route
     element={
       <RoleRoute
-        allowedRoles={["admin"]}
+        allowedRoles={["Admin"]}
       />
     }
   >

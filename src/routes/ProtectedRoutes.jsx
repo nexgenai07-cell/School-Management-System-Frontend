@@ -23,12 +23,15 @@ Used For:
 */
 
 function ProtectedRoute() {
+
   // Get authentication status from Redux store
-  const { isAuthenticated } =
+  const { isAuthenticated,user, loading  } =
     useSelector(
       (state) => state.auth
     );
-
+  if (loading) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  }
   // Redirect to login page if user is not authenticated
   if (!isAuthenticated) {
     return (
@@ -37,6 +40,9 @@ function ProtectedRoute() {
         replace
       />
     );
+  }
+  if (user?.status === 'Pending') {
+    return <Navigate to="/pending-approval" replace />;
   }
 
   // Render child routes if authenticated

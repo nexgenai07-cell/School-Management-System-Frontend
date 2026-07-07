@@ -1,60 +1,42 @@
 import { configureStore } from "@reduxjs/toolkit";
-import authReducer from "./authSlice";
-import studentReducer from "./studentSlice";
-import parentReducer from "./parentSlice"; // Import the parent reducer
-/*
-======================================================
-Redux Store Configuration
 
-Purpose:
-- Creates the application's global Redux store.
-- Registers all feature reducers (slices).
-- Provides a single source of truth for app state.
+// ----- Core Auth -----
+import authReducer from "./auth/authSlice";
 
-Reducers:
-- auth: Handles authentication state such as
-  user information, token, login status,
-  loading state, and errors.
+import studentReducer from "./studentSlice";   
+import parentReducer from "./parentSlice";     
 
-As the application grows, additional slices
-can be added here:
+import adminReducer from "./admin/adminSlice";
+import teacherReducer from "./teacher/teacherSlice";
 
-reducer: {
-  auth: authReducer,
-  students: studentsReducer,
-  teachers: teachersReducer,
-  notifications: notificationsReducer,
-}
-======================================================
-*/
+// ----- Feature Slices  -----
 import complaintReducer from "./complaint/complaintSlice";
 import notificationReducer from "./notification/notificationSlice";
 import settingsReducer from "./setting/settingSlice";
 
-
-
-
-
+/*
+======================================================
+Redux Store Configuration
+- Registers all feature reducers to create the global state tree.
+- Provides a single source of truth for the entire application.
+======================================================
+*/
 const store = configureStore({
   reducer: {
-    // Authentication state management
+    // Authentication
     auth: authReducer,
+
+    // Role-based modules
     student: studentReducer,
-    // Additional reducers can be added here like:
-    // students: studentsReducer,
-    // teachers: teachersReducer,
-    // notifications: notificationsReducer,
+    parent: parentReducer,
+    admin: adminReducer,      
+    teacher: teacherReducer,   
 
-
-
-
-     complaints: complaintReducer,
-     notifications: notificationReducer,
-     settings: settingsReducer,
-     parent: parentReducer, // Added parent reducer for managing parent-related state
-  
+    // Feature modules
+    complaints: complaintReducer,
+    notifications: notificationReducer,
+    settings: settingsReducer,
   },
 });
 
-// Export store to provide it to the application
 export default store;
