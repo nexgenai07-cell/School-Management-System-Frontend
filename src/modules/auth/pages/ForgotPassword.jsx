@@ -1,55 +1,40 @@
-/**
- * FORGOT PASSWORD PAGE
- *
- * Three-step flow inside the same card (AuthLayout wraps this):
- *   Step 1 "email" : user enters their email, we send an OTP code.
- *   Step 2 "otp"   : user enters the 6-digit OTP (auto-advancing boxes).
- *                    Includes a resend timer.
- *   Step 3 "reset" : user sets a new password (with strength meter).
- *   Step 4 "done"  : confirmation, link back to Login.
- *
- * No real backend yet — every "API call" is a setTimeout.
- * Replace each with real endpoints later:
- *   - sendOtp(email)
- *   - verifyOtp(email, code)
- *   - resetPassword(email, newPassword)
- *
- * Usage: rendered by React Router at /forgot-password, wrapped in AuthLayout.
- *   <Route path="/forgot-password" element={<AuthLayout><ForgotPassword /></AuthLayout>} />
- */
-
 import { useState, useRef, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { Mail, ShieldCheck, Lock, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
 
-import { Input,Button,PasswordStrength } from '../../../components';
+import { Input, Button, PasswordStrength } from '../../../components';
+import { forgotPassword, resetPasswordConfirm } from '../../../store/auth/authThunks';
 
 const OTP_LENGTH = 6;
 const RESEND_SECONDS = 30;
 
 function ForgotPassword() {
-  const [step, setStep] = useState('email'); // email | otp | reset | done
+  const dispatch = useDispatch();
+  const { loading } = useSelector((state) => state.auth);
+
+  // Steps: 'email' | 'reset' | 'done'
+  const [step, setStep] = useState('email');
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState(Array(OTP_LENGTH).fill(''));
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [resendTimer, setResendTimer] = useState(0);
 
   const otpRefs = useRef([]);
 
-  // Countdown for "Resend OTP"
+  // Countdown for Resend OTP
   useEffect(() => {
     if (resendTimer <= 0) return;
     const id = setTimeout(() => setResendTimer((t) => t - 1), 1000);
     return () => clearTimeout(id);
   }, [resendTimer]);
 
-  // ── Step 1: send OTP ───────────────────────────────────────────
-  function handleSendOtp(e) {
+  // ── Step 1: Send OTP ───────────────────────────────────────────
+  async function handleSendOtp(e) {
     e.preventDefault();
     setError('');
 
@@ -58,27 +43,33 @@ function ForgotPassword() {
       return;
     }
 
-    setLoading(true);
-    // Replace with real "send OTP" API call later
-    setTimeout(() => {
-      setLoading(false);
-      setStep('otp');
+    try {
+      await dispatch(forgotPassword({ email })).unwrap();
+      setStep('reset');
       setResendTimer(RESEND_SECONDS);
-    }, 800);
+      setOtp(Array(OTP_LENGTH).fill(''));
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err) {
+      setError(err.message || 'Failed to send OTP. Please try again.');
+    }
   }
 
+  // ── Resend OTP ──────────────────────────────────────────────────
   function handleResendOtp() {
     if (resendTimer > 0) return;
     setOtp(Array(OTP_LENGTH).fill(''));
     setResendTimer(RESEND_SECONDS);
-    // Replace with real "resend OTP" API call later
+    setError('');
+    dispatch(forgotPassword({ email }))
+      .unwrap()
+      .catch((err) => setError(err.message || 'Failed to resend OTP.'));
   }
 
-  // ── OTP box handling ───────────────────────────────────────────
+  // ── OTP Box Handlers ───────────────────────────────────────────
   function handleOtpChange(index, value) {
-    if (!/^[0-9]?$/.test(value)) return; // digits only, one char
+    if (!/^[0-9]?$/.test(value)) return;
     setError('');
-
     const next = [...otp];
     next[index] = value;
     setOtp(next);
@@ -106,8 +97,8 @@ function ForgotPassword() {
     otpRefs.current[Math.min(digits.length, OTP_LENGTH - 1)]?.focus();
   }
 
-  // ── Step 2: verify OTP ─────────────────────────────────────────
-  function handleVerifyOtp(e) {
+  // ── Step 2: Verify OTP + Reset Password (Single API Call) ─────
+  async function handleResetPassword(e) {
     e.preventDefault();
     setError('');
 
@@ -116,20 +107,6 @@ function ForgotPassword() {
       setError('Please enter the full 6-digit code.');
       return;
     }
-
-    setLoading(true);
-    // Replace with real "verify OTP" API call later
-    setTimeout(() => {
-      setLoading(false);
-      setStep('reset');
-    }, 800);
-  }
-
-  // ── Step 3: set new password ───────────────────────────────────
-  function handleResetPassword(e) {
-    e.preventDefault();
-    setError('');
-
     if (newPassword.length < 8) {
       setError('Password must be at least 8 characters.');
       return;
@@ -139,15 +116,20 @@ function ForgotPassword() {
       return;
     }
 
-    setLoading(true);
-    // Replace with real "reset password" API call later
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      await dispatch(resetPasswordConfirm({
+        email,
+        token: code,
+        new_password: newPassword,
+      })).unwrap();
+
       setStep('done');
-    }, 800);
+    } catch (err) {
+      setError(err.message || 'Invalid OTP or password reset failed.');
+    }
   }
 
-  // ── Step 4: done ────────────────────────────────────────────────
+  // ── Step 3: Done ────────────────────────────────────────────────
   if (step === 'done') {
     return (
       <div className="space-y-6 text-center">
@@ -173,8 +155,7 @@ function ForgotPassword() {
 
   return (
     <div className="space-y-6">
-
-      {/* Header changes per step */}
+      {/* ── Header ── */}
       <div>
         {step === 'email' && (
           <>
@@ -184,32 +165,24 @@ function ForgotPassword() {
             </p>
           </>
         )}
-        {step === 'otp' && (
-          <>
-            <h2 className="text-2xl font-bold text-text-primary">Enter verification code</h2>
-            <p className="mt-1 text-sm text-text-secondary">
-              We've sent a 6-digit code to <span className="font-semibold text-text-primary">{email}</span>
-            </p>
-          </>
-        )}
         {step === 'reset' && (
           <>
-            <h2 className="text-2xl font-bold text-text-primary">Set new password</h2>
+            <h2 className="text-2xl font-bold text-text-primary">Verify & Reset Password</h2>
             <p className="mt-1 text-sm text-text-secondary">
-              Choose a new password for your account.
+              Enter the 6-digit code sent to <span className="font-semibold text-text-primary">{email}</span> and set a new password.
             </p>
           </>
         )}
       </div>
 
-      {/* Error message */}
+      {/* ── Error Message ── */}
       {error && (
         <div className="rounded-input bg-danger-bg px-4 py-3 text-sm text-danger-text">
           {error}
         </div>
       )}
 
-      {/* ── Step 1: email form ─────────────────────────────────── */}
+      {/* ── Step 1: Email Form ── */}
       {step === 'email' && (
         <form onSubmit={handleSendOtp} className="space-y-4">
           <Input
@@ -228,9 +201,10 @@ function ForgotPassword() {
         </form>
       )}
 
-      {/* ── Step 2: OTP form ───────────────────────────────────── */}
-      {step === 'otp' && (
-        <form onSubmit={handleVerifyOtp} className="space-y-5">
+      {/* ── Step 2: OTP + New Password (Merged) ── */}
+      {step === 'reset' && (
+        <form onSubmit={handleResetPassword} className="space-y-5">
+          {/* OTP Inputs */}
           <div className="flex justify-center gap-2" onPaste={handleOtpPaste}>
             {otp.map((digit, index) => (
               <input
@@ -247,12 +221,8 @@ function ForgotPassword() {
             ))}
           </div>
 
-          <Button type="submit" fullWidth loading={loading} tone="brand">
-            <ShieldCheck size={18} />
-            Verify Code
-          </Button>
-
-          <p className="text-center text-sm text-text-secondary">
+          {/* Resend OTP */}
+          <div className="text-center text-sm text-text-secondary">
             {resendTimer > 0 ? (
               <>Resend code in <span className="font-medium text-text-primary">{resendTimer}s</span></>
             ) : (
@@ -264,13 +234,12 @@ function ForgotPassword() {
                 Resend code
               </button>
             )}
-          </p>
-        </form>
-      )}
+          </div>
 
-      {/* ── Step 3: reset password form ───────────────────────── */}
-      {step === 'reset' && (
-        <form onSubmit={handleResetPassword} className="space-y-4">
+          {/* Divider */}
+          <hr className="border-surface-muted" />
+
+          {/* New Password */}
           <div className="space-y-1">
             <Input
               label="New Password"
@@ -308,20 +277,19 @@ function ForgotPassword() {
             required
           />
 
-          <Button type="submit" fullWidth loading={loading} tone="brand">
-            Reset Password
+          <Button type="submit" fullWidth loading={loading} tone="brand" leftIcon={<ShieldCheck size={18} />}>
+            Verify & Reset Password
           </Button>
         </form>
       )}
 
-      {/* Back to login */}
+      {/* ── Back to Login ── */}
       <p className="text-center text-sm text-text-secondary">
         Remembered your password?{' '}
         <Link to="/login" className="font-medium text-brand-primary hover:text-brand-hover transition-colors">
           Sign in
         </Link>
       </p>
-
     </div>
   );
 }

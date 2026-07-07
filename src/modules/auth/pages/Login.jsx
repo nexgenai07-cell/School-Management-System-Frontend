@@ -1,77 +1,70 @@
 import { useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux'; 
 import { useNavigate, Link } from 'react-router-dom';
-import { Mail, Eye, EyeOff, GraduationCap } from 'lucide-react';
-
-import { loginSuccess } from '../../../store/authSlice';
-import { mockUsers } from '../../../mocks/authMock';
-import { Button,Input } from '../../../components';
+import { Mail, Eye, EyeOff } from 'lucide-react';
+import { loginUser, fetchUserProfile } from '../../../store/auth/authThunks';
+import { Button, Input } from '../../../components';
 
 /**
  * LOGIN PAGE
  *
- * Handles user authentication using mock data (real API later).
- * On success: dispatches loginSuccess to Redux, redirects by role.
- * On pending: redirects to /pending-approval.
- * On failure: shows inline error message.
- *
- * Uses AuthLayout (centered card) as its wrapper via React Router.
+ * Handles user authentication using Redux Thunks (real API).
+ * 1. Dispatch loginUser to get tokens.
+ * 2. Dispatch fetchUserProfile to get user info.
+ * 3. On success: redirects by role.
+ * 4. Uses Redux state for loading and error.
  */
 
 const ROLE_REDIRECTS = {
-  admin: '/admin/dashboard',
-  teacher: '/teacher/dashboard',
-  student: '/student/dashboard',
-  parent: '/parent/dashboard',
+  Admin: '/admin/dashboard',
+  Teacher: '/teacher/dashboard',
+  Student: '/student/dashboard',
+  Parent: '/parent/dashboard',
 };
-
 
 function Login() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
+  // ----- REDUX STATE (Loading & Error from store) -----
+  const { loading, error } = useSelector((state) => state.auth);
+
   const [form, setForm] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
 
   function handleChange(e) {
-    setError(''); // clear error on every keystroke
+    // Optional: Clearing error on typing is handled automatically by loginStart in thunk
     setForm({ ...form, [e.target.name]: e.target.value });
   }
 
-  function handleSubmit(e) {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
+ async function handleSubmit(e) {
+  e.preventDefault();
 
-    // Simulate a small network delay (replace with real API call later)
-    setTimeout(() => {
-      const user = mockUsers.find(
-        (u) => u.email === form.email && u.password === form.password
-      );
+  try {
+    // Step 1: Login (Get Tokens)
+    await dispatch(loginUser({ email: form.email, password: form.password })).unwrap();
 
-      if (!user) {
-        setError('Invalid email or password. Please try again.');
-        setLoading(false);
-        return;
-      }
+    // Step 2: Fetch Profile (Get User Info)
+    const user = await dispatch(fetchUserProfile()).unwrap();
+    console.log("User Data from API:", user);
+    
+    if (user?.status === 'Pending') {
+    navigate('/pending-approval');
+    return; // Yahan se return kar do, dashboard par mat bhejo
+    }
 
-      if (user.status === 'Pending') {
-        // Don't store in Redux — user isn't approved yet
-        navigate('/pending-approval');
-        return;
-      }
-
-      // Store user + token in Redux, then redirect by role
-      dispatch(loginSuccess({ user, token: user.token }));
-      navigate(ROLE_REDIRECTS[user.role] || '/login');
-    }, 800);
+    // Step 3: Redirect based on Role (FIXED)
+    const userRole = user?.role_name; 
+    const redirectPath = ROLE_REDIRECTS[userRole] || '/login';
+    console.log("Redirect Path:", redirectPath);
+    
+    navigate(redirectPath);
+  } catch (err) {
+    console.error('Login flow error:', err.message);
   }
-
+}
   return (
     <div className="space-y-6">
-
       {/* Header */}
       <div>
         <h2 className="text-2xl font-bold text-text-primary">Welcome back</h2>
@@ -80,7 +73,7 @@ function Login() {
         </p>
       </div>
 
-      {/* Error message */}
+      {/* Error message - Now comes from Redux state */}
       {error && (
         <div className="rounded-input bg-danger-bg px-4 py-3 text-sm text-danger-text">
           {error}
@@ -120,7 +113,7 @@ function Login() {
             }
             required
           />
-          
+
           {/* Forgot password — right aligned under password field */}
           <div className="flex justify-end">
             <Link
@@ -135,7 +128,7 @@ function Login() {
         <Button
           type="submit"
           fullWidth
-          loading={loading}
+          loading={loading} 
           tone="brand"
         >
           Sign In
@@ -152,7 +145,6 @@ function Login() {
           Sign up
         </Link>
       </p>
-
     </div>
   );
 }

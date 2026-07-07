@@ -1,6 +1,6 @@
 import { useState, useEffect ,useMemo } from "react";
 import { CheckCircle, XCircle, Clock, TrendingUp, AlertCircle, Timer, ChevronLeft, ChevronRight } from "lucide-react";
-
+import { useDispatch, useSelector } from "react-redux"; 
 // Reusable components
 import { PageHeader } from "../../../components/global/pageheader";
 import { SearchBar } from "../../../components/global/Searchbar";
@@ -13,8 +13,7 @@ import ResponsiveTable from "../components/ResponsiveTable";
 // Admin-scoped Drawer
 import Drawer from "../components/Drawer";
 
-// Mock data
-import { MOCK_USERS } from "../../../mocks/Adminmock";
+import { fetchAllUsers, fetchApprovals, updateApprovalStatus } from "../../../store/admin/adminThunks";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 const getInitials = (name) =>
@@ -33,22 +32,22 @@ const formatDate = (iso) =>
   });
 
 const ROLE_STYLES = {
-  student: {
+  Student: {
     avatar: "bg-[var(--color-student-light)] text-[var(--color-student-primary)]",
     tone: "student",
   },
-  teacher: {
+  Teacher: {
     avatar: "bg-[var(--color-teacher-light)] text-[var(--color-teacher-primary)]",
     tone: "teacher",
   },
-  parent: {
+  Parent: {
     avatar: "bg-[var(--color-parent-light)] text-[var(--color-parent-primary)]",
     tone: "parent",
   },
 };
 
 const TABS = ["All", "Pending", "Approved", "Rejected"];
-const ITEMS_PER_PAGE = 5;
+const ITEMS_PER_PAGE = 10;
 
 // ─── Table columns ───────────────────────────────────────────────────────────
 const buildColumns = (onViewDetails) => [
@@ -56,7 +55,7 @@ const buildColumns = (onViewDetails) => [
     key: "full_name",
     label: "Name",
     render: (row) => {
-      const style = ROLE_STYLES[row.role] ?? ROLE_STYLES.student;
+      const style = ROLE_STYLES[row.role_name] ?? ROLE_STYLES.Student;
       return (
         <div className="flex items-center gap-3">
           <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${style.avatar}`}>
@@ -75,7 +74,7 @@ const buildColumns = (onViewDetails) => [
     label: "Role",
     render: (row) => (
       <Badge tone={ROLE_STYLES[row.role]?.tone ?? "brand"}>
-        {row.role.charAt(0).toUpperCase() + row.role.slice(1)}
+        {row.role_name || "Unknown"}
       </Badge>
     ),
     mobile: { role: "badge" },
@@ -99,23 +98,24 @@ const buildColumns = (onViewDetails) => [
   {
     key: "status",
     label: "Status",
-    render: (row) => (
-      <StatusBadge status={row.status.charAt(0).toUpperCase() + row.status.slice(1)} />
-    ),
+    render: (row) => {
+      const status = row?.status || "Unknown";
+    return <StatusBadge status={status.charAt(0).toUpperCase() + status.slice(1)} />;
+  },
     mobile: { role: "detail", label: "Status" },
   },
   {
     key: "actions",
-    label: "",
+    label: "Actions",
     render: (row) => (
-      <div className="flex justify-end">
+      <div className="flex justify-start">
         <Button
-          variant={row.status === "pending" ? "outline" : "ghost"}
+          variant={row.status === "Pending" ? "outline" : "ghost"}
           size="sm"
           tone="admin"
           onClick={() => onViewDetails(row)}
         >
-          {row.status === "pending" ? "View Details" : "View"}
+          {row.status === "Pending" ? "View Details" : "View"}
         </Button>
       </div>
     ),
@@ -123,7 +123,6 @@ const buildColumns = (onViewDetails) => [
   },
 ];
 
-// ─── Drawer content ──────────────────────────────────────────────────────────
 function DrawerRow({ label, value }) {
   return (
     <div className="flex flex-col gap-0.5">
@@ -134,9 +133,31 @@ function DrawerRow({ label, value }) {
     </div>
   );
 }
+// ─── Drawer content ──────────────────────────────────────────────────────────
+function UserDrawerContent({ user, rollNumber, setRollNumber }) {
+  const [rollNumberError, setRollNumberError] = useState("");
+  const style = ROLE_STYLES[user.role_name] ?? ROLE_STYLES.Student;
 
-function UserDrawerContent({ user }) {
-  const style = ROLE_STYLES[user.role] ?? ROLE_STYLES.student;
+  // Validate roll number on change
+  const handleRollNumberChange = (e) => {
+    const value = e.target.value;
+    setRollNumber(value);
+    setRollNumberError("");
+  };
+
+   const handleRollNumberBlur = (e) => {
+    const value = e.target.value.trim();
+    if (value) {
+      const pattern = /^STU-\d{3}-\d{3}$/;
+      if (!pattern.test(value)) {
+        setRollNumberError("Invalid format. Use: STU-001-001");
+      } else {
+        setRollNumberError("");
+      }
+    } else {
+      setRollNumberError("");
+    }
+  };
 
   return (
     <div className="space-y-7">
@@ -151,7 +172,7 @@ function UserDrawerContent({ user }) {
           </p>
           <div className="mt-1.5">
             <Badge tone={style.tone}>
-              {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+              {user.role_name.charAt(0).toUpperCase() + user.role_name.slice(1)}
             </Badge>
           </div>
         </div>
@@ -172,10 +193,36 @@ function UserDrawerContent({ user }) {
           label="Current Status"
           value={
             <StatusBadge
-              status={user.status.charAt(0).toUpperCase() + user.status.slice(1)}
+              status={(user?.status || "Unknown").charAt(0).toUpperCase() + (user?.status || "Unknown").slice(1)}
             />
           }
         />
+
+        {/* ── ROLL NUMBER INPUT (Only for Students) ── */}
+        {user.role_name === "Student" && user.status === "Pending" && (
+          <div className="pt-2">
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+              Roll Number <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={rollNumber}
+              onChange={handleRollNumberChange}      
+              onBlur={handleRollNumberBlur} 
+              placeholder="e.g. STU-001-001"
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-admin-primary)] ${
+                rollNumberError ? "border-red-500" : "border-gray-300"
+              }`}
+            />
+            {/* Field-specific error */}
+            {rollNumberError && (
+              <p className="text-xs text-red-500 mt-1">{rollNumberError}</p>
+            )}
+            <p className="text-xs text-[var(--color-text-muted)] mt-1">
+              Format: <strong>STU-001-001</strong> (e.g. STU-123-456)
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -183,32 +230,82 @@ function UserDrawerContent({ user }) {
 
 // ─── Main Page ───────────────────────────────────────────────────────────────
 export default function UserApprovals() {
-  const [requests, setRequests] = useState(MOCK_USERS);
+   const dispatch = useDispatch(); 
+  const { approvals, loading, updating, error } = useSelector((state) => state.admin); 
+   const [rollNumber, setRollNumber] = useState("");
   const [activeTab, setActiveTab] = useState("All");
   const [search, setSearch] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const stats = useMemo(() => ({
-    total: requests.length,
-    pending: requests.filter((r) => r.status === "pending").length,
-    approved: requests.filter((r) => r.status === "approved").length,
-    rejected: requests.filter((r) => r.status === "rejected").length,
-  }), [requests]);
+ // ─── Fetch Approvals on Page Load ──────────────────────────────────
+  useEffect(() => {
+    dispatch(fetchAllUsers());
+  }, [dispatch]);
 
+  // ─── Handle Approve ──────────────────────────────────────────────
+ const handleApprove = (id) => {
+  console.log(" Selected User:", selectedUser);
+  console.log(" Role Name:", selectedUser?.role_name);
+  console.log(" Roll Number State:", rollNumber);
+
+  const payload = { userId: id, action: "approve" };
+
+  if (selectedUser?.role_name === "Student") {
+    console.log(" Student detected, checking roll number...");
+    if (!rollNumber.trim()) {
+      alert("Please enter a roll number for the student.");
+      return;
+    }
+    payload.roll_number = rollNumber.trim();
+  } else {
+    console.log(" Not a Student (or role_name mismatch)");
+  }
+
+  console.log("Final Payload:", payload);
+  dispatch(updateApprovalStatus(payload));
+  setSelectedUser(null);
+  setRollNumber("");
+};
+
+  // ─── Handle Reject ───────────────────────────────────────────────
+  const handleReject = (id) => {
+    dispatch(updateApprovalStatus({ userId: id, action: "reject" }));
+    setSelectedUser(null);
+  };
+
+  // ─── Stats (Use Redux approvals instead of local requests) ──────
+  const stats = useMemo(() => ({
+    total: approvals.length,
+    pending: approvals.filter((r) => r.status === "Pending").length,
+    approved: approvals.filter((r) => r.status === "Active").length,
+    rejected: approvals.filter((r) => r.status === "Rejected").length,
+  }), [approvals]);
+
+  // ─── Filtering (Use Redux approvals) ──────────────────────────────
   const filtered = useMemo(() => {
-    let list = requests;
-    if (activeTab !== "All")
-      list = list.filter((r) => r.status === activeTab.toLowerCase());
+    let list = approvals;
+    if (activeTab !== "All") {
+    //  Map UI tabs to backend statuses
+    const statusMap = {
+      "Pending": "Pending",
+      "Approved": "Active",   //  "Approved" -> "Active"
+      "Rejected": "Rejected",
+    };
+    const backendStatus = statusMap[activeTab];
+    if (backendStatus) {
+      list = list.filter((r) => r.status === backendStatus);
+    }
+  }
     if (search.trim())
       list = list.filter(
         (r) =>
           r.full_name.toLowerCase().includes(search.toLowerCase()) ||
           r.email.toLowerCase().includes(search.toLowerCase()) ||
-          r.role.toLowerCase().includes(search.toLowerCase())
+          r.role_name?.toLowerCase().includes(search.toLowerCase()) 
       );
     return list;
-  }, [requests, activeTab, search]);
+  }, [approvals, activeTab, search]);
 
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const paginated = filtered.slice(
@@ -221,21 +318,9 @@ useEffect(() => {
   setCurrentPage(1);
 }, [activeTab, search]);
 
-  const handleApprove = (id) => {
-    setRequests((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, status: "approved" } : r))
-    );
-    setSelectedUser(null);
-  };
+  
 
-  const handleReject = (id) => {
-    setRequests((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, status: "rejected" } : r))
-    );
-    setSelectedUser(null);
-  };
-
-  const columns = buildColumns(setSelectedUser);
+const columns = buildColumns(setSelectedUser);
 
   return (
     <div className="p-6 md:p-0 flex flex-col gap-7 min-h-screen bg-[var(--color-surface-dim)]">
@@ -336,13 +421,13 @@ useEffect(() => {
             emptyMessage="No requests found."
             mobileActions={(row) => (
               <Button
-                variant={row.status === "pending" ? "outline" : "ghost"}
+                variant={row.status === "Pending" ? "outline" : "ghost"}
                 size="sm"
                 tone="admin"
                 fullWidth
                 onClick={() => setSelectedUser(row)}
               >
-                {row.status === "pending" ? "View Details" : "View"}
+                {row.status === "Pending" ? "View Details" : "View"}
               </Button>
             )}
             />
@@ -438,11 +523,13 @@ useEffect(() => {
       {/* ── Drawer ── */}
       <Drawer
         open={!!selectedUser}
-        onClose={() => setSelectedUser(null)}
+        onClose={() => {setSelectedUser(null);setRollNumber("");}}
         title="Registration Details"
+        
         footer={
-          selectedUser?.status === "pending" ? (
+          selectedUser?.status === "Pending" ? (
             <div className="grid grid-cols-2 gap-3">
+              
               <Button
                 variant="outline"
                 tone="admin"
@@ -458,6 +545,8 @@ useEffect(() => {
                 fullWidth
                 leftIcon={<CheckCircle size={16} />}
                 onClick={() => handleApprove(selectedUser.id)}
+                disabled={selectedUser?.role_name === "Student" &&
+                 !/^STU-\d{3}-\d{3}$/.test(rollNumber.trim())}
               >
                 Approve
               </Button>
@@ -465,7 +554,11 @@ useEffect(() => {
           ) : null
         }
       >
-        {selectedUser && <UserDrawerContent user={selectedUser} />}
+        {selectedUser && <UserDrawerContent
+          user={selectedUser}
+          rollNumber={rollNumber}
+          setRollNumber={setRollNumber}
+        />}
       </Drawer>
     </div>
   );

@@ -17,7 +17,7 @@ const StudentRoutes = (
   <Route
     element={
       <RoleRoute
-        allowedRoles={["student"]}
+        allowedRoles={["Student"]}
       />
     }
   >

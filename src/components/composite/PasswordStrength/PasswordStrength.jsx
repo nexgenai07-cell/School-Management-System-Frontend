@@ -44,7 +44,6 @@ function PasswordStrength({ password, className = '' }) {
 
   const score = getScore(password);
   const level = STRENGTH_LEVELS[score];
-  console.log('Score:', score);
 
   return (
     <div className={['space-y-1', className].join(' ')}>
