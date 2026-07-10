@@ -15,6 +15,7 @@ const ParticipationList = () => {
   const {
     events = [],
     parentLinks = [],
+    certificates = [],
     selectedChild,
     loading,
   } = useSelector((state) => state.parent);
@@ -206,17 +207,12 @@ const ParticipationList = () => {
               (
                 participation
               ) => (
-                <ParticipationCard
-                  key={
-                    participation.id
-                  }
-                  participation={
-                    participation
-                  }
-                  onView={
-                    setSelectedParticipation
-                  }
-                />
+              <ParticipationCard
+    key={participation.id}
+    participation={participation}
+    certificates={certificates}
+    onView={setSelectedParticipation}
+/>
               )
             )
           )}

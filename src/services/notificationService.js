@@ -1,22 +1,6 @@
 // src/services/notificationService.js
 
-import * as studentMock from "../mocks/studentMock";
-
-import * as parentMock from "../mocks/parentMock";
-
-
-/*
-==========================================================
-Mock Data By Role
-==========================================================
-*/
-
-const mockData = {
-  student: studentMock,
-
-  parent: parentMock,
-  
-};
+import api from "./api";
 
 const notificationService = {
   /*
@@ -24,9 +8,9 @@ const notificationService = {
   Get All Notifications
   ==========================================================
   */
-
   getNotifications: async (role) => {
-    return mockData[role]?.notifications || [];
+    const { data } = await api.get(`/${role}/notifications`);
+    return data;
   },
 
   /*
@@ -34,14 +18,9 @@ const notificationService = {
   Get Unread Notifications
   ==========================================================
   */
-
-  getUnreadNotifications: async (role) => {
-    const notifications =
-      mockData[role]?.notifications || [];
-
-    return notifications.filter(
-      (notification) => !notification.is_read
-    );
+  getUnreadNotifications: async () => {
+    const { data } = await api.get("/notifications/unread");
+    return data;
   },
 
   /*
@@ -49,20 +28,11 @@ const notificationService = {
   Mark Notification As Read
   ==========================================================
   */
-
-  markAsRead: async (role, id) => {
-    const notifications =
-      mockData[role]?.notifications || [];
-
-    const notification = notifications.find(
-      (item) => item.id === Number(id)
+  markAsRead: async (id) => {
+    const { data } = await api.put(
+      `/notifications/read/${id}`
     );
-
-    if (notification) {
-      notification.is_read = true;
-    }
-
-    return notification || null;
+    return data;
   },
 
   /*
@@ -70,16 +40,11 @@ const notificationService = {
   Mark All Notifications As Read
   ==========================================================
   */
-
-  markAllAsRead: async (role) => {
-    const notifications =
-      mockData[role]?.notifications || [];
-
-    notifications.forEach((notification) => {
-      notification.is_read = true;
-    });
-
-    return notifications;
+  markAllAsRead: async () => {
+    const { data } = await api.put(
+      "/notifications/read-all"
+    );
+    return data;
   },
 };
 

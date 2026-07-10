@@ -1,338 +1,153 @@
-import {
-  useState,
-} from "react";
-import {
-  Upload,
-  FileText,
-  X,
-} from "lucide-react";
+import { Link, X } from "lucide-react";
 
-import Modal from "../../../components/ui/model/Model";
 import Button from "../../../components/ui/Button/Button";
+import Modal from "../../../components/ui/model/Model";
 
 function AssignmentSubmissionModal({
   open,
   onClose,
   onSubmit,
-  file,
-  setFile,
+  fileUrl,
+  setFileUrl,
   loading = false,
+  isReplace = false,
 }) {
-  const [dragActive, setDragActive] =
-    useState(false);
-
-  /*
-  =========================================
-  File Selection
-  =========================================
-  */
-
-  const handleFileChange = (
-    e
-  ) => {
-    const selectedFile =
-      e.target.files?.[0];
-
-    if (selectedFile) {
-      setFile(
-        selectedFile
-      );
+  const isValidUrl = (url) => {
+    try {
+      new URL(url);
+      return true;
+    } catch {
+      return false;
     }
   };
 
-  /*
-  =========================================
-  Drag Events
-  =========================================
-  */
+  const handleSubmit = () => {
+    if (!isValidUrl(fileUrl)) return;
 
-  const handleDrag = (
-    e
-  ) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (
-      e.type ===
-        "dragenter" ||
-      e.type ===
-        "dragover"
-    ) {
-      setDragActive(true);
-    }
-
-    if (
-      e.type ===
-      "dragleave"
-    ) {
-      setDragActive(false);
-    }
+    onSubmit({
+      file_url: fileUrl.trim(),
+    });
   };
 
-  const handleDrop = (
-    e
-  ) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    setDragActive(false);
-
-    const droppedFile =
-      e.dataTransfer
-        .files?.[0];
-
-    if (
-      droppedFile
-    ) {
-      setFile(
-        droppedFile
-      );
-    }
+  const handleClose = () => {
+    setFileUrl("");
+    onClose();
   };
-
-  /*
-  =========================================
-  Remove File
-  =========================================
-  */
-
-  const removeFile =
-    () => {
-      setFile(null);
-    };
 
   return (
     <Modal
       open={open}
-      onClose={onClose}
-      title="Submit Assignment"
+      onClose={handleClose}
+      title={
+        isReplace
+          ? "Replace Submission"
+          : "Submit Assignment"
+      }
     >
       <div className="space-y-6">
-        {/* =====================================
-            Upload Area
-        ===================================== */}
+        {/* URL Input */}
+        <div>
+          <label className="mb-2 block text-sm font-medium text-text-primary">
+            Assignment File URL
+          </label>
 
-        <label
-          htmlFor="assignment-file"
-          onDragEnter={
-            handleDrag
-          }
-          onDragLeave={
-            handleDrag
-          }
-          onDragOver={
-            handleDrag
-          }
-          onDrop={
-            handleDrop
-          }
-          className={`
-            flex
-            cursor-pointer
-            flex-col
-            items-center
-            justify-center
-            rounded-2xl
-            border-2
-            border-dashed
-            px-6
-            py-10
-            text-center
-            transition-all
-            duration-200
-
-            ${
-              dragActive
-                ? `
-                  border-student-primary
-                  bg-student-border
-                  scale-[1.02]
-                  shadow-lg
-                `
-                : `
-                  border-student-border
-                  bg-student-light
-                  hover:border-student-primary
-                  hover:bg-student-border
-                `
-            }
-          `}
-        >
-          {/* Upload Icon */}
-          <div
-            className={`
-              flex
-              h-16
-              w-16
-              items-center
-              justify-center
-              rounded-full
-              bg-white
-              shadow-soft
-              transition-transform
-              duration-200
-
-              ${
-                dragActive
-                  ? "scale-110"
-                  : ""
-              }
-            `}
-          >
-            <Upload
-              size={30}
-              className="text-student-primary"
+          <div className="relative">
+            <Link
+              size={18}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted"
             />
+
+            <input
+              type="url"
+              value={fileUrl}
+              onChange={(e) =>
+                setFileUrl(e.target.value)
+              }
+              placeholder="https://drive.google.com/file/..."
+              className="
+                w-full
+                rounded-2xl
+                border
+                border-student-border
+                bg-student-light
+                py-3
+                pl-11
+                pr-12
+                text-sm
+                outline-none
+                transition
+                focus:border-student-primary
+                focus:ring-2
+                focus:ring-student-primary/20
+              "
+            />
+
+            {fileUrl && (
+              <button
+                type="button"
+                onClick={() =>
+                  setFileUrl("")
+                }
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-red-500"
+              >
+                <X size={18} />
+              </button>
+            )}
           </div>
 
-          {/* Title */}
-          <h3 className="mt-5 text-lg font-semibold text-student-text">
-            {dragActive
-              ? "Drop your file here"
-              : "Upload Assignment"}
-          </h3>
-
-          {/* Subtitle */}
-          <p className="mt-2 text-sm text-text-secondary">
-            Drag & drop
-            your file here
-            or click to
-            browse
+          <p className="mt-2 text-xs text-text-muted">
+            Paste a public URL from Google Drive,
+            Dropbox, OneDrive, GitHub, etc.
           </p>
 
-          {/* Supported Files */}
-          <p className="mt-1 text-xs text-text-muted">
-            Supported:
-            PDF, DOC,
-            DOCX, ZIP
-          </p>
+          {fileUrl &&
+            !isValidUrl(fileUrl) && (
+              <p className="mt-2 text-sm text-red-500">
+                Please enter a valid URL.
+              </p>
+            )}
+        </div>
 
-          {/* Hidden Input */}
-          <input
-            id="assignment-file"
-            type="file"
-            className="hidden"
-            onChange={
-              handleFileChange
-            }
-          />
-        </label>
+        {/* Preview */}
+        {isValidUrl(fileUrl) && (
+          <div className="rounded-2xl border border-student-border bg-student-light p-4">
+            <p className="mb-2 text-sm font-semibold">
+              Preview
+            </p>
 
-        {/* =====================================
-            Selected File
-        ===================================== */}
-
-        {file && (
-          <div
-            className="
-              flex
-              items-center
-              justify-between
-              rounded-2xl
-              border
-              border-student-border
-              bg-student-light
-              p-4
-            "
-          >
-            <div className="flex items-center gap-4">
-              <div
-                className="
-                  flex
-                  h-12
-                  w-12
-                  items-center
-                  justify-center
-                  rounded-full
-                  bg-white
-                  shadow-soft
-                "
-              >
-                <FileText
-                  size={
-                    24
-                  }
-                  className="text-student-primary"
-                />
-              </div>
-
-              <div>
-                <p
-                  className="
-                    max-w-[220px]
-                    truncate
-                    font-medium
-                    text-text-primary
-                  "
-                >
-                  {
-                    file.name
-                  }
-                </p>
-
-                <p className="text-sm text-text-secondary">
-                  {(
-                    file.size /
-                    1024
-                  ).toFixed(
-                    2
-                  )}{" "}
-                  KB
-                </p>
-              </div>
-            </div>
-
-            <Button
-              variant="ghost"
-              tone="student"
-              size="sm"
-              leftIcon={
-                <X />
-              }
-              onClick={
-                removeFile
-              }
+            <a
+              href={fileUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="break-all text-sm text-student-primary hover:underline"
             >
-              Remove
-            </Button>
+              {fileUrl}
+            </a>
           </div>
         )}
 
-        {/* =====================================
-            Action Buttons
-        ===================================== */}
-
+        {/* Buttons */}
         <div className="flex gap-4">
           <Button
             variant="outline"
             tone="student"
             fullWidth
-            onClick={
-              onClose
-            }
+            onClick={handleClose}
           >
             Cancel
           </Button>
 
           <Button
-            tone="student"
-            fullWidth
-            loading={
-              loading
-            }
-            disabled={
-              !file
-            }
-            leftIcon={
-              <Upload />
-            }
-            onClick={
-              onSubmit
-            }
-          >
-            Submit
-            Assignment
-          </Button>
+  tone="student"
+  fullWidth
+  loading={loading}
+  disabled={!isValidUrl(fileUrl)}
+  onClick={handleSubmit}
+>
+  {isReplace
+    ? "Update Submission"
+    : "Submit Assignment"}
+</Button>
         </div>
       </div>
     </Modal>

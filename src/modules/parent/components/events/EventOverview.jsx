@@ -15,6 +15,7 @@ import StatCard from "../../../../components/composite/StatCard/StatCard";
 const EventOverview = () => {
   const {
     events = [],
+    certificates = [],
     parentLinks = [],
     selectedChild,
   } = useSelector(
@@ -54,20 +55,31 @@ const EventOverview = () => {
 
   /*
   =====================================================
+  Child Certificates
+  =====================================================
+  */
+
+  const childCertificates = useMemo(() => {
+    if (!currentChild) return [];
+
+    return certificates.filter(
+      (certificate) =>
+        certificate.student_name ===
+        currentChild.student_name
+    );
+  }, [certificates, currentChild]);
+
+  /*
+  =====================================================
   Statistics
   =====================================================
   */
 
   const stats = useMemo(() => {
-    const certificates =
-      childEvents.filter(
-        (event) => event.certificate
-      ).length;
-
     const firstPositions =
       childEvents.filter(
         (event) =>
-          event.position === "1st"
+          event.position === "1st Place"
       ).length;
 
     const participatedEvents =
@@ -79,15 +91,15 @@ const EventOverview = () => {
 
     return {
       total: childEvents.length,
-      certificates,
+      certificates:
+        childCertificates.length,
       firstPositions,
       participatedEvents,
     };
-  }, [childEvents]);
+  }, [childEvents, childCertificates]);
 
   return (
     <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
-
       <StatCard
         label="Participations"
         value={stats.total}
@@ -123,7 +135,6 @@ const EventOverview = () => {
         footerText="Different Events"
         footerColor="info"
       />
-
     </div>
   );
 };

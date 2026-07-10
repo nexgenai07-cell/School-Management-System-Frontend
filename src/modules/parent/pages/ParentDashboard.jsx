@@ -15,6 +15,7 @@ import ChildSelector from "../components/ChildSelector";
 import AttendanceSummaryCard from "../components/AttendenceSummaryCard";
 import GradeSummaryCard from "../components/GradeSummaryCard";
 import ActiveEventsCard from "../components/ActiveEventsCard";
+// import PerformanceInsightsCard from "../components/PerformanceInsightsCard";
 
 const ParentDashboard = () => {
   const dispatch = useDispatch();
@@ -52,8 +53,8 @@ const ParentDashboard = () => {
 
       {/* =======================================================
           Dashboard Cards
-      ======================================================= */}
-
+      ============== ========================================= */}
+   
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         <AttendanceSummaryCard />
 
@@ -66,7 +67,7 @@ const ParentDashboard = () => {
           Bottom Banner
       ======================================================= */}
 
-   
+      
     </div>
   );
 };

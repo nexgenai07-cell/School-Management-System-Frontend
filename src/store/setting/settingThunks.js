@@ -30,15 +30,14 @@ export const fetchProfile = createAsyncThunk(
  */
 export const updateProfile = createAsyncThunk(
   "settings/updateProfile",
-  async ({ role, profileData }, { rejectWithValue }) => {
+  async (profileData, { rejectWithValue }) => {
     try {
-      return await settingsService.updateProfile(
-        role,
-        profileData
-      );
+      return await settingsService.updateProfile(profileData);
     } catch (error) {
       return rejectWithValue(
-        error.message || "Failed to update profile."
+        error.response?.data ||
+        error.message ||
+        "Failed to update profile."
       );
     }
   }

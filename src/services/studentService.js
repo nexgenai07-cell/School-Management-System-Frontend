@@ -1,32 +1,21 @@
 import * as mockData from "../mocks/studentMock";
-
+import api from "./api";
 const studentService = {
-  /*
-  =====================================
-  DASHBOARD
-  =====================================
-  */
 
-  getDashboard: async () =>
-    mockData.studentDashboard,
 
-  /*
-  =====================================
-  PROFILE
-  =====================================
-  */
-
-  getProfile: async () =>
-    mockData.profile,
-
-  updateProfile: async (
-    profileData
-  ) => {
-    return {
-      ...mockData.studentProfile,
-      ...profileData,
-    };
+   getProfile: async () => {
+    const response = await api.get("/auth/profile");
+    return response.data;
   },
+
+updateProfile: async (profileData) => {
+  const response = await api.put(
+    "/auth/profile",
+    profileData
+  );
+
+  return response.data;
+},
 
   /*
   =====================================
@@ -34,8 +23,13 @@ const studentService = {
   =====================================
   */
 
-  getAttendance: async () =>
-    mockData.attendance,
+  getAttendance: async () => {
+  const { data } = await api.get(
+    "/student/attendance"
+  );
+
+  return data;
+},
 
   /*
   =====================================
@@ -43,9 +37,18 @@ const studentService = {
   =====================================
   */
 
-  getReportCard:
-    async () =>
-      mockData.reportCard,
+ getReportCard: async () => {
+  const { data } = await api.get(
+    "/student/grades"
+  );
+
+  return {
+    academic_year: "2025-2026",
+    published_at: new Date().toISOString(),
+    remarks: "",
+    grades: data,
+  };
+},
 
   /*
   =====================================
@@ -53,28 +56,44 @@ const studentService = {
   =====================================
   */
 
-  getAssignments:
-    async () =>
-      mockData.assignments,
+ 
+getAssignments: async () => {
+  const { data } = await api.get(
+    "/student/assignments"
+  );
 
-  submitAssignment:
-    async (
-      submissionData
-    ) => {
-      return {
-        success: true,
-        message:
-          "Assignment submitted successfully.",
-        data: submissionData,
-      };
-    },
+  return data;
+},
 
-  /*
-  =====================================
-  FINANCE
-  =====================================
-  */
+ submitAssignment: async (submissionData) => {
+  const { data } = await api.post(
+    "/student/submissions",
+    submissionData
+  );
 
+  return data;
+},
+
+ getSubmissions: async () => {
+  const { data } = await api.get(
+    "/student/submissions"
+  );
+
+  return data;
+},
+updateSubmission: async (id, submissionData) => {
+  const { data } = await api.patch(
+    `/student/submissions/${id}`,
+    submissionData
+  );
+
+  return data;
+},
+
+deleteSubmission: async (id) => {
+  console.log("deleting");
+  await api.delete(`/student/submissions/${id}`);
+},
   /*
 =====================================
 FINANCE
@@ -82,57 +101,25 @@ FINANCE
 */
 
 getFees: async () =>
-  mockData.fees,
+ {
+   const { data } = await api.get(
+    "/student/fees"
+  );
+
+  return data;
+ },
 
 getPayments: async () =>
-  mockData.payments,
+ {
+   const { data } = await api.get(
+    "/student/payments"
+  );
 
-createPaymentIntent: async (feeId) => {
-  const fee =
-    mockData.fees.find(
-      (item) =>
-        item.id === feeId
-    );
+  return data;
+ },
 
-  if (!fee) {
-    throw new Error(
-      "Fee not found."
-    );
-  }
 
-  return {
-    clientSecret:
-      "pi_mock_secret_123456789",
 
-    paymentIntentId:
-      "pi_mock_123456789",
-
-    fee_id: feeId,
-
-    amount:
-      Number(
-        fee.amount
-      ) -
-      Number(
-        fee.amount_paid
-      ),
-
-    currency: "PKR",
-
-    payment_method:
-      "Stripe",
-  };
-},
-
-  /*
-  =====================================
-  TIMETABLE
-  =====================================
-  */
-
-  getTimetable:
-    async () =>
-      mockData.timetable,
 
   /*
   =====================================
@@ -140,14 +127,37 @@ createPaymentIntent: async (feeId) => {
   =====================================
   */
 
-  getEvents:
-    async () =>
-      mockData.events,
 
   getParticipations:
     async () =>
-      mockData.participations,
+      {
+   const { data } = await api.get(
+    "/student/events/participations"
+   
+  )
 
+ return data;
+},
+
+
+getCertificates: async () => {
+  console.log("Inside getCertificates");
+
+  try {
+    const response = await api.get("/student/certificates");
+
+    console.log("Full Response:", response);
+    console.log("Data:", response.data);
+
+    return response.data;
+  } catch (error) {
+    console.log("API Error:", error);
+    console.log("Status:", error.response?.status);
+    console.log("Response:", error.response?.data);
+
+    throw error;
+  }
+},
   /*
   =====================================
   COMPLAINTS

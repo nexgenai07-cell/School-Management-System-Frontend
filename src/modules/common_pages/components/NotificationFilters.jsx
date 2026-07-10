@@ -8,6 +8,7 @@ const NotificationFilters = ({
   role,
   filter,
   setFilter,
+  unreadCount,
 }) => {
   const dispatch = useDispatch();
 
@@ -54,14 +55,17 @@ const NotificationFilters = ({
       </div>
 
       {/* Mark All Read */}
-      <Button
-        variant="secondary"
-        tone={role}
-        size="sm"
-        onClick={handleMarkAllRead}
-      >
-        ✓ Mark All as Read
-      </Button>
+  <Button
+  variant="secondary"
+  tone={role}
+  size="sm"
+  onClick={handleMarkAllRead}
+  disabled={unreadCount === 0}
+>
+  {unreadCount === 0
+    ? "✓ All Read"
+    : "✓ Mark All as Read"}
+</Button>
     </div>
   );
 };

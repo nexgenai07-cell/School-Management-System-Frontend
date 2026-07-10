@@ -1,7 +1,7 @@
 // src/services/parentService.js
 
 import * as mockData from "../mocks/parentMock";
-
+import api from "./api";
 const parentService = {
   /*
   =====================================================
@@ -10,7 +10,10 @@ const parentService = {
   =====================================================
   */
 
-  getProfile: async () => mockData.parentProfile,
+ getProfile: async () => {
+  const { data } = await api.get("/auth/profile");
+  return data;
+},
 
   /*
   =====================================================
@@ -24,8 +27,10 @@ const parentService = {
   =====================================================
   */
 
-  getParentLinks: async () => mockData.parentLinks,
-
+  getParentLinks: async () =>{
+  const { data } = await api.get("/parent-links/");
+  return data;
+},
   getParentLinkById: async (id) =>
     mockData.parentLinks.find(
       (item) => item.id === Number(id)
@@ -65,7 +70,10 @@ const parentService = {
   =====================================================
   */
 
-  getAttendance: async () => mockData.attendance,
+  getAttendance: async () => {
+  const { data } = await api.get("/parent/attendance");
+  return data;
+},
 
   getAttendanceById: async (id) =>
     mockData.attendance.find(
@@ -80,7 +88,10 @@ const parentService = {
   =====================================================
   */
 
-  getGrades: async () => mockData.grades,
+  getGrades: async () => {
+  const { data } = await api.get("/parent/grades");
+  return data;
+},
 
   getGradeById: async (id) =>
     mockData.grades.find(
@@ -96,7 +107,10 @@ const parentService = {
   */
 
   getBehaviorLogs: async () =>
-    mockData.behaviorLogs,
+   {
+  const { data } = await api.get("/parent/behavior-logs");
+  return data;
+},
 
   getBehaviorLogById: async (id) =>
     mockData.behaviorLogs.find(
@@ -111,7 +125,10 @@ const parentService = {
   =====================================================
   */
 
-  getFees: async () => mockData.fees,
+  getFees: async () =>{
+  const { data } = await api.get("/parent/fees");
+  return data;
+},
 
   getFeeById: async (id) =>
     mockData.fees.find(
@@ -126,7 +143,10 @@ const parentService = {
   =====================================================
   */
 
-  getPayments: async () => mockData.payments,
+  getPayments: async () => {
+  const { data } = await api.get("/parent/payments");
+  return data;
+},
 
   getPaymentById: async (id) =>
     mockData.payments.find(
@@ -141,7 +161,10 @@ const parentService = {
   */
 
   getNotifications: async () =>
-    mockData.notifications,
+   {
+  const { data } = await api.get("/parent/notifications");
+  return data;
+},
 
   /*
   =====================================================
@@ -152,22 +175,6 @@ const parentService = {
   =====================================================
   */
 
-  getComplaints: async () =>
-    mockData.complaints,
-
-  getComplaintById: async (id) =>
-    mockData.complaints.find(
-      (item) => item.id === Number(id)
-    ),
-
-  createComplaint: async (data) => ({
-    id: Date.now(),
-    complaint_type: data.complaint_type,
-    description: data.description,
-    status: "Open",
-    created_at: new Date().toISOString(),
-  }),
-
   /*
   =====================================================
   Events
@@ -176,12 +183,11 @@ const parentService = {
   =====================================================
   */
 
-  getEvents: async () => mockData.events,
+  getEvents: async () => {
+  const { data } = await api.get("/parent/events/participations");
+  return data;
+},
 
-  getEventById: async (id) =>
-    mockData.events.find(
-      (item) => item.id === Number(id)
-    ),
 
   /*
   =====================================================
@@ -192,7 +198,11 @@ const parentService = {
   */
 
   getCertificates: async () =>
-    mockData.certificates,
+    {
+  const { data } = await api.get("/parent/certificates");
+  console.log(data);
+  return data;
+},
 
   getCertificateById: async (id) =>
     mockData.certificates.find(

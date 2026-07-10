@@ -57,6 +57,7 @@ Flow: GET /auth/profile with Bearer token -> Dispatch setUser
 export const fetchUserProfile = createAsyncThunk(
   "auth/fetchUserProfile",
   async (_, { dispatch, getState }) => {
+    // eslint-disable-next-line no-useless-catch
     try {
       // Get the current access token from Redux state
       const { accessToken } = getState().auth;
@@ -94,7 +95,7 @@ export const fetchUserProfile = createAsyncThunk(
       throw error;
     }
   }
-);
+  );
 
 /*
 ============================================
@@ -159,6 +160,7 @@ Flow: POST /auth/password-reset -> Success -> User enters OTP
 export const forgotPassword = createAsyncThunk(
   "auth/forgotPassword",
   async ({ email }, { dispatch }) => {
+    // eslint-disable-next-line no-useless-catch
     try {
       const response = await fetch(`${API_BASE}/auth/password-reset`, {
         method: "POST",
@@ -196,6 +198,7 @@ Flow: POST /auth/password-reset/confirm -> Success -> Redirect to login
 export const resetPasswordConfirm = createAsyncThunk(
   "auth/resetPasswordConfirm",
   async ({ email, token, new_password }, { dispatch }) => {
+    // eslint-disable-next-line no-useless-catch
     try {
       const response = await fetch(`${API_BASE}/auth/password-reset/confirm`, {
         method: "POST",
