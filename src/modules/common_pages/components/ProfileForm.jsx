@@ -136,23 +136,17 @@ const ProfileForm = ({ role }) => {
   Submit
   =====================================================
   */
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  if (!validate()) return;
 
-    if (!validate()) return;
-
-    await dispatch(
-      updateProfile({
-        role,
-        profileData: {
-          full_name: formData.full_name,
-          phone_number:
-            formData.phone_number,
-        },
-      })
-    );
-  };
+  await dispatch(
+  updateProfile({
+    full_name: formData.full_name,
+  })
+);
+};
  const primaryColor = `var(--color-${role?.toLowerCase() || 'brand'}-primary)`;
   const lightColor = `var(--color-${role?.toLowerCase() || 'brand'}-light)`;
 

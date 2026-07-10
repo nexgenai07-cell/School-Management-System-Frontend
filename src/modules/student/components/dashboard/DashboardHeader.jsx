@@ -90,13 +90,13 @@ const DashboardHeader = () => {
       ========================================== */}
 
       <ProfileCard
-        name={profile.full_name}
-        role="Student"
-        email={profile.email}
-        subtitle={`${profile.class_name} • Section ${profile.section}`}
-        meta1={`Roll No: ${profile.roll_number}`}
-        meta2={`Scholarship ${profile.scholarship_percentage}%`}
-      />
+  name={profile.full_name}
+  role={profile.role_name}
+  email={profile.email}
+  subtitle={`User ID: ${profile.id}`}
+  meta1={`Status: ${profile.status}`}
+  meta2={`Joined: ${new Date(profile.created_at).toLocaleString()}`}
+/>
 
     </div>
   );

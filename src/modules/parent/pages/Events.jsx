@@ -12,6 +12,7 @@ import ParticipationList from "../components/events/ParticipationList";
 import {
   fetchParentLinks,
   fetchEvents,
+  fetchCertificates,
 } from "../../../store/parentThunks";
 
 const Events = () => {
@@ -22,11 +23,11 @@ const Events = () => {
   Fetch Data
   =====================================================
   */
-
-  useEffect(() => {
-    dispatch(fetchParentLinks());
-    dispatch(fetchEvents());
-  }, [dispatch]);
+useEffect(() => {
+  dispatch(fetchParentLinks());
+  dispatch(fetchEvents());
+  dispatch(fetchCertificates());
+}, [dispatch]);
 
   return (
     <div className="space-y-8">

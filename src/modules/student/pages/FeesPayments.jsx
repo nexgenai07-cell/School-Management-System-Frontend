@@ -13,6 +13,7 @@ import FeeScheduleTable from "../components/FeeScheduleTable";
 import PaymentPanel from "../components/PaymentPanel";
 import PaymentHistory from "../components/PaymentHistory";
 import FeeDetailsModal from "../components/FeeDetailsModal";
+import StripePaymentModal from "../../../modules/stripe/StripePaymentModal";
 
 import {
   fetchFees,
@@ -41,7 +42,11 @@ function FeesPayments() {
     detailsOpen,
     setDetailsOpen,
   ] = useState(false);
+const [clientSecret, setClientSecret] =
+  useState("");
 
+const [showStripe, setShowStripe] =
+  useState(false);
   /*
   =====================================
   Initial Load
@@ -88,25 +93,35 @@ function FeesPayments() {
   Stripe Payment
   =====================================
   */
+const handlePayment = async () => {
+  try {
+    const response = await dispatch(
+      createPaymentIntent({
+        fee_id: selectedFee.id,
+      })
+    ).unwrap();
 
-  const handlePayment = async (fee) => {
-    try {
-        const response = await dispatch(
-            createPaymentIntent(fee.id)
-        ).unwrap();
+    console.log("Payment Intent:", response);
 
-        console.log(response);
-
-        alert("Payment Successful");
-
-        dispatch(fetchFees());
-        dispatch(fetchPayments());
-
-    } catch (error) {
-        console.error(error);
+    if (!response.client_secret) {
+      throw new Error(
+        "No client_secret returned from backend."
+      );
     }
-};
 
+    setClientSecret(response.client_secret);
+    setShowStripe(true);
+
+  } catch (error) {
+    console.error(error);
+
+    alert(
+      error?.response?.data?.detail ||
+      error?.message ||
+      "Unable to initialize payment."
+    );
+  }
+};
   /*
   =====================================
   Loading
@@ -122,6 +137,7 @@ function FeesPayments() {
   }
 
   return (
+    <>
     <div className="space-y-8">
 
       {/* =====================================
@@ -253,6 +269,24 @@ function FeesPayments() {
       />
 
     </div>
+    <StripePaymentModal
+  open={showStripe}
+  clientSecret={clientSecret}
+  onClose={() => {
+    setShowStripe(false);
+    setClientSecret("");
+  }}
+  onSuccess={() => {
+    setShowStripe(false);
+    setClientSecret("");
+
+    dispatch(fetchFees());
+    dispatch(fetchPayments());
+
+    alert("Payment Successful");
+  }}
+/>
+</>
   );
 }
 

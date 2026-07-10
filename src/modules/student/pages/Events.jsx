@@ -9,23 +9,19 @@ import {
 } from "react-redux";
 
 import {
-  Calendar,
   CalendarDays,
-  Clock3,
-  MapPin,
-  Trophy,
   Users,
   Award,
   X,
-  Info,
   ArrowUpRight,
-  Sparkles,
-  Timer,
+  Trophy,
+  ScrollText,
+  Hash,
 } from "lucide-react";
 
 import {
-  fetchEvents,
   fetchParticipations,
+  fetchCertificates,
 } from "../../../store/studentThunks";
 
 import Card from "../../../components/ui/card/Card";
@@ -33,138 +29,57 @@ import Badge from "../../../components/ui/Badge/Badge";
 import Button from "../../../components/ui/Button/Button";
 
 /* ==========================================================
-   Utilities
+   Design notes
+   ----------------------------------------------------------
+   This page is a personal record of a student's history —
+   part timeline, part awards case. The visual language leans
+   into that: participation entries read like numbered ticket
+   stubs (they ARE chronological, so numbering earns its keep),
+   and certificates read like small sealed credentials, with a
+   circular seal mark and a formal, ledger-like frame. Headings
+   use a serif for a slightly ceremonial tone; everything else
+   stays quiet so the two signature card types can carry the
+   page.
    ========================================================== */
 
 const TONE_STYLES = {
-  indigo: "bg-indigo-500",
-  amber: "bg-amber-500",
-  emerald: "bg-emerald-500",
-  rose: "bg-rose-500",
+  indigo: { bg: "bg-indigo-500", text: "text-indigo-600", ring: "ring-indigo-500/15" },
+  amber: { bg: "bg-amber-500", text: "text-amber-600", ring: "ring-amber-500/15" },
+  emerald: { bg: "bg-emerald-500", text: "text-emerald-600", ring: "ring-emerald-500/15" },
+  rose: { bg: "bg-rose-500", text: "text-rose-600", ring: "ring-rose-500/15" },
 };
 
-function StatTile({ label, value, subtext, icon: Icon, tone = "indigo" }) {
-  return (
-    <div
-      className="
-        rounded-2xl
-        border
-        border-student-border/60
-        bg-surface
-        p-6
-        shadow-sm
-        transition-shadow
-        duration-300
-        hover:shadow-md
-      "
-    >
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-text-muted">
-            {label}
-          </p>
-          <p className="mt-3 text-3xl font-bold tracking-tight text-text-primary">
-            {value}
-          </p>
-        </div>
+/* ==========================================================
+   Stat Tile — ledger-strip style: a quiet top rule, a large
+   serif numeral, and a small icon mark rather than a heavy
+   icon block.
+   ========================================================== */
 
-        <div
-          className={`
-            flex
-            h-11
-            w-11
-            shrink-0
-            items-center
-            justify-center
-            rounded-xl
-            text-white
-            shadow-md
-            ${TONE_STYLES[tone]}
-          `}
-        >
-          <Icon size={20} strokeWidth={2.25} />
+function StatTile({ label, value, subtext, icon: Icon, tone = "indigo" }) {
+  const t = TONE_STYLES[tone];
+
+  return (
+    <div className="group relative overflow-hidden rounded-2xl border border-student-border/60 bg-surface px-6 py-5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
+      <div className={`absolute inset-x-0 top-0 h-[3px] ${t.bg}`} />
+
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-text-muted">
+          {label}
+        </p>
+        <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${t.ring} ring-4 ${t.text} transition-transform duration-300 group-hover:scale-110`}>
+          <Icon size={14} strokeWidth={2.5} />
         </div>
       </div>
 
+      <p className="mt-3 font-serif text-4xl font-semibold tracking-tight text-text-primary">
+        {value}
+      </p>
+
       {subtext && (
-        <p className="mt-4 text-sm font-medium text-text-secondary">
+        <p className="mt-1.5 text-xs font-medium text-text-secondary">
           {subtext}
         </p>
       )}
-    </div>
-  );
-}
-
-const STATUS_STYLES = {
-  Registered: {
-    badge: "warning",
-    bar: "bg-amber-400",
-  },
-  Attended: {
-    badge: "success",
-    bar: "bg-emerald-400",
-  },
-};
-
-function getDaysUntil(dateStr) {
-  const diff =
-    new Date(dateStr).setHours(0, 0, 0, 0) -
-    new Date().setHours(0, 0, 0, 0);
-  return Math.round(diff / (1000 * 60 * 60 * 24));
-}
-
-function DaysBadge({ date }) {
-  const days = getDaysUntil(date);
-  if (days < 0) return null;
-
-  const label =
-    days === 0 ? "Today" : days === 1 ? "Tomorrow" : `In ${days} days`;
-
-  return (
-    <span
-      className="
-        inline-flex
-        items-center
-        gap-1.5
-        rounded-full
-        border
-        border-student-primary/20
-        bg-student-primary/10
-        px-3
-        py-1
-        text-xs
-        font-semibold
-        text-student-primary
-        backdrop-blur-sm
-      "
-    >
-      <Timer size={12} />
-      {label}
-    </span>
-  );
-}
-
-/* ==========================================================
-   Small presentational helpers
-   ========================================================== */
-
-function IconChip({ icon: Icon, className = "" }) {
-  return (
-    <div
-      className={`
-        flex
-        h-9
-        w-9
-        shrink-0
-        items-center
-        justify-center
-        rounded-xl
-        bg-student-primary/10
-        text-student-primary
-        ${className}
-      `}
-    >
-      <Icon size={17} strokeWidth={2.25} />
     </div>
   );
 }
@@ -174,7 +89,9 @@ function DetailRow({ icon: Icon, label, value }) {
 
   return (
     <div className="flex items-start gap-3">
-      <IconChip icon={Icon} />
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-student-primary/10 text-student-primary">
+        <Icon size={16} strokeWidth={2.25} />
+      </div>
       <div className="pt-0.5">
         <p className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">
           {label}
@@ -188,277 +105,149 @@ function DetailRow({ icon: Icon, label, value }) {
 }
 
 /* ==========================================================
-   Event card
+   Participation Card — a numbered ticket stub. The dashed
+   divider + notches nod to a real stub without overdoing it;
+   the number is genuine information (position in the history),
+   not decoration.
    ========================================================== */
 
-function EventCard({ event, onViewDetails }) {
+function ParticipationCard({ participation, index, onViewDetails }) {
+  const isWinner = Boolean(participation.position);
+
   return (
-    <Card
-      className="
-        group
-        relative
-        overflow-hidden
-        border-student-border/60
-        transition-all
-        duration-300
-        hover:-translate-y-1
-        hover:border-student-primary/30
-        hover:shadow-xl
-        hover:shadow-student-primary/10
-      "
-    >
-      {/* Top accent bar */}
-      <div
-        className="
-          absolute
-          inset-x-0
-          top-0
-          h-[3px]
-          bg-gradient-to-r
-          from-student-primary
-          via-student-primary/70
-          to-transparent
-          opacity-0
-          transition-opacity
-          duration-300
-          group-hover:opacity-100
-        "
-      />
+    <Card className="group relative overflow-visible border-student-border/60 transition-all duration-300 hover:border-student-primary/30 hover:shadow-md hover:shadow-student-primary/5">
+      <div className="flex items-stretch gap-0">
+        {/* Stub number panel */}
+        <div className="relative flex w-16 shrink-0 flex-col items-center justify-center border-r border-dashed border-student-border/70 pr-4">
+          <span className="font-serif text-2xl font-semibold text-student-primary/70">
+            {String(index + 1).padStart(2, "0")}
+          </span>
+          <span className="mt-0.5 text-[9px] font-semibold uppercase tracking-widest text-text-muted">
+            Entry
+          </span>
 
-      <div className="space-y-5">
-        {/* Eyebrow row */}
-        <div className="flex items-center justify-between gap-3">
-          <DaysBadge date={event.start_date} />
-          <Badge variant="secondary" className="shrink-0">
-            {event.event_type}
-          </Badge>
+          {/* notch cutouts, top and bottom */}
+          <span className="absolute -top-2 right-[-9px] h-4 w-4 rounded-full bg-page" />
+          <span className="absolute -bottom-2 right-[-9px] h-4 w-4 rounded-full bg-page" />
         </div>
 
-        {/* Title */}
-        <div>
-          <h3
-            className="
-              text-xl
-              font-bold
-              leading-snug
-              tracking-tight
-              text-text-primary
-              transition-colors
-              group-hover:text-student-primary
-            "
-          >
-            {event.title}
-          </h3>
+        <div className="flex flex-1 flex-col gap-4 pl-5 py-1 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h3 className="text-lg font-bold tracking-tight text-text-primary">
+              {participation.event_name}
+            </h3>
 
-          <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-text-secondary">
-            {event.description}
-          </p>
-        </div>
-
-        {/* Divider */}
-        <div className="h-px bg-student-border/60" />
-
-        {/* Details */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-3">
-            <IconChip icon={CalendarDays} />
-            <span className="text-sm font-medium text-text-primary">
-              {new Date(event.start_date).toLocaleDateString(undefined, {
-                weekday: "short",
-                month: "short",
-                day: "numeric",
-              })}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <IconChip icon={Clock3} />
-            <span className="text-sm font-medium text-text-primary">
-              {new Date(event.start_date).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <IconChip icon={MapPin} />
-            <span className="text-sm font-medium text-text-primary">
-              {event.venue}
-            </span>
-          </div>
-        </div>
-
-        {/* Registration */}
-        {event.registration_required && (
-          <div
-            className="
-              flex
-              items-center
-              justify-between
-              rounded-xl
-              border
-              border-student-primary/15
-              bg-gradient-to-br
-              from-student-light
-              to-student-primary/5
-              p-4
-            "
-          >
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-student-text">
-                Registration closes
-              </p>
-              <p className="mt-1 text-sm font-semibold text-text-primary">
-                {new Date(
-                  event.registration_deadline
-                ).toLocaleDateString(undefined, {
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-text-secondary">
+              <span className="flex items-center gap-1.5">
+                <CalendarDays size={14} className="text-text-muted" />
+                {new Date(participation.event_date).toLocaleDateString(undefined, {
                   month: "short",
                   day: "numeric",
                   year: "numeric",
                 })}
-              </p>
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Users size={14} className="text-text-muted" />
+                {participation.role}
+              </span>
             </div>
-            <Sparkles size={18} className="text-student-primary/60" />
           </div>
-        )}
 
-        <Button
-          tone="student"
-          fullWidth
-          onClick={() => onViewDetails(event)}
-          className="group/btn"
-        >
-          <span className="flex items-center justify-center gap-2">
-            View Details
-            <ArrowUpRight
-              size={16}
-              className="transition-transform duration-200 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5"
-            />
-          </span>
-        </Button>
+          <div className="flex flex-wrap items-center gap-2.5">
+            {isWinner && (
+              <Badge variant="success" className="gap-1">
+                <Trophy size={12} />
+                {participation.position}
+              </Badge>
+            )}
+
+            {participation.certificate && (
+              <Badge variant="info" className="gap-1">
+                <Award size={12} />
+                Certificate earned
+              </Badge>
+            )}
+
+            <Button
+              variant="outline"
+              tone="student"
+              size="sm"
+              onClick={() => onViewDetails(participation)}
+              className="group/btn text-xs py-1.5 px-3 transition-all duration-200 hover:bg-student-primary hover:text-white"
+            >
+              <span className="flex items-center gap-1.5">
+                Details
+                <ArrowUpRight size={13} className="transition-transform duration-200 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5" />
+              </span>
+            </Button>
+          </div>
+        </div>
       </div>
     </Card>
   );
 }
 
 /* ==========================================================
-   Participation card
+   Certificate Card — a small sealed credential: a circular
+   "seal" mark instead of a plain icon tile, a hairline inset
+   frame, and the citation set in serif italics like an actual
+   certificate would print it.
    ========================================================== */
 
-function ParticipationCard({ participation }) {
-  const status = STATUS_STYLES[participation.attendance_status];
-
+function CertificateCard({ certificate, onViewDetails }) {
   return (
-    <Card className="relative overflow-hidden border-student-border/60">
-      {/* Status accent bar */}
-      {status && (
-        <div
-          className={`absolute inset-y-0 left-0 w-1 ${status.bar}`}
-        />
-      )}
+    <Card className="group relative overflow-hidden border-student-border/60 transition-all duration-300 hover:-translate-y-1 hover:border-student-primary/30 hover:shadow-lg hover:shadow-student-primary/[0.06]">
+      <div className="pointer-events-none absolute inset-2 rounded-xl border border-dashed border-student-primary/15" />
 
-      <div className="flex flex-col gap-5 pl-2 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex items-start gap-4">
-          <div
-            className="
-              hidden
-              h-11
-              w-11
-              shrink-0
-              items-center
-              justify-center
-              rounded-full
-              bg-student-primary/10
-              text-sm
-              font-bold
-              text-student-primary
-              sm:flex
-            "
-          >
-            {participation.event_title?.charAt(0) ?? "E"}
+      <div className="relative flex flex-col gap-4 p-1">
+        <div className="flex items-start justify-between">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-student-primary/25 bg-student-primary/5 text-student-primary transition-transform duration-300 group-hover:rotate-12">
+            <Award size={20} strokeWidth={2} />
           </div>
 
-          <div>
-            <h3 className="text-lg font-bold tracking-tight text-text-primary">
-              {participation.event_title}
-            </h3>
-
-            <p className="mt-1 flex items-center gap-1.5 text-sm text-text-secondary">
-              <MapPin size={13} className="text-text-muted" />
-              {participation.venue}
-            </p>
-
-            <p className="mt-2 text-xs font-medium text-text-muted">
-              Registered on{" "}
-              {new Date(
-                participation.registration_date
-              ).toLocaleDateString(undefined, {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              })}
-            </p>
-          </div>
+          <Badge variant="secondary" className="capitalize text-[10px] py-0.5 px-2">
+            {certificate.cert_type || "Merit"}
+          </Badge>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          {participation.attendance_status === "Registered" && (
-            <Badge variant="warning">Registered</Badge>
-          )}
+        <div>
+          <h3 className="font-serif text-lg font-semibold tracking-tight text-text-primary">
+            Certificate of Recognition
+          </h3>
+          <p className="mt-1.5 line-clamp-2 font-serif text-sm italic leading-6 text-text-secondary">
+            "{certificate.generated_text}"
+          </p>
+        </div>
 
-          {participation.attendance_status === "Attended" && (
-            <Badge variant="success">Attended</Badge>
-          )}
+        <div className="flex items-center justify-between border-t border-student-border/50 pt-3">
+          <span className="flex items-center gap-1 text-[11px] font-mono tracking-wide text-text-muted">
+            <Hash size={11} />
+            {certificate.id}
+          </span>
 
-          {participation.result_position && (
-            <Badge variant="secondary">
-              🏆 {participation.result_position}
-            </Badge>
-          )}
-
-          {participation.certificate_no && (
-            <Badge variant="info">🎓 Certificate</Badge>
-          )}
+          <Button
+            variant="outline"
+            tone="student"
+            size="sm"
+            onClick={() => onViewDetails(certificate)}
+            className="group/btn text-xs py-1.5 px-3 transition-all duration-200 hover:bg-student-primary hover:text-white"
+          >
+            <span className="flex items-center gap-1">
+              View
+              <ArrowUpRight size={13} className="transition-transform duration-200 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5" />
+            </span>
+          </Button>
         </div>
       </div>
-
-      {participation.certificate_no && (
-        <div
-          className="
-            mt-5
-            flex
-            items-center
-            justify-between
-            rounded-xl
-            border
-            border-student-primary/15
-            bg-gradient-to-br
-            from-student-light
-            to-student-primary/5
-            p-4
-          "
-        >
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-student-text">
-              Certificate Number
-            </p>
-            <p className="mt-1 font-mono text-sm font-semibold tracking-wide text-text-primary">
-              {participation.certificate_no}
-            </p>
-          </div>
-          <Award size={20} className="text-student-primary/60" />
-        </div>
-      )}
     </Card>
   );
 }
 
 /* ==========================================================
-   Event details modal
+   Details Modal
    ========================================================== */
 
-function EventDetailsModal({ event, onClose }) {
+function EventDetailsModal({ item, onClose }) {
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Escape") onClose();
@@ -469,352 +258,276 @@ function EventDetailsModal({ event, onClose }) {
 
     return () => {
       document.body.style.overflow = "";
-      document.removeEventListener(
-        "keydown",
-        handleKeyDown
-      );
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, [onClose]);
 
-  if (!event) return null;
+  if (!item) return null;
+
+  const isCertificateType = Object.prototype.hasOwnProperty.call(item, "generated_text");
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm animate-fadeIn"
       role="dialog"
       aria-modal="true"
     >
-      <div
-        className="absolute inset-0"
-        onClick={onClose}
-      />
+      <div className="absolute inset-0" onClick={onClose} />
 
-      <div className="relative z-10 w-full max-w-xl overflow-hidden rounded-2xl bg-white shadow-2xl">
-
+      <div className="relative z-10 w-full max-w-xl overflow-hidden rounded-2xl bg-white shadow-2xl animate-scaleUp">
         {/* Header */}
-
         <div className="flex items-start justify-between bg-student-primary px-6 py-5 text-white">
-
           <div>
-            <div className="mb-2 flex gap-2">
-              <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-medium">
-                {event.event_type}
+            <div className="mb-2 flex flex-wrap gap-2">
+              <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-medium uppercase tracking-wide">
+                {isCertificateType ? `${item.cert_type || "Merit"} award` : `Role: ${item.role || "Participant"}`}
               </span>
-
-              {event.registration_required && (
-                <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-medium">
-                  Registration Required
+              {!isCertificateType && item.position && (
+                <span className="flex items-center gap-1 rounded-full bg-amber-400/30 px-3 py-1 text-xs font-semibold text-amber-100">
+                  <Trophy size={12} />
+                  {item.position}
                 </span>
               )}
             </div>
 
-            <h2 className="text-2xl font-bold">
-              {event.title}
+            <h2 className="font-serif text-2xl font-semibold">
+              {isCertificateType ? "Certificate Verification" : item.event_name}
             </h2>
           </div>
 
           <button
             onClick={onClose}
-            className="rounded-lg p-2 transition hover:bg-white/20"
+            aria-label="Close details"
+            className="rounded-lg p-2 transition-colors hover:bg-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
           >
             <X size={18} />
           </button>
         </div>
 
         {/* Body */}
-
         <div className="space-y-6 p-6">
-
           <div>
-            <h3 className="mb-2 text-sm font-semibold uppercase text-text-secondary">
-              Description
+            <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-text-secondary">
+              {isCertificateType ? "Citation" : "Summary"}
             </h3>
-
-            <p className="leading-7 text-text-secondary">
-              {event.description}
+            <p className={`leading-7 text-text-secondary bg-slate-50 p-4 rounded-xl border border-dashed border-student-border/60 ${isCertificateType ? "font-serif italic" : ""}`}>
+              {isCertificateType
+                ? item.generated_text
+                : "You registered for this event and your participation was confirmed and recorded."}
             </p>
           </div>
 
-          <div className="grid gap-5 md:grid-cols-2">
+          <div className="grid gap-5 sm:grid-cols-2">
+            <DetailRow
+              icon={ScrollText}
+              label="Record ID"
+              value={`#${item.id}`}
+            />
 
             <DetailRow
               icon={CalendarDays}
-              label="Date"
-              value={new Date(
-                event.start_date
-              ).toLocaleDateString()}
-            />
-
-            <DetailRow
-              icon={Clock3}
-              label="Time"
-              value={new Date(
-                event.start_date
-              ).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
+              label={isCertificateType ? "Issued" : "Event date"}
+              value={new Date(item.created_at || item.event_date).toLocaleDateString(undefined, {
+                month: "long",
+                day: "numeric",
+                year: "numeric",
               })}
             />
 
-            <DetailRow
-              icon={MapPin}
-              label="Venue"
-              value={event.venue}
-            />
-
-            {event.registration_required && (
+            {!isCertificateType && (
               <DetailRow
-                icon={Calendar}
-                label="Registration Deadline"
-                value={new Date(
-                  event.registration_deadline
-                ).toLocaleDateString()}
+                icon={Users}
+                label="Role"
+                value={item.role}
               />
             )}
-
           </div>
-
         </div>
 
         {/* Footer */}
-
-        <div className="flex justify-end gap-3 border-t px-6 py-4">
-
-          <Button
-            variant="outline"
-            tone="student"
-            onClick={onClose}
-          >
+        <div className="flex justify-end gap-3 border-t border-student-border/60 px-6 py-4">
+          <Button variant="outline" tone="student" onClick={onClose} className="transition-all hover:bg-slate-100">
             Close
           </Button>
-
-          {event.registration_required && (
-            <Button tone="student">
-              Register
-            </Button>
-          )}
-
         </div>
-
       </div>
     </div>
   );
 }
 
 /* ==========================================================
-   Main component
+   Empty State — shared, with copy tuned to which section it's
+   representing.
+   ========================================================== */
+
+function EmptyState({ icon: Icon, title, description }) {
+  return (
+    <Card className="transition-all hover:shadow-md">
+      <div className="py-16 text-center">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border-2 border-dashed border-student-primary/30 text-student-primary">
+          <Icon size={26} strokeWidth={1.75} />
+        </div>
+        <h3 className="mt-5 text-lg font-semibold text-text-primary">
+          {title}
+        </h3>
+        <p className="mx-auto mt-2 max-w-sm text-sm text-text-secondary">
+          {description}
+        </p>
+      </div>
+    </Card>
+  );
+}
+
+/* ==========================================================
+   Main View
    ========================================================== */
 
 function Events() {
   const dispatch = useDispatch();
 
-  const { events, participations, loading } = useSelector(
-    (state) => state.student
-  );
+  const {
+    participations = [],
+    certificates = [],
+    loading,
+  } = useSelector((state) => state.student);
 
-  const [selectedEvent, setSelectedEvent] = useState(null);
-
-  /*
-  ========================================
-  Fetch Data
-  ========================================
-  */
+  const [selectedItem, setSelectedItem] = useState(null);
 
   useEffect(() => {
-    dispatch(fetchEvents());
     dispatch(fetchParticipations());
+    dispatch(fetchCertificates());
   }, [dispatch]);
 
-  /*
-  ========================================
-  Statistics
-  ========================================
-  */
-
-  const registeredEvents = participations.filter(
-    (event) => event.attendance_status === "Registered"
-  );
-
-  const attendedEvents = participations.filter(
-    (event) => event.attendance_status === "Attended"
-  );
-
-  const certificates = participations.filter(
-    (event) => event.certificate_no
-  );
-
-  const achievements = participations.filter(
-    (event) => event.result_position
-  );
-
-  /*
-  ========================================
-  Loading State
-  ========================================
-  */
+  const totalRegistered = participations.length;
+  const certificatesList = certificates || [];
+  const achievementsCount = participations.filter((item) => item.position).length;
 
   if (loading) {
     return (
       <div className="flex h-[70vh] items-center justify-center">
         <div className="relative h-14 w-14">
           <div className="absolute inset-0 animate-spin rounded-full border-4 border-student-border border-t-student-primary" />
-          <div className="absolute inset-0 animate-ping rounded-full border border-student-primary/20" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-10">
-      {/* ====================================
-          Header
-      ==================================== */}
-
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-student-primary">
-            <Sparkles size={13} />
-            Student Life
+    <div className="space-y-10 animate-fadeIn">
+      {/* Header */}
+      <div className="flex flex-col gap-4 border-b border-student-border/60 pb-8 sm:flex-row sm:items-end sm:justify-between">
+        <div className="space-y-2">
+          <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-student-primary">
+            <ScrollText size={13} />
+            Your record
           </span>
 
-          <h1 className="mt-2 text-3xl font-bold tracking-tight text-text-primary">
-            Events &amp; Activities
+          <h1 className="font-serif text-4xl font-semibold tracking-tight text-text-primary">
+            Participations &amp; Credentials
           </h1>
 
-          <p className="mt-2 max-w-xl text-text-secondary">
-            Discover upcoming events and track your participation history.
+          <p className="max-w-xl text-sm text-text-secondary">
+            Every event you've taken part in, and every certificate you've earned along the way.
           </p>
         </div>
       </div>
 
-      {/* ====================================
-          Statistics
-      ==================================== */}
-
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+      {/* Stats */}
+      <div className="grid gap-5 sm:grid-cols-3">
         <StatTile
-          label="Upcoming Events"
-          value={events.length}
-          subtext="Scheduled this term"
-          icon={Calendar}
-          tone="indigo"
-        />
-
-        <StatTile
-          label="Registered"
-          value={registeredEvents.length}
-          subtext="Events joined"
+          label="Events joined"
+          value={totalRegistered}
+          subtext="Total registrations"
           icon={Users}
           tone="amber"
         />
 
         <StatTile
           label="Certificates"
-          value={certificates.length}
+          value={certificatesList.length}
           subtext="Earned so far"
           icon={Award}
           tone="emerald"
         />
 
         <StatTile
-          label="Achievements"
-          value={achievements.length}
-          subtext="Podium finishes"
+          label="Podium finishes"
+          value={achievementsCount}
+          subtext="Ranked results"
           icon={Trophy}
           tone="rose"
         />
       </div>
 
-      {/* ====================================
-          Upcoming Events
-      ==================================== */}
-
+      {/* Participations */}
       <div className="space-y-5">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold tracking-tight text-text-primary">
-            Upcoming Events
+          <h2 className="font-serif text-2xl font-semibold tracking-tight text-text-primary">
+            Participation History
           </h2>
-          {events.length > 0 && (
-            <span className="text-sm font-medium text-text-muted">
-              {events.length} {events.length === 1 ? "event" : "events"}
+          {participations.length > 0 && (
+            <span className="text-sm font-medium text-text-muted bg-slate-100 px-2.5 py-0.5 rounded-full">
+              {participations.length} {participations.length === 1 ? "entry" : "entries"}
             </span>
           )}
         </div>
 
-        {events.length === 0 ? (
-          <Card>
-            <div className="py-16 text-center">
-              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-student-primary/10">
-                <Calendar size={32} className="text-student-primary" />
-              </div>
-
-              <h3 className="mt-5 text-xl font-semibold text-text-primary">
-                No Upcoming Events
-              </h3>
-
-              <p className="mt-2 text-text-secondary">
-                There are no upcoming events at the moment.
-              </p>
-            </div>
-          </Card>
-        ) : (
-          <div className="grid gap-6 lg:grid-cols-2">
-            {events.map((event) => (
-              <EventCard
-                key={event.id}
-                event={event}
-                onViewDetails={setSelectedEvent}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* ====================================
-          My Participation
-      ==================================== */}
-
-      <div className="space-y-5">
-        <h2 className="text-2xl font-bold tracking-tight text-text-primary">
-          My Participation
-        </h2>
-
         {participations.length === 0 ? (
-          <Card>
-            <div className="py-16 text-center">
-              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-student-primary/10">
-                <Users size={32} className="text-student-primary" />
-              </div>
-
-              <h3 className="mt-5 text-xl font-semibold text-text-primary">
-                No Participation History
-              </h3>
-
-              <p className="mt-2 text-text-secondary">
-                You have not participated in any events yet.
-              </p>
-            </div>
-          </Card>
+          <EmptyState
+            icon={Users}
+            title="No events yet"
+            description="Once you register for an event, it will show up here as a numbered entry in your history."
+          />
         ) : (
-          <div className="space-y-4">
-            {participations.map((participation) => (
+          <div className="space-y-3">
+            {participations.map((item, i) => (
               <ParticipationCard
-                key={participation.id}
-                participation={participation}
+                key={`participation-${item.id}`}
+                participation={item}
+                index={i}
+                onViewDetails={setSelectedItem}
               />
             ))}
           </div>
         )}
       </div>
 
-      {/* ====================================
-          Event Details Modal
-      ==================================== */}
+      {/* Certificates */}
+      <div className="space-y-5">
+        <div className="flex items-center justify-between">
+          <h2 className="font-serif text-2xl font-semibold tracking-tight text-text-primary">
+            Earned Certificates
+          </h2>
+          {certificatesList.length > 0 && (
+            <span className="text-sm font-medium text-text-muted bg-slate-100 px-2.5 py-0.5 rounded-full">
+              {certificatesList.length} {certificatesList.length === 1 ? "certificate" : "certificates"}
+            </span>
+          )}
+        </div>
 
-      {selectedEvent && (
+        {certificatesList.length === 0 ? (
+          <EmptyState
+            icon={Award}
+            title="No certificates yet"
+            description="Certificates appear here as soon as one is issued for an event you've completed."
+          />
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2">
+            {certificatesList.map((cert) => (
+              <CertificateCard
+                key={`cert-${cert.id}`}
+                certificate={cert}
+                onViewDetails={setSelectedItem}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {selectedItem && (
         <EventDetailsModal
-          event={selectedEvent}
-          onClose={() => setSelectedEvent(null)}
+          item={selectedItem}
+          onClose={() => setSelectedItem(null)}
         />
       )}
     </div>

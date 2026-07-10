@@ -106,7 +106,7 @@ const AttendanceTable = () => {
   ];
 
   return (
-    <Card className="h-full">
+    <Card className="h-[600px]">
       {/* ==========================================
           Header
       ========================================== */}

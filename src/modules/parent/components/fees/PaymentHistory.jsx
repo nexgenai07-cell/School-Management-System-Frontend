@@ -88,7 +88,7 @@ const PaymentHistory = () => {
     <Card hover={false}>
       {/* Header */}
 
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex items-center justify-between z-0">
 
         <div>
 

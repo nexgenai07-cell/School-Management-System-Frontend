@@ -1,32 +1,33 @@
-// src/modules/student/components/dashboard/UpcomingEvents.jsx
+// src/modules/student/components/dashboard/YourParticipations.jsx
 
 import { useMemo } from "react";
 import { useSelector } from "react-redux";
-import { CalendarDays, MapPin, Clock3, Ticket,ArrowRight } from "lucide-react";
-// import Button from "../../../../components/ui/Button/Button";
+import { Link } from "react-router-dom";
+import { CalendarDays, Users, Trophy, Award, ArrowRight } from "lucide-react";
 import Card from "../../../../components/ui/Card/Card";
 import Badge from "../../../../components/ui/Badge/Badge";
-// import { Link } from "react-router-dom";
+
 /* ------------------------------------------------------------------ */
-/*  Urgency helpers                                                     */
+/*  Adjust to match your router config                                */
+/* ------------------------------------------------------------------ */
+const EVENTS_PAGE_PATH = "/student/events";
+
+/* ------------------------------------------------------------------ */
+/*  Helpers                                                            */
 /* ------------------------------------------------------------------ */
 
-const URGENCY = {
-  danger: { colors: ["#FB7185", "#E11D48"] },
-  warning: { colors: ["#FBBF24", "#D97706"] },
-  info: { colors: ["#38BDF8", "#2563EB"] },
-  primary: { colors: ["#A78BFA", "#6366F1"] },
+const PLACEMENT_COLORS = {
+  1: ["#FBBF24", "#D97706"],
+  2: ["#CBD5E1", "#64748B"],
+  3: ["#FDBA74", "#C2410C"],
+  default: ["#A78BFA", "#6366F1"],
 };
 
-const getBadge = (date) => {
-  const today = new Date();
-  const eventDate = new Date(date);
-  const diff = Math.ceil((eventDate - today) / (1000 * 60 * 60 * 24));
-
-  if (diff <= 0) return { label: "Today", variant: "danger" };
-  if (diff === 1) return { label: "Tomorrow", variant: "warning" };
-  if (diff <= 7) return { label: "This Week", variant: "info" };
-  return { label: "Upcoming", variant: "primary" };
+const getPlacementColors = (position) => {
+  if (!position) return PLACEMENT_COLORS.default;
+  const match = String(position).match(/\d/);
+  const rank = match ? Number(match[0]) : null;
+  return PLACEMENT_COLORS[rank] || PLACEMENT_COLORS.default;
 };
 
 /** Ticket-style date tile — the month/day live in one glanceable
@@ -50,48 +51,56 @@ const DateTile = ({ date, colors }) => {
 /*  Main component                                                     */
 /* ------------------------------------------------------------------ */
 
-const UpcomingEvents = () => {
-  const { events = [] } = useSelector((state) => state.student);
+const YourParticipations = () => {
+  const { participations = [] } = useSelector((state) => state.student);
 
-  const upcomingEvents = useMemo(() => {
-    const today = new Date();
-    return events
-      .filter((event) => new Date(event.start_date) >= today)
-      .sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
-  }, [events]);
+  const recentParticipations = useMemo(() => {
+    return [...participations].sort(
+      (a, b) => new Date(b.event_date) - new Date(a.event_date)
+    );
+  }, [participations]);
 
   return (
     <Card hover={false}>
       {/* Header */}
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold">Upcoming Events</h2>
-        <p className="mt-1 text-sm text-text-secondary">
-          Stay informed about university activities and important events.
-        </p>
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-semibold">Your Participations</h2>
+          <p className="mt-1 text-sm text-text-secondary">
+            A quick look at the events you've taken part in.
+          </p>
+        </div>
+
+        <Link
+          to={EVENTS_PAGE_PATH}
+          className="group flex shrink-0 items-center gap-1 whitespace-nowrap text-sm font-medium text-student-primary transition-colors hover:text-student-primary/80"
+        >
+          View all
+          <ArrowRight
+            size={15}
+            className="transition-transform duration-200 group-hover:translate-x-0.5"
+          />
+        </Link>
       </div>
 
       {/* List */}
-      {upcomingEvents.length === 0 ? (
+      {recentParticipations.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-300 py-12 text-center">
-          <CalendarDays size={42} className="mx-auto text-slate-400" />
-          <p className="mt-4 font-medium">No Upcoming Events</p>
+          <Users size={42} className="mx-auto text-slate-400" />
+          <p className="mt-4 font-medium">No Participations Yet</p>
           <p className="mt-1 text-sm text-text-secondary">
-            Check back later for new announcements.
+            Events you register for will show up here.
           </p>
-       
         </div>
-        
       ) : (
         <div className="relative">
           <div className="events-scroll max-h-[520px] space-y-3 overflow-y-auto pr-1.5">
-            
-            {upcomingEvents.map((event, index) => {
-              const badge = getBadge(event.start_date);
-              const colors = URGENCY[badge.variant].colors;
+            {recentParticipations.map((participation, index) => {
+              const colors = getPlacementColors(participation.position);
 
               return (
                 <div
-                  key={event.id}
+                  key={participation.id}
                   style={{
                     borderLeftColor: colors[1],
                     animationDelay: `${Math.min(index, 8) * 60}ms`,
@@ -100,65 +109,47 @@ const UpcomingEvents = () => {
                              [animation-fill-mode:forwards] animate-[event-in_0.5s_ease-out]
                              transition-all duration-200 hover:-translate-y-0.5 hover:border-student-primary hover:shadow-sm"
                 >
-                  
                   {/* Title */}
                   <div className="mb-4 flex items-start justify-between gap-4">
                     <div className="flex items-start gap-3">
-                      <DateTile date={event.start_date} colors={colors} />
+                      <DateTile date={participation.event_date} colors={colors} />
                       <div>
                         <h3 className="text-lg font-semibold text-text-primary">
-                          {event.title}
+                          {participation.event_name}
                         </h3>
-                        <p className="mt-1 text-sm text-text-secondary">
-                          {event.event_type}
+                        <p className="mt-1 flex items-center gap-1.5 text-sm text-text-secondary">
+                          <Users size={14} />
+                          {participation.role}
                         </p>
                       </div>
                     </div>
 
-                    <Badge variant={badge.variant}>{badge.label}</Badge>
-                  </div>
-
-                  {/* Venue */}
-                  <div className="mb-2 flex items-center gap-2 text-sm text-text-secondary">
-                    <MapPin size={16} />
-                    {event.venue}
+                    {participation.position && (
+                      <Badge variant="success" className="gap-1 whitespace-nowrap">
+                        <Trophy size={12} />
+                        {participation.position}
+                      </Badge>
+                    )}
                   </div>
 
                   {/* Date */}
                   <div className="mb-2 flex items-center gap-2 text-sm text-text-secondary">
                     <CalendarDays size={16} />
-                    {new Date(event.start_date).toLocaleDateString("en-US", {
+                    {new Date(participation.event_date).toLocaleDateString("en-US", {
                       weekday: "short",
                       month: "short",
                       day: "numeric",
+                      year: "numeric",
                     })}
                   </div>
 
-                  {/* Time */}
-                  <div className="mb-4 flex items-center gap-2 text-sm text-text-secondary">
-                    <Clock3 size={16} />
-                    {new Date(event.start_date).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                    {" - "}
-                    {new Date(event.end_date).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </div>
-
-                  {/* Registration */}
-                  {event.registration_required && (
+                  {/* Certificate */}
+                  {participation.certificate && (
                     <div className="rounded-lg bg-student-light p-3">
                       <div className="flex items-center gap-2 text-sm">
-                        <Ticket size={16} className="text-student-primary" />
-                        <span className="font-medium">Registration Required</span>
+                        <Award size={16} className="text-student-primary" />
+                        <span className="font-medium">Certificate Earned</span>
                       </div>
-                      <p className="mt-1 text-xs text-text-secondary">
-                        Register before{" "}
-                        {new Date(event.registration_deadline).toLocaleDateString()}
-                      </p>
                     </div>
                   )}
                 </div>
@@ -166,7 +157,7 @@ const UpcomingEvents = () => {
             })}
           </div>
 
-          {upcomingEvents.length > 3 && (
+          {recentParticipations.length > 3 && (
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-white to-transparent" />
           )}
         </div>
@@ -202,4 +193,4 @@ const UpcomingEvents = () => {
   );
 };
 
-export default UpcomingEvents;
+export default YourParticipations;

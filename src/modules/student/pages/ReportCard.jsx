@@ -14,7 +14,7 @@ import {
 } from "recharts";
 
 import {
-  Download,
+
   GraduationCap,
   Trophy,
   Percent,
@@ -30,7 +30,7 @@ import { fetchProfile, fetchReportCard } from "../../../store/studentThunks";
 import PageHeader from "../../../components/global/PageHeader/PageHeader";
 import Card from "../../../components/ui/Card/Card";
 import Select from "../../../components/ui/Select/Select";
-import Button from "../../../components/ui/Button/Button";
+
 
 /* ------------------------------------------------------------------ */
 /*  Shared grade-tier system                                           */
@@ -92,6 +92,36 @@ const MetricCard = ({ label, value, footer, icon: Icon, colors }) => (
 );
 
 /* ------------------------------------------------------------------ */
+/*  Summary filter pills                                               */
+/*  Shares the same `examFilter` state as the chart and table below,   */
+/*  so picking an exam type here updates every section together.       */
+/* ------------------------------------------------------------------ */
+
+const SUMMARY_FILTERS = ["All", "Mid-Term", "Final", "Quiz", "Assignment"];
+
+const SummaryFilterBar = ({ value, onChange }) => (
+  <div className="flex flex-wrap items-center gap-2">
+    {SUMMARY_FILTERS.map((option) => {
+      const active = option === value;
+      return (
+        <button
+          key={option}
+          type="button"
+          onClick={() => onChange(option)}
+          className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all duration-200 ${
+            active
+              ? "border-student-primary bg-student-primary text-white shadow-sm"
+              : "border-student-border bg-white text-text-secondary hover:border-student-primary/40 hover:text-student-primary"
+          }`}
+        >
+          {option === "All" ? "All Exams" : option}
+        </button>
+      );
+    })}
+  </div>
+);
+
+/* ------------------------------------------------------------------ */
 /*  Chart sub-components                                               */
 /* ------------------------------------------------------------------ */
 
@@ -141,11 +171,13 @@ function ReportCard() {
     dispatch(fetchReportCard());
   }, [dispatch]);
 
+  // Single shared filter — drives the summary cards, the chart, and
+  // the table together instead of drifting independently.
   const [examFilter, setExamFilter] = useState("All");
 
   const examOptions = [
     { label: "All Exams", value: "All" },
-    { label: "Mid Term", value: "Mid Term" },
+    { label: "Mid Term", value: "Mid-Term" },
     { label: "Final", value: "Final" },
     { label: "Quiz", value: "Quiz" },
     { label: "Assignment", value: "Assignment" },
@@ -158,36 +190,75 @@ function ReportCard() {
   }, [reportCard, examFilter]);
 
   const chartData = useMemo(() => {
-    return filteredGrades.map((grade) => ({
-      subject: grade.subject_name,
-      exam: grade.exam_type,
-      marks: Number(((Number(grade.obtained_marks) / Number(grade.total_marks)) * 100).toFixed(1)),
-      obtained: Number(grade.obtained_marks),
-      total: Number(grade.total_marks),
-    }));
+    const grades = filteredGrades;
+
+    if (!grades.length) return [];
+
+    const grouped = grades.reduce((acc, grade) => {
+      const exam = grade.exam_type;
+
+      if (!acc[exam]) {
+        acc[exam] = {
+          obtained: 0,
+          total: 0,
+        };
+      }
+
+      acc[exam].obtained += Number(grade.obtained_marks);
+      acc[exam].total += Number(grade.total_marks);
+
+      return acc;
+    }, {});
+
+    return Object.entries(grouped).map(([exam, values]) => {
+      const percentage = Number(
+        ((values.obtained / values.total) * 100).toFixed(1)
+      );
+
+      return {
+        subject: exam,
+        exam,
+        marks: percentage,
+        obtained: values.obtained,
+        total: values.total,
+        grade: getGradeMeta(percentage).grade,
+      };
+    });
   }, [filteredGrades]);
 
   const chartHeight = Math.max(chartData.length * 48, 260);
 
   const summary = useMemo(() => {
-    const grades = reportCard?.grades || [];
+    const grades = filteredGrades;
 
     if (!grades.length) {
-      return { obtained: 0, total: 0, percentage: 0, average: 0, grade: "-" };
+      return {
+        obtained: 0,
+        total: 0,
+        percentage: 0,
+        average: "0.00",
+        grade: "-",
+        subjectCount: 0,
+      };
     }
 
     const obtained = grades.reduce((sum, item) => sum + Number(item.obtained_marks), 0);
     const total = grades.reduce((sum, item) => sum + Number(item.total_marks), 0);
-    const percentage = (obtained / total) * 100;
+    const percentage = total > 0 ? (obtained / total) * 100 : 0;
+
+    // Count each subject once, even if it has multiple exam-type
+    // records (Mid-Term, Final, Quiz, ...) within the current filter.
+    const subjectCount = new Set(grades.map((item) => item.subject_name)).size;
 
     return {
       obtained,
       total,
       percentage,
-      average: percentage.toFixed(1),
+      average: percentage.toFixed(2),
       grade: getGradeMeta(percentage).grade,
+      subjectCount,
     };
-  }, [reportCard]);
+  }, [filteredGrades]);
 
   const publishedDate = useMemo(() => {
     if (!reportCard?.published_at) return "Not published yet";
@@ -221,23 +292,31 @@ function ReportCard() {
         breadcrumbs={["Student", "Report Card"]}
         icon={GraduationCap}
         bgColor="bg-student-light"
-        action={
-          <Button>
-            <Download size={18} />
-            Download PDF
-          </Button>
-        }
+
       />
 
       {/* ================================= */}
       {/* Summary Cards */}
       {/* ================================= */}
 
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <h2 className="text-lg font-bold text-student-text">Grade Summary</h2>
+          <p className="text-sm text-text-secondary">
+            {examFilter === "All"
+              ? "Stats across all examinations."
+              : `Stats for ${examFilter} only.`}
+          </p>
+        </div>
+
+        <SummaryFilterBar value={examFilter} onChange={setExamFilter} />
+      </div>
+
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
         <MetricCard
           label="Subjects"
-          value={reportCard?.grades?.length ?? 0}
-          footer="Completed"
+          value={summary.subjectCount}
+          footer={examFilter === "All" ? "Completed" : `${examFilter} Entries`}
           icon={BookOpen}
           colors={["#818CF8", "#6366F1"]}
         />
@@ -260,7 +339,7 @@ function ReportCard() {
 
         <MetricCard
           label="Marks"
-          value={`${summary.obtained}/${summary.total}`}
+          value={`${summary.obtained.toFixed(2)}/${summary.total.toFixed(2)}`}
           footer="Obtained"
           icon={Target}
           colors={["#38BDF8", "#2563EB"]}
@@ -369,150 +448,298 @@ function ReportCard() {
       {/* ================================= */}
       {/* Subject Results */}
       {/* ================================= */}
-<Card>
-  {/* ==========================================
-      Header
-  ========================================== */}
+      <Card>
+        {/* ==========================================
+            Header
+        ========================================== */}
 
-  <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-    <div>
-      <h2 className="text-2xl font-bold text-student-text">
-        Subject Wise Results
-      </h2>
+        <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-student-text">
+              Subject Wise Results
+            </h2>
 
-      <p className="mt-1 text-sm text-text-secondary">
-        View your performance across different examinations.
-      </p>
-    </div>
+            <p className="mt-1 text-sm text-text-secondary">
+              View your performance across different examinations.
+            </p>
+          </div>
 
-    <div className="w-full lg:w-64">
-      <Select
-        tone="student"
-        value={examFilter}
-        options={examOptions}
-        onChange={setExamFilter}
-      />
-    </div>
-  </div>
+          <div className="w-full lg:w-64">
+            <Select
+              tone="student"
+              value={examFilter}
+              options={examOptions}
+              onChange={setExamFilter}
+            />
+          </div>
+        </div>
 
-  {/* ==========================================
-      Empty State
-  ========================================== */}
+        {/* ==========================================
+            Empty State
+        ========================================== */}
 
-  {filteredGrades.length === 0 ? (
-    <div className="flex h-80 flex-col items-center justify-center rounded-xl border border-dashed border-slate-300">
-      <ClipboardX
-        size={46}
-        className="text-slate-400"
-      />
+        {filteredGrades.length === 0 ? (
+          <div className="flex h-80 flex-col items-center justify-center rounded-xl border border-dashed border-slate-300">
+            <ClipboardX
+              size={46}
+              className="text-slate-400"
+            />
 
-      <h3 className="mt-4 text-lg font-semibold">
-        No Results Found
-      </h3>
+            <h3 className="mt-4 text-lg font-semibold">
+              No Results Found
+            </h3>
 
-      <p className="mt-2 text-sm text-text-secondary">
-        There are no results for the selected examination.
-      </p>
-    </div>
-  ) : (
-    <>
-      {/* ==========================================
-          Desktop Table
-      ========================================== */}
+            <p className="mt-2 text-sm text-text-secondary">
+              There are no results for the selected examination.
+            </p>
+          </div>
+        ) : (
+          <>
+            {/* ==========================================
+                Desktop Table
+            ========================================== */}
 
-      <div className="hidden overflow-x-auto lg:block">
-        <table className="w-full min-w-[950px]">
-          <thead>
-            <tr className="border-b border-student-border bg-student-light/40">
-              <th className="p-4 text-left text-xs font-semibold uppercase">
-                Subject
-              </th>
+            <div className="hidden overflow-x-auto lg:block">
+              <table className="w-full min-w-[950px]">
+                <thead>
+                  <tr className="border-b border-student-border bg-student-light/40">
+                    <th className="p-4 text-left text-xs font-semibold uppercase">
+                      Subject
+                    </th>
 
-              <th className="p-4 text-left text-xs font-semibold uppercase">
-                Teacher
-              </th>
+                    <th className="p-4 text-left text-xs font-semibold uppercase">
+                      Teacher
+                    </th>
 
-              <th className="p-4 text-left text-xs font-semibold uppercase">
-                Exam
-              </th>
+                    <th className="p-4 text-left text-xs font-semibold uppercase">
+                      Exam
+                    </th>
 
-              <th className="p-4 text-left text-xs font-semibold uppercase">
-                Marks
-              </th>
+                    <th className="p-4 text-left text-xs font-semibold uppercase">
+                      Marks
+                    </th>
 
-              <th className="p-4 text-left text-xs font-semibold uppercase">
-                Performance
-              </th>
+                    <th className="p-4 text-left text-xs font-semibold uppercase">
+                      Performance
+                    </th>
 
-              <th className="p-4 text-left text-xs font-semibold uppercase">
-                Date
-              </th>
+                    <th className="p-4 text-left text-xs font-semibold uppercase">
+                      Date
+                    </th>
 
-              <th className="p-4 text-left text-xs font-semibold uppercase">
-                Grade
-              </th>
-            </tr>
-          </thead>
+                    <th className="p-4 text-left text-xs font-semibold uppercase">
+                      Grade
+                    </th>
+                  </tr>
+                </thead>
 
-          <tbody>
-            {filteredGrades.map(
-              (subject, index) => {
-                const percentage = (
-                  (Number(
-                    subject.obtained_marks
-                  ) /
-                    Number(
-                      subject.total_marks
-                    )) *
-                  100
-                ).toFixed(1);
+                <tbody>
+                  {filteredGrades.map(
+                    (subject, index) => {
+                      const percentage = (
+                        (Number(
+                          subject.obtained_marks
+                        ) /
+                          Number(
+                            subject.total_marks
+                          )) *
+                        100
+                      ).toFixed(1);
 
-                const meta =
-                  getGradeMeta(
-                    percentage
-                  );
+                      const meta =
+                        getGradeMeta(
+                          percentage
+                        );
 
-                return (
-                  <tr
-                    key={subject.id}
-                    style={{
-                      animationDelay: `${index * 40}ms`,
-                    }}
-                    className="border-b border-slate-100 transition hover:bg-student-light/30"
-                  >
-                    <td className="p-4 font-semibold">
-                      {
-                        subject.subject_name
-                      }
-                    </td>
+                      return (
+                        <tr
+                          key={subject.id}
+                          style={{
+                            animationDelay: `${index * 40}ms`,
+                          }}
+                          className="border-b border-slate-100 transition hover:bg-student-light/30"
+                        >
+                          <td className="p-4 font-semibold">
+                            {
+                              subject.subject_name
+                            }
+                          </td>
 
-                    <td className="p-4 text-text-secondary">
-                      {
-                        subject.teacher_name
-                      }
-                    </td>
+                          <td className="p-4 text-text-secondary">
+                            {
+                              subject.teacher_name
+                            }
+                          </td>
 
-                    <td className="p-4">
-                      <span className="rounded-lg bg-student-light px-3 py-1 text-xs font-medium">
-                        {
-                          subject.exam_type
-                        }
-                      </span>
-                    </td>
+                          <td className="p-4">
+                            <span className="rounded-lg bg-student-light px-3 py-1 text-xs font-medium">
+                              {
+                                subject.exam_type
+                              }
+                            </span>
+                          </td>
 
-                    <td className="p-4 font-medium">
-                      {
-                        subject.obtained_marks
-                      }
-                      /
-                      {
+                          <td className="p-4 font-medium">
+                            {
+                              subject.obtained_marks
+                            }
+                            /
+                            {
+                              subject.total_marks
+                            }
+                          </td>
+
+                          <td className="p-4">
+                            <div className="flex items-center gap-3">
+                              <div className="h-2 w-24 overflow-hidden rounded-full bg-slate-200">
+                                <div
+                                  className="h-full rounded-full"
+                                  style={{
+                                    width: `${percentage}%`,
+                                    background: `linear-gradient(90deg, ${meta.colors[0]}, ${meta.colors[1]})`,
+                                  }}
+                                />
+                              </div>
+
+                              <span className="font-semibold">
+                                {percentage}%
+                              </span>
+                            </div>
+                          </td>
+
+                          <td className="p-4">
+                            {new Date(
+                              subject.exam_date
+                            ).toLocaleDateString()}
+                          </td>
+
+                          <td className="p-4">
+                            <GradeBadge
+                              percentage={
+                                percentage
+                              }
+                            />
+                          </td>
+                        </tr>
+                      );
+                    }
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* ==========================================
+                Mobile & Tablet Cards
+            ========================================== */}
+
+            <div className="grid gap-4 lg:hidden">
+              {filteredGrades.map(
+                (subject) => {
+                  const percentage = (
+                    (Number(
+                      subject.obtained_marks
+                    ) /
+                      Number(
                         subject.total_marks
-                      }
-                    </td>
+                      )) *
+                    100
+                  ).toFixed(1);
 
-                    <td className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="h-2 w-24 overflow-hidden rounded-full bg-slate-200">
+                  const meta =
+                    getGradeMeta(
+                      percentage
+                    );
+
+                  return (
+                    <Card
+                      key={subject.id}
+                      hover={false}
+                      className="border"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <h3 className="font-semibold text-text-primary">
+                            {
+                              subject.subject_name
+                            }
+                          </h3>
+
+                          <p className="text-sm text-text-secondary">
+                            {
+                              subject.teacher_name
+                            }
+                          </p>
+                        </div>
+
+                        <GradeBadge
+                          percentage={
+                            percentage
+                          }
+                        />
+                      </div>
+
+                      <div className="mt-5 grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <p className="text-text-secondary">
+                            Exam
+                          </p>
+
+                          <span className="mt-1 inline-block rounded bg-student-light px-2 py-1 text-xs">
+                            {
+                              subject.exam_type
+                            }
+                          </span>
+                        </div>
+
+                        <div>
+                          <p className="text-text-secondary">
+                            Date
+                          </p>
+
+                          <p className="font-medium">
+                            {new Date(
+                              subject.exam_date
+                            ).toLocaleDateString()}
+                          </p>
+                        </div>
+
+                        <div>
+                          <p className="text-text-secondary">
+                            Obtained
+                          </p>
+
+                          <p className="font-semibold">
+                            {
+                              subject.obtained_marks
+                            }
+                          </p>
+                        </div>
+
+                        <div>
+                          <p className="text-text-secondary">
+                            Total
+                          </p>
+
+                          <p className="font-semibold">
+                            {
+                              subject.total_marks
+                            }
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-6">
+                        <div className="mb-2 flex items-center justify-between">
+                          <span className="text-sm text-text-secondary">
+                            Performance
+                          </span>
+
+                          <span className="font-semibold">
+                            {percentage}%
+                          </span>
+                        </div>
+
+                        <div className="h-2 overflow-hidden rounded-full bg-slate-200">
                           <div
                             className="h-full rounded-full"
                             style={{
@@ -521,163 +748,15 @@ function ReportCard() {
                             }}
                           />
                         </div>
-
-                        <span className="font-semibold">
-                          {percentage}%
-                        </span>
                       </div>
-                    </td>
-
-                    <td className="p-4">
-                      {new Date(
-                        subject.exam_date
-                      ).toLocaleDateString()}
-                    </td>
-
-                    <td className="p-4">
-                      <GradeBadge
-                        percentage={
-                          percentage
-                        }
-                      />
-                    </td>
-                  </tr>
-                );
-              }
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* ==========================================
-          Mobile & Tablet Cards
-      ========================================== */}
-
-      <div className="grid gap-4 lg:hidden">
-        {filteredGrades.map(
-          (subject) => {
-            const percentage = (
-              (Number(
-                subject.obtained_marks
-              ) /
-                Number(
-                  subject.total_marks
-                )) *
-              100
-            ).toFixed(1);
-
-            const meta =
-              getGradeMeta(
-                percentage
-              );
-
-            return (
-              <Card
-                key={subject.id}
-                hover={false}
-                className="border"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h3 className="font-semibold text-text-primary">
-                      {
-                        subject.subject_name
-                      }
-                    </h3>
-
-                    <p className="text-sm text-text-secondary">
-                      {
-                        subject.teacher_name
-                      }
-                    </p>
-                  </div>
-
-                  <GradeBadge
-                    percentage={
-                      percentage
-                    }
-                  />
-                </div>
-
-                <div className="mt-5 grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="text-text-secondary">
-                      Exam
-                    </p>
-
-                    <span className="mt-1 inline-block rounded bg-student-light px-2 py-1 text-xs">
-                      {
-                        subject.exam_type
-                      }
-                    </span>
-                  </div>
-
-                  <div>
-                    <p className="text-text-secondary">
-                      Date
-                    </p>
-
-                    <p className="font-medium">
-                      {new Date(
-                        subject.exam_date
-                      ).toLocaleDateString()}
-                    </p>
-                  </div>
-
-                  <div>
-                    <p className="text-text-secondary">
-                      Obtained
-                    </p>
-
-                    <p className="font-semibold">
-                      {
-                        subject.obtained_marks
-                      }
-                    </p>
-                  </div>
-
-                  <div>
-                    <p className="text-text-secondary">
-                      Total
-                    </p>
-
-                    <p className="font-semibold">
-                      {
-                        subject.total_marks
-                      }
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-6">
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className="text-sm text-text-secondary">
-                      Performance
-                    </span>
-
-                    <span className="font-semibold">
-                      {percentage}%
-                    </span>
-                  </div>
-
-                  <div className="h-2 overflow-hidden rounded-full bg-slate-200">
-                    <div
-                      className="h-full rounded-full"
-                      style={{
-                        width: `${percentage}%`,
-                        background: `linear-gradient(90deg, ${meta.colors[0]}, ${meta.colors[1]})`,
-                      }}
-                    />
-                  </div>
-                </div>
-              </Card>
-            );
-          }
+                    </Card>
+                  );
+                }
+              )}
+            </div>
+          </>
         )}
-      </div>
-    </>
-  )}
-</Card>
+      </Card>
 
       {/* ================================= */}
       {/* Academic Summary */}
@@ -703,7 +782,7 @@ function ReportCard() {
 
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <span className="text-text-secondary">Total Subjects</span>
-              <span className="font-semibold text-text-primary">{reportCard?.grades?.length || 0}</span>
+              <span className="font-semibold text-text-primary">{summary.subjectCount}</span>
             </div>
 
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">

@@ -9,11 +9,13 @@ import {
   CheckCircle2,
   AlertCircle,
   Star,
+  X,
 } from "lucide-react";
 
 import Button from "../../../components/ui/Button/Button";
 import Badge from "../../../components/ui/Badge/Badge";
 import Card from "../../../components/ui/card/Card";
+
 
 /* ------------------------------------------------------------------ */
 /*  Status → color, one source of truth reused for the icon badge,     */
@@ -28,7 +30,7 @@ const STATUS_META = {
 
 const OVERDUE_COLORS = ["#FB7185", "#E11D48"];
 
-function AssignmentCard({ assignment, onSubmit, onReplace, onView }) {
+function AssignmentCard({ assignment, onSubmit, onReplace, onView,onDelete }) {
   const {
     title,
     subject_name,
@@ -233,25 +235,81 @@ function AssignmentCard({ assignment, onSubmit, onReplace, onView }) {
         {/* Actions */}
         {/* ================================= */}
 
-        <div className="flex flex-wrap gap-3">
-          {status === "Pending" && (
-            <Button tone="student" leftIcon={<Upload />} onClick={onSubmit}>
-              Submit Assignment
-            </Button>
-          )}
+  {/* ================================= */}
+{/* Actions */}
+{/* ================================= */}
 
-          {status === "Submitted" && (
-            <Button tone="student" leftIcon={<RotateCcw />} onClick={onReplace}>
-              Replace Submission
-            </Button>
-          )}
+<div className="flex flex-wrap gap-3">
+  {/* Pending */}
+  {status === "Pending" && !isOverdue && (
+    <Button
+      tone="student"
+      leftIcon={<Upload />}
+      onClick={onSubmit}
+    >
+      Submit Assignment
+    </Button>
+  )}
 
-          {submission && (
-            <Button variant="outline" tone="student" leftIcon={<Eye />} onClick={onView}>
-              View File
-            </Button>
-          )}
-        </div>
+  {/* Submitted */}
+  {status === "Submitted" && (
+    <>
+      {!isOverdue && (
+        <>
+          <Button
+            tone="student"
+            leftIcon={<RotateCcw />}
+            onClick={onReplace}
+          >
+            Replace Submission
+          </Button>
+
+          <Button
+            variant="danger"
+            leftIcon={<X />}
+            onClick={() =>
+              onDelete(submission.id)
+            }
+          >
+            Delete Submission
+          </Button>
+        </>
+      )}
+
+      <Button
+        variant="outline"
+        tone="student"
+        leftIcon={<Eye />}
+        onClick={onView}
+      >
+        View File
+      </Button>
+    </>
+  )}
+
+  {/* Graded */}
+  {status === "Graded" && submission && (
+    <Button
+      variant="outline"
+      tone="student"
+      leftIcon={<Eye />}
+      onClick={onView}
+    >
+      View File
+    </Button>
+  )}
+
+  {/* Overdue and not submitted */}
+  {isOverdue && status === "Pending" && (
+    <Button
+      variant="outline"
+      disabled
+      leftIcon={<Clock3 />}
+    >
+      Submission Closed
+    </Button>
+  )}
+</div>
       </div>
     </Card>
   );

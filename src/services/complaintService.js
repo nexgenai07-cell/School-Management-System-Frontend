@@ -1,48 +1,27 @@
 // src/services/complaintService.js
 
-import * as studentMock from "../mocks/studentmock";
-import * as parentMock from "../mocks/parentMock";
-
-
-const mockData = {
-  student: studentMock,
-  parent: parentMock,
-  
-
-};
+import api from "./api";
 
 const complaintService = {
   // Get all complaints
   getComplaints: async (role) => {
-  console.log("ROLE:", role);
-  console.log("DATA:", mockData[role]);
-
-  return mockData[role]?.complaints || [];
-},
-
-  // Get a single complaint by ID
-  getComplaintById: async (role, id) => {
-    return (
-      mockData[role]?.complaints.find(
-        (complaint) => complaint.id === Number(id)
-      ) || null
-    );
+    const { data } = await api.get(`/${role}/complaints`);
+    return data;
   },
 
-  // Create a new complaint
+  // Get complaint by ID
+  getComplaintById: async (role, id) => {
+    const { data } = await api.get(`/${role}/complaints/${id}`);
+    return data;
+  },
+
+  // Create complaint
   createComplaint: async (role, complaintData) => {
-    // Mock implementation
-    const newComplaint = {
-      id: Date.now(),
-      ...complaintData,
-      status: "Open",
-      created_at: new Date().toISOString(),
-    };
-
-    return newComplaint;
-
-    // Real API later:
-    // return api.post(`/${role}/complaints`, complaintData);
+    const { data } = await api.post(
+      `/${role}/complaints`,
+      complaintData
+    );
+    return data;
   },
 };
 

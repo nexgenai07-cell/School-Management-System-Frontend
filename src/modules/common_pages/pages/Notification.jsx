@@ -4,10 +4,10 @@ import NotificationFilters from "../components/NotificationFilters";
 import NotificationList from "../components/NotificationList";
 
 const Notification = ({ role }) => {
+  const [filter, setFilter] = useState("all");
+  const [unreadCount, setUnreadCount] = useState(0);
 
-    const [filter, setFilter] = useState("all");
   return (
-
     <div className="space-y-8">
       {/* Header */}
       <div className="rounded-2xl bg-surface p-8 shadow-sm">
@@ -24,21 +24,20 @@ const Notification = ({ role }) => {
         </div>
       </div>
 
-      {/* Statistics */}
-      <NotificationStats role={role}/>
+      <NotificationStats role={role} />
 
-      {/* Filters */}
-    <NotificationFilters
-  role={role}
-  filter={filter}
-  setFilter={setFilter}
-/>
+      <NotificationFilters
+        role={role}
+        filter={filter}
+        setFilter={setFilter}
+        unreadCount={unreadCount}
+      />
 
-      {/* Notification List */}
       <NotificationList
-  role={role}
-  filter={filter}
-/>
+        role={role}
+        filter={filter}
+        onUnreadCountChange={setUnreadCount}
+      />
     </div>
   );
 };

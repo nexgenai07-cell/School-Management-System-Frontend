@@ -35,6 +35,7 @@ const initialState = {
   attendance: [],
   reportCard: null,
   assignments: [],
+   submissions: [],
 
   /*
   ======================================================
@@ -54,7 +55,7 @@ paymentIntent: null,
   timetable: [],
   events: [],
   participations: [],
-
+certificates: [],
   /*
   ======================================================
   Complaints
@@ -168,18 +169,6 @@ const studentSlice = createSlice({
       ======================================================
       */
 
-      .addCase(
-        studentThunks
-          .fetchDashboard
-          .fulfilled,
-        (
-          state,
-          action
-        ) => {
-          state.dashboard =
-            action.payload;
-        }
-      )
 
       /*
       ======================================================
@@ -199,7 +188,7 @@ const studentSlice = createSlice({
             action.payload;
         }
       )
-
+  
       /*
       ======================================================
       Attendance
@@ -256,7 +245,21 @@ const studentSlice = createSlice({
             action.payload;
         }
       )
+.addCase(
+    studentThunks.fetchSubmissions.fulfilled,
+    (state, action) => {
+        state.submissions = action.payload;
+    }
+)
 
+.addCase(
+  studentThunks.deleteSubmission.fulfilled,
+  (state, action) => {
+    state.submissions = state.submissions.filter(
+      (submission) => submission.id !== action.payload
+    );
+  }
+)
       /*
       ======================================================
       Finance
@@ -297,18 +300,7 @@ const studentSlice = createSlice({
       ======================================================
       */
 
-      .addCase(
-        studentThunks
-          .fetchTimetable
-          .fulfilled,
-        (
-          state,
-          action
-        ) => {
-          state.timetable =
-            action.payload;
-        }
-      )
+      
 
       /*
       ======================================================
@@ -341,6 +333,13 @@ const studentSlice = createSlice({
             action.payload;
         }
       )
+
+      .addCase(
+  studentThunks.fetchCertificates.fulfilled,
+  (state, action) => {
+    state.certificates = action.payload;
+  }
+)
 
       /*
       ======================================================

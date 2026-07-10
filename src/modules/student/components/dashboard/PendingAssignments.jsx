@@ -50,14 +50,54 @@ const getDueCopy = (date) => {
 /* ------------------------------------------------------------------ */
 
 const PendingAssignments = () => {
-  const { assignments = [] } = useSelector((state) => state.student);
+ const {
+  assignments = [],
+  submissions = [],
+} = useSelector(
+  (state) => state.student
+);
 
-  const pendingAssignments = useMemo(() => {
-    return assignments
-      .filter((assignment) => assignment.status === "Pending")
-      .sort((a, b) => new Date(a.due_date) - new Date(b.due_date));
-  }, [assignments]);
+/*
+==================================================
+Merge Assignments + Submissions
+==================================================
+*/
 
+const pendingAssignments = useMemo(() => {
+  return assignments
+    .map((assignment) => {
+      const submission = submissions.find(
+        (item) =>
+          item.assignment === assignment.id
+      );
+
+      let status = "Pending";
+
+      if (submission) {
+        status =
+          submission.marks != null
+            ? "Graded"
+            : "Submitted";
+      }
+
+      return {
+        ...assignment,
+        status,
+      };
+    })
+    .filter(
+      (assignment) =>
+        assignment.status === "Pending"
+    )
+    .sort(
+      (a, b) =>
+        new Date(a.due_date) -
+        new Date(b.due_date)
+    );
+}, [
+  assignments,
+  submissions,
+]);
   return (
     <Card hover={false} className="flex h-full flex-col">
       {/* ========================================== */}

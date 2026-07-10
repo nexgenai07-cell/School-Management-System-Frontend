@@ -11,7 +11,8 @@ import {
 import ChildSelector from "../components/ChildSelector";
 import AttendanceCalendar from "../components/attendance/AttendanceCalendar";
 import AttendanceTable from "../components/attendance/AttendanceTable";
-import MonthlySummary from "../components/attendance/MonthlySummary";
+import AttendanceChart from "../components/attendance/AttendanceChart";
+
 import AttendanceStats from "../components/attendance/AttendanceStats";
 
 const Attendance = () => {
@@ -36,13 +37,17 @@ const Attendance = () => {
 
     <AttendanceStats />
 
+    {/* Trend Chart */}
+
+    <AttendanceChart />
+
     {/* Main Layout */}
 
     <div className="grid gap-6 lg:grid-cols-5">
 
         <div className="space-y-6 lg:col-span-2">
             <AttendanceCalendar />
-            <MonthlySummary />
+            
         </div>
 
         <div className="lg:col-span-3">

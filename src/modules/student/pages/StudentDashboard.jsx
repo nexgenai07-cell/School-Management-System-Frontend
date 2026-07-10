@@ -8,7 +8,8 @@ import {
   fetchAttendance,
   fetchReportCard,
   fetchAssignments,
-  fetchEvents,
+ 
+  fetchParticipations,
 } from "../../../store/studentThunks";
 import DashboardHeader from "../components/dashboard/DashboardHeader";
 import QuickStats from "../components/dashboard/QuickStats";
@@ -17,7 +18,8 @@ import AttendanceChart from "../components/dashboard/AttendanceChart";
 import GradeSummaryChart from "../components/dashboard/GradeSummaryChart";
 
 import PendingAssignments from "../components/dashboard/PendingAssignments";
-import UpcomingEvents from "../components/dashboard/UpcomingEvents";
+
+import YourParticipations from "../components/dashboard/YourParticipations";
 
 const StudentDashboard = () => {
    const dispatch = useDispatch();
@@ -26,7 +28,7 @@ const StudentDashboard = () => {
   dispatch(fetchAttendance("student"));
   dispatch(fetchReportCard("student"));
   dispatch(fetchAssignments("student"));
-  dispatch(fetchEvents("student"));
+  dispatch(fetchParticipations("student"));
 }, [dispatch]);
   return (
     <div className="space-y-6">
@@ -63,7 +65,7 @@ const StudentDashboard = () => {
 
         <PendingAssignments />
 
-        <UpcomingEvents />
+        <YourParticipations />
 
       </div>
 

@@ -22,21 +22,6 @@ export const fetchProfile = createAsyncThunk(
   }
 );
 
-export const fetchDashboard =
-  createAsyncThunk(
-    "student/fetchDashboard",
-    async (_, thunkAPI) => {
-      try {
-        return await studentService.getDashboard();
-      } catch (error) {
-        return thunkAPI.rejectWithValue(
-          error.response?.data
-            ?.message ||
-            error.message
-        );
-      }
-    }
-  );
 
 /*
 =====================================================
@@ -97,7 +82,17 @@ export const fetchAssignments =
       }
     }
   );
-
+export const fetchSubmissions =
+  createAsyncThunk(
+    "student/fetchSubmissions",
+    async (_, thunkAPI) => {
+      try {
+        return await studentService.getSubmissions();
+      } catch (err) {
+        return thunkAPI.rejectWithValue(err.response?.data);
+      }
+    }
+  );
 export const submitAssignment =
   createAsyncThunk(
     "student/submitAssignment",
@@ -125,6 +120,47 @@ export const submitAssignment =
       }
     }
   );
+  export const updateSubmission = createAsyncThunk(
+  "student/updateSubmission",
+  async ({ id, submissionData }, thunkAPI) => {
+    try {
+      const response =
+        await studentService.updateSubmission(
+          id,
+          submissionData
+        );
+
+      thunkAPI.dispatch(fetchAssignments());
+      thunkAPI.dispatch(fetchSubmissions());
+
+      return response;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data ||
+          error.message
+      );
+    }
+  }
+);
+
+  export const deleteSubmission = createAsyncThunk(
+  "student/deleteSubmission",
+  async (id, thunkAPI) => {
+    try {
+      await studentService.deleteSubmission(id);
+
+      thunkAPI.dispatch(fetchAssignments());
+      thunkAPI.dispatch(fetchSubmissions());
+
+      return id;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data ||
+        error.message
+      );
+    }
+  }
+);
 
 /*
 =====================================================
@@ -163,20 +199,21 @@ export const fetchPayments = createAsyncThunk(
 
 
 
-export const createPaymentIntent = createAsyncThunk(
-  "student/createPaymentIntent",
-  async (feeId, thunkAPI) => {
-    try {
-      return await paymentService.createPaymentIntent({
-        fee_id: feeId,
-      });
-    } catch (error) {
-      return thunkAPI.rejectWithValue(
-        error.response?.data?.message || error.message
-      );
+export const createPaymentIntent =
+  createAsyncThunk(
+    "student/createPaymentIntent",
+    async (paymentData, thunkAPI) => {
+      try {
+        return await paymentService.createPaymentIntent(
+          paymentData
+        );
+      } catch (error) {
+        return thunkAPI.rejectWithValue(
+          error.response?.data
+        );
+      }
     }
-  }
-);
+  );
 
 /*
 =====================================================
@@ -184,21 +221,8 @@ TIMETABLE
 =====================================================
 */
 
-export const fetchTimetable =
-  createAsyncThunk(
-    "student/fetchTimetable",
-    async (_, thunkAPI) => {
-      try {
-        return await studentService.getTimetable();
-      } catch (error) {
-        return thunkAPI.rejectWithValue(
-          error.response?.data
-            ?.message ||
-            error.message
-        );
-      }
-    }
-  );
+
+  
 
 /*
 =====================================================
@@ -237,7 +261,17 @@ export const fetchParticipations =
       }
     }
   );
-
+export const fetchCertificates = createAsyncThunk(
+  "student/fetchCertificates",
+  async (_, { rejectWithValue }) => {
+    try {
+      const data = await studentService.getCertificates();
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data);
+    }
+  }
+);
 /*
 =====================================================
 COMPLAINTS

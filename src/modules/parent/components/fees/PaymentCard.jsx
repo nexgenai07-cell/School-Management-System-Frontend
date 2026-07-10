@@ -9,11 +9,15 @@ import {
   ShieldCheck,
   CreditCard,
 } from "lucide-react";
-
+import { useState } from "react";
 import Card from "../../../../components/ui/Card/Card";
 import Button from "../../../../components/ui/Button/Button";
-
+import StripePaymentModal from "../../../../modules/stripe/StripePaymentModal";
 import { createPaymentIntent } from "../../../../store/parentThunks";
+import {
+  fetchFees,
+  fetchPayments,
+} from "../../../../store/parentThunks";
 
 const PaymentCard = () => {
   const dispatch = useDispatch();
@@ -21,7 +25,11 @@ const PaymentCard = () => {
   const { selectedFee, loading } = useSelector(
     (state) => state.parent
   );
+const [clientSecret, setClientSecret] =
+  useState("");
 
+const [showStripe, setShowStripe] =
+  useState(false);
   /*
   =====================================================
   No Fee Selected
@@ -74,16 +82,38 @@ const PaymentCard = () => {
   Stripe Payment
   =====================================================
   */
-
-  const handlePayment = () => {
-    dispatch(
+const handlePayment = async () => {
+  try {
+    const response = await dispatch(
       createPaymentIntent({
         fee_id: selectedFee.id,
       })
+    ).unwrap();
+
+    console.log("Payment Intent:", response);
+
+    if (!response.client_secret) {
+      throw new Error(
+        "No client_secret returned from backend."
+      );
+    }
+
+    setClientSecret(response.client_secret);
+    setShowStripe(true);
+
+  } catch (error) {
+    console.error(error);
+
+    alert(
+      error?.response?.data?.detail ||
+      error?.message ||
+      "Unable to initialize payment."
     );
-  };
+  }
+};
 
   return (
+    <>
     <Card
       hover={false}
       className="sticky top-6"
@@ -289,7 +319,26 @@ const PaymentCard = () => {
         </div>
 
       </div>
+
     </Card>
+          <StripePaymentModal
+  open={showStripe}
+  clientSecret={clientSecret}
+  onClose={() => {
+    setShowStripe(false);
+    setClientSecret("");
+  }}
+  onSuccess={() => {
+    setShowStripe(false);
+    setClientSecret("");
+
+    dispatch(fetchFees());
+    dispatch(fetchPayments());
+
+    alert("Payment Successful");
+  }}
+/>
+</>
   );
 };
 

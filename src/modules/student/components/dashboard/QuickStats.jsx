@@ -1,169 +1,3 @@
-// import { useMemo } from "react";
-// import { useSelector } from "react-redux";
-// import {
-//   CheckCircle,
-//   GraduationCap,
-//   ClipboardList,
-//   CalendarDays,
-// } from "lucide-react";
-
-// import StatCard from "../../../../components/composite/StatCard/StatCard";
-
-// const QuickStats = () => {
-//   const {
-//     attendance = [],
-//     reportCard = {},
-//     assignments = [],
-//     events = [],
-//   } = useSelector((state) => state.student);
-
-//   const stats = useMemo(() => {
-//     /* ---------------- Attendance ---------------- */
-
-//     const presentDays = attendance.filter(
-//       ({ status }) => status === "Present"
-//     ).length;
-
-//     const attendancePercentage = attendance.length
-//       ? Math.round((presentDays / attendance.length) * 100)
-//       : 0;
-
-//     /* ---------------- Grades ---------------- */
-
-//     const grades = reportCard?.grades || [];
-
-//     const obtainedMarks = grades.reduce(
-//       (sum, item) => sum + Number(item.obtained_marks),
-//       0
-//     );
-
-//     const totalMarks = grades.reduce(
-//       (sum, item) => sum + Number(item.total_marks),
-//       0
-//     );
-
-//     const averageMarks = totalMarks
-//       ? Math.round((obtainedMarks / totalMarks) * 100)
-//       : 0;
-
-//     /* ---------------- Assignments ---------------- */
-
-//     const pendingAssignments = assignments.filter(
-//       (assignment) =>
-//         assignment.submitted === false ||
-//         assignment.status !== "Submitted"
-//     ).length;
-
-//     /* ---------------- Events ---------------- */
-
-//     const today = new Date();
-
-//     const upcomingEvents = events.filter((event) => {
-//       const eventDate = new Date(
-//         event.event_date || event.date
-//       );
-//       return eventDate >= today;
-//     }).length;
-
-//     return {
-//       attendancePercentage,
-//       averageMarks,
-//       totalExams: grades.length,
-//       pendingAssignments,
-//       upcomingEvents,
-//     };
-//   }, [attendance, reportCard, assignments, events]);
-
-//   const getAttendanceColor = () => {
-//     if (stats.attendancePercentage >= 90) return "success";
-//     if (stats.attendancePercentage >= 75) return "warning";
-//     return "danger";
-//   };
-
-//   const getAttendanceMessage = () => {
-//     if (stats.attendancePercentage >= 90)
-//       return "Excellent Attendance";
-
-//     if (stats.attendancePercentage >= 75)
-//       return "Keep Improving";
-
-//     return "Attendance Needs Attention";
-//   };
-
-//   const getMarksColor = () => {
-//     if (stats.averageMarks >= 85) return "success";
-//     if (stats.averageMarks >= 70) return "warning";
-//     return "danger";
-//   };
-
-//   const cards = [
-//     {
-//       title: "Attendance",
-//       value: `${stats.attendancePercentage}%`,
-//       footer: getAttendanceMessage(),
-//       icon: <CheckCircle size={22} />,
-//       footerColor: getAttendanceColor(),
-//     },
-
-//     {
-//       title: "Academic Score",
-//       value: `${stats.averageMarks}%`,
-//       footer: `${stats.totalExams} Exams Evaluated`,
-//       icon: <GraduationCap size={22} />,
-//       footerColor: getMarksColor(),
-//     },
-
-//     {
-//       title: "Assignments",
-//       value: stats.pendingAssignments,
-//       footer:
-//         stats.pendingAssignments === 0
-//           ? "All Completed 🎉"
-//           : `${stats.pendingAssignments} Pending`,
-//       icon: <ClipboardList size={22} />,
-//       footerColor:
-//         stats.pendingAssignments === 0
-//           ? "success"
-//           : "warning",
-//     },
-
-//     {
-//       title: "School Events",
-//       value: stats.upcomingEvents,
-//       footer:
-//         stats.upcomingEvents
-//           ? `${stats.upcomingEvents} Upcoming`
-//           : "No Upcoming Events",
-//       icon: <CalendarDays size={22} />,
-//       footerColor:
-//         stats.upcomingEvents
-//           ? "info"
-//           : "neutral",
-//     },
-//   ];
-
-//   return (
-//     <section className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
-//       {cards.map((card) => (
-//         <div
-//           key={card.title}
-//           className="transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02]"
-//         >
-//           <StatCard
-//             label={card.title}
-//             value={card.value}
-//             icon={card.icon}
-//             tone="student"
-//             footerText={card.footer}
-//             footerColor={card.footerColor}
-//           />
-//         </div>
-//       ))}
-//     </section>
-//   );
-// };
-
-// export default QuickStats;
 
 import { useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
@@ -171,9 +5,10 @@ import {
   CheckCircle2,
   GraduationCap,
   ClipboardList,
-  CalendarDays,
+  Users,
+  Trophy,
 } from "lucide-react";
-
+import { mergeAssignments } from "../../../../utils/assignmentUtils";
 /* ------------------------------------------------------------------ */
 /*  Small visual primitives                                           */
 /* ------------------------------------------------------------------ */
@@ -247,39 +82,6 @@ const ProgressBar = ({ percent, colors }) => {
   );
 };
 
-/** Row of dots representing upcoming items, with the newest one glowing. */
-const DotTimeline = ({ filled, total, colors }) => {
-  const count = Math.max(total, filled, 1);
-  const dots = Array.from({ length: Math.min(count, 6) });
-
-  return (
-    <div className="flex items-center gap-1.5">
-      {dots.map((_, i) => {
-        const isFilled = i < Math.min(filled, 6);
-        return (
-          <span
-            key={i}
-            className="h-2 w-2 rounded-full transition-all duration-500"
-            style={{
-              background: isFilled
-                ? `linear-gradient(135deg, ${colors[0]}, ${colors[1]})`
-                : undefined,
-              boxShadow:
-                isFilled && i === Math.min(filled, 6) - 1
-                  ? `0 0 0 3px ${colors[1]}22`
-                  : "none",
-              transitionDelay: `${i * 60}ms`,
-            }}
-            className={`h-2 w-2 rounded-full transition-all duration-500 ${
-              isFilled ? "" : "bg-slate-200 dark:bg-slate-700"
-            }`}
-          />
-        );
-      })}
-    </div>
-  );
-};
-
 const footerToneClasses = {
   success: "text-emerald-600 dark:text-emerald-400",
   warning: "text-amber-600 dark:text-amber-400",
@@ -287,6 +89,30 @@ const footerToneClasses = {
   info: "text-sky-600 dark:text-sky-400",
   neutral: "text-slate-500 dark:text-slate-400",
 };
+
+/* ------------------------------------------------------------------ */
+/*  Exam-type filter used only on the Academic Score card              */
+/* ------------------------------------------------------------------ */
+
+const EXAM_FILTERS = ["All", "Mid-Term", "Final", "Quiz", "Assignment"];
+
+const AcademicFilterSelect = ({ value, onChange }) => (
+  <select
+    value={value}
+    onChange={(e) => onChange(e.target.value)}
+    onClick={(e) => e.stopPropagation()}
+    className="relative z-10 w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs
+               font-medium text-text-secondary outline-none transition-colors
+               hover:border-student-primary/40 focus:border-student-primary
+               dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+  >
+    {EXAM_FILTERS.map((option) => (
+      <option key={option} value={option}>
+        {option === "All" ? "All Exams" : option}
+      </option>
+    ))}
+  </select>
+);
 
 /* ------------------------------------------------------------------ */
 /*  Main component                                                    */
@@ -297,105 +123,108 @@ const QuickStats = () => {
     attendance = [],
     reportCard = {},
     assignments = [],
-    events = [],
+    submissions = [],
+    participations = [],
   } = useSelector((state) => state.student);
 
- const stats = useMemo(() => {
-  /* ==========================================
-      Attendance
-  ========================================== */
+  const [academicFilter, setAcademicFilter] = useState("All");
 
-  const presentDays = attendance.filter(
-    (record) => record.status === "Present"
-  ).length;
-
-  const attendancePercentage = attendance.length
-    ? Math.round(
-        (presentDays / attendance.length) * 100
-      )
-    : 0;
-
-  /* ==========================================
-      Academic Performance
-  ========================================== */
-
-  const grades = reportCard?.grades || [];
-
-  const obtainedMarks = grades.reduce(
-    (sum, grade) =>
-      sum + Number(grade.obtained_marks),
-    0
+  const mergedAssignments = useMemo(
+    () => mergeAssignments(assignments, submissions),
+    [assignments, submissions]
   );
 
-  const totalMarks = grades.reduce(
-    (sum, grade) =>
-      sum + Number(grade.total_marks),
-    0
-  );
+  const stats = useMemo(() => {
+    /* ==========================================
+        Attendance
+    ========================================== */
 
-  const averageMarks = totalMarks
-    ? Math.round(
-        (obtainedMarks / totalMarks) * 100
-      )
-    : 0;
+    const presentDays = attendance.filter(
+      (record) => record.status === "Present"
+    ).length;
 
-  /* ==========================================
-      Assignments
-  ========================================== */
-
-  const totalAssignments = assignments.length;
-
-  const pendingAssignments = assignments.filter(
-    (assignment) =>
-      assignment.status === "Pending"
-  ).length;
-
-  const completedAssignments = assignments.filter(
-    (assignment) =>
-      assignment.status === "Submitted" ||
-      assignment.status === "Graded"
-  ).length;
-
-  const assignmentCompletion =
-    totalAssignments > 0
-      ? Math.round(
-          (completedAssignments /
-            totalAssignments) *
-            100
-        )
+    const attendancePercentage = attendance.length
+      ? Math.round((presentDays / attendance.length) * 100)
       : 0;
 
-  /* ==========================================
-      Upcoming Events
-  ========================================== */
+    /* ==========================================
+        Academic Performance
+        Scoped to the selected exam-type filter.
+    ========================================== */
 
-  const today = new Date();
+    const allGrades = reportCard?.grades || [];
+    const grades =
+      academicFilter === "All"
+        ? allGrades
+        : allGrades.filter((grade) => grade.exam_type === academicFilter);
 
-  const upcomingEvents = events.filter(
-    (event) =>
-      new Date(event.start_date) >= today
-  ).length;
+    const obtainedMarks = grades.reduce(
+      (sum, grade) => sum + Number(grade.obtained_marks),
+      0
+    );
 
-  return {
-    attendancePercentage,
+    const totalMarks = grades.reduce(
+      (sum, grade) => sum + Number(grade.total_marks),
+      0
+    );
 
-    averageMarks,
-    totalExams: grades.length,
+const averageMarks = totalMarks
+  ? Number((((obtainedMarks / totalMarks) * 100).toFixed(2)))
+  : 0;
 
-    totalAssignments,
-    pendingAssignments,
-    completedAssignments,
-    assignmentCompletion,
+    /* ==========================================
+        Assignments
+    ========================================== */
 
-    upcomingEvents,
-    totalEvents: events.length,
-  };
-}, [
-  attendance,
-  reportCard,
-  assignments,
-  events,
-]);
+    const totalAssignments = mergedAssignments.length;
+
+    const pendingAssignments = mergedAssignments.filter(
+      (assignment) => assignment.status === "Pending"
+    ).length;
+
+    const completedAssignments = mergedAssignments.filter(
+      (assignment) =>
+        assignment.status === "Submitted" || assignment.status === "Graded"
+    ).length;
+
+    const assignmentCompletion =
+      totalAssignments > 0
+        ? Math.round((completedAssignments / totalAssignments) * 100)
+        : 0;
+
+    /* ==========================================
+        Participations
+    ========================================== */
+
+    const totalParticipations = participations.length;
+
+    const podiumFinishes = participations.filter(
+      (item) => item.position
+    ).length;
+
+    const achievementRate = totalParticipations
+      ? Math.round((podiumFinishes / totalParticipations) * 100)
+      : 0;
+
+ return {
+  attendancePercentage,
+
+  averageMarks,
+
+  totalExams: new Set(
+    grades.map((grade) => grade.subject_name)
+  ).size,
+
+  totalAssignments,
+  pendingAssignments,
+  completedAssignments,
+  assignmentCompletion,
+
+  totalParticipations,
+  podiumFinishes,
+  achievementRate,
+};
+  }, [attendance, reportCard, mergedAssignments, participations, academicFilter]);
 
   const getAttendanceTone = () => {
     if (stats.attendancePercentage >= 90) return "success";
@@ -430,11 +259,15 @@ const QuickStats = () => {
       key: "academic",
       title: "Academic Score",
       value: `${stats.averageMarks}%`,
-      footer: `${stats.totalExams} exams evaluated`,
+      footer:
+        stats.totalExams === 0
+          ? "No exams recorded"
+          : `${stats.totalExams} exam${stats.totalExams === 1 ? "" : "s"} evaluated`,
       footerTone: getMarksTone(),
       icon: GraduationCap,
       colors: ["#A78BFA", "#6366F1"],
       visual: { type: "ring", percent: stats.averageMarks },
+      filterable: true,
     },
     {
       key: "assignments",
@@ -450,19 +283,22 @@ const QuickStats = () => {
       visual: { type: "bar", percent: stats.assignmentCompletion },
     },
     {
-      key: "events",
-      title: "School Events",
-      value: stats.upcomingEvents,
-      footer: stats.upcomingEvents ? `${stats.upcomingEvents} upcoming` : "No upcoming events",
-      footerTone: stats.upcomingEvents ? "info" : "neutral",
-      icon: CalendarDays,
+      key: "participations",
+      title: "Participations",
+      value: stats.totalParticipations,
+      footer:
+        stats.podiumFinishes > 0
+          ? `${stats.podiumFinishes} podium ${stats.podiumFinishes === 1 ? "finish" : "finishes"}`
+          : "No podium finishes yet",
+      footerTone: stats.podiumFinishes > 0 ? "info" : "neutral",
+      icon: stats.podiumFinishes > 0 ? Trophy : Users,
       colors: ["#38BDF8", "#2563EB"],
-      visual: { type: "dots", filled: stats.upcomingEvents, total: stats.totalEvents },
+      visual: { type: "ring", percent: stats.achievementRate },
     },
   ];
 
   return (
-    <section className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+    <section className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
       {cards.map((card, index) => {
         const Icon = card.icon;
         return (
@@ -471,35 +307,42 @@ const QuickStats = () => {
             style={{ animationDelay: `${index * 90}ms` }}
             className="group relative overflow-hidden rounded-2xl border border-slate-200/70 bg-white p-5 opacity-0 shadow-sm [animation-fill-mode:forwards]
                        animate-[quickstat-in_0.6s_ease-out] transition-all duration-300
-                       hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-200/60
+                       hover:-translate-y-1 hover:border-slate-200 hover:shadow-xl hover:shadow-slate-200/70
                        dark:border-slate-800 dark:bg-slate-900 dark:hover:shadow-black/30"
           >
+            {/* top accent line */}
+            <div
+              aria-hidden
+              className="absolute inset-x-0 top-0 h-[3px] opacity-80"
+              style={{ background: `linear-gradient(90deg, ${card.colors[0]}, ${card.colors[1]})` }}
+            />
+
             {/* ambient gradient glow, revealed on hover */}
             <div
               aria-hidden
-              className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-20"
+              className="pointer-events-none absolute -right-10 -top-10 h-36 w-36 rounded-full opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-25"
               style={{ background: `linear-gradient(135deg, ${card.colors[0]}, ${card.colors[1]})` }}
             />
 
             <div className="relative flex items-start justify-between">
               <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                   {card.title}
                 </p>
-                <p className="mt-1.5 text-3xl font-semibold text-slate-800 dark:text-slate-100">
+                <p className="mt-1.5 text-3xl font-bold tabular-nums tracking-tight text-slate-800 dark:text-slate-100">
                   {card.value}
                 </p>
               </div>
 
               {card.visual.type === "ring" ? (
-                <div className="relative flex h-[68px] w-[68px] items-center justify-center">
+                <div className="relative flex h-[68px] w-[68px] shrink-0 items-center justify-center">
                   <ProgressRing
                     percent={card.visual.percent}
                     gradientId={`grad-${card.key}`}
                     colors={card.colors}
                   />
                   <div
-                    className="absolute flex h-9 w-9 items-center justify-center rounded-full text-white shadow-sm"
+                    className="absolute flex h-9 w-9 items-center justify-center rounded-full text-white shadow-md transition-transform duration-300 group-hover:scale-105"
                     style={{ background: `linear-gradient(135deg, ${card.colors[0]}, ${card.colors[1]})` }}
                   >
                     <Icon size={17} strokeWidth={2.25} />
@@ -507,7 +350,7 @@ const QuickStats = () => {
                 </div>
               ) : (
                 <div
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-white shadow-sm transition-transform duration-300 group-hover:scale-105"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-white shadow-md transition-transform duration-300 group-hover:scale-105 group-hover:rotate-3"
                   style={{ background: `linear-gradient(135deg, ${card.colors[0]}, ${card.colors[1]})` }}
                 >
                   <Icon size={20} strokeWidth={2.25} />
@@ -519,17 +362,19 @@ const QuickStats = () => {
               {card.visual.type === "bar" && (
                 <ProgressBar percent={card.visual.percent} colors={card.colors} />
               )}
-              {card.visual.type === "dots" && (
-                <DotTimeline
-                  filled={card.visual.filled}
-                  total={card.visual.total}
-                  colors={card.colors}
-                />
-              )}
 
-              <p className={`text-sm font-medium ${footerToneClasses[card.footerTone]}`}>
+              <p className={`flex items-center gap-1.5 text-sm font-medium ${footerToneClasses[card.footerTone]}`}>
+                <span
+                  aria-hidden
+                  className="h-1.5 w-1.5 shrink-0 rounded-full"
+                  style={{ background: `linear-gradient(135deg, ${card.colors[0]}, ${card.colors[1]})` }}
+                />
                 {card.footer}
               </p>
+
+              {card.filterable && (
+                <AcademicFilterSelect value={academicFilter} onChange={setAcademicFilter} />
+              )}
             </div>
           </div>
         );

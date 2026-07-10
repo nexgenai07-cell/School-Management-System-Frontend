@@ -1,505 +1,3 @@
-// import { useEffect, useMemo, useState } from "react";
-// import {
-//   useDispatch,
-//   useSelector,
-// } from "react-redux";
-// import {
-//   Calendar,
-//   CheckCircle2,
-//   XCircle,
-//   Clock3,
-// } from "lucide-react";
-
-// import {
-//   fetchAttendance,
-// } from "../../../store/studentThunks";
-
-// import PageHeader from "../../../components/global/PageHeader/PageHeader";
-// import Card from "../../../components/ui/Card/Card";
-// import StatCard from "../../../components/composite/StatCard/StatCard";
-// import Badge from "../../../components/ui/Badge/Badge";
-
-// function Attendance() {
-//   const dispatch =
-//     useDispatch();
-
-//   const {
-//     attendance,
-//     loading,
-//   } = useSelector(
-//     (state) =>
-//       state.student
-//   );
-
-//   /*
-//   =====================================
-//   Current Month
-//   =====================================
-//   */
-
-//   const currentMonth =
-//     new Date().toLocaleString(
-//       "default",
-//       {
-//         month: "long",
-//       }
-//     );
-
-//   const currentYear =
-//     new Date().getFullYear();
-
-//   const [
-//     selectedMonth,
-//     setSelectedMonth,
-//   ] = useState(
-//     currentMonth
-//   );
-
-//   /*
-//   =====================================
-//   Fetch Attendance
-//   =====================================
-//   */
-
-//   useEffect(() => {
-//     dispatch(
-//       fetchAttendance()
-//     );
-//   }, [dispatch]);
-
-//   /*
-//   =====================================
-//   Month List
-//   =====================================
-//   */
-
-//   const months = [
-//     "January",
-//     "February",
-//     "March",
-//     "April",
-//     "May",
-//     "June",
-//     "July",
-//     "August",
-//     "September",
-//     "October",
-//     "November",
-//     "December",
-//   ];
-
-//   /*
-//   =====================================
-//   Filter Attendance By Month
-//   =====================================
-//   */
-
-//   const monthlyAttendance =
-//     useMemo(() => {
-//       return attendance.filter(
-//         (item) => {
-//           const month =
-//             new Date(
-//               item.date
-//             ).toLocaleString(
-//               "default",
-//               {
-//                 month:
-//                   "long",
-//               }
-//             );
-
-//           return (
-//             month ===
-//             selectedMonth
-//           );
-//         }
-//       );
-//     }, [
-//       attendance,
-//       selectedMonth,
-//     ]);
-
-//   /*
-//   =====================================
-//   Statistics
-//   =====================================
-//   */
-
-//   const stats =
-//     useMemo(() => {
-//       const present =
-//         monthlyAttendance.filter(
-//           (item) =>
-//             item.status ===
-//             "Present"
-//         ).length;
-
-//       const absent =
-//         monthlyAttendance.filter(
-//           (item) =>
-//             item.status ===
-//             "Absent"
-//         ).length;
-
-//       const leave =
-//         monthlyAttendance.filter(
-//           (item) =>
-//             item.status ===
-//             "Leave"
-//         ).length;
-
-//       const percentage =
-//         monthlyAttendance.length
-//           ? Math.round(
-//               (present /
-//                 monthlyAttendance.length) *
-//                 100
-//             )
-//           : 0;
-
-//       return {
-//         present,
-//         absent,
-//         leave,
-//         percentage,
-//       };
-//     }, [
-//       monthlyAttendance,
-//     ]);
-
-//   /*
-//   =====================================
-//   Sort By Date
-//   =====================================
-//   */
-
-//   const sortedAttendance =
-//     useMemo(() => {
-//       return [
-//         ...monthlyAttendance,
-//       ].sort(
-//         (a, b) =>
-//           new Date(
-//             b.date
-//           ) -
-//           new Date(
-//             a.date
-//           )
-//       );
-//     }, [
-//       monthlyAttendance,
-//     ]);
-
-//   /*
-//   =====================================
-//   Status Badge
-//   =====================================
-//   */
-
-//   const getBadge =
-//     (status) => {
-//       switch (
-//         status
-//       ) {
-//         case "Present":
-//           return (
-//             <Badge color="success">
-//               Present
-//             </Badge>
-//           );
-
-//         case "Absent":
-//           return (
-//             <Badge color="danger">
-//               Absent
-//             </Badge>
-//           );
-
-//         case "Leave":
-//           return (
-//             <Badge color="warning">
-//               Leave
-//             </Badge>
-//           );
-
-//         default:
-//           return (
-//             <Badge color="secondary">
-//               Unknown
-//             </Badge>
-//           );
-//       }
-//     };
-
-//   /*
-//   =====================================
-//   Loading
-//   =====================================
-//   */
-
-//   if (loading) {
-//     return (
-//       <div className="flex h-screen items-center justify-center">
-//         Loading attendance...
-//       </div>
-//     );
-//   }
-
-//   return (
-//     <div className="space-y-8">
-//       {/* ============================== */}
-//       {/* Header */}
-//       {/* ============================== */}
-
-//       <PageHeader
-//         bgColor="bg-student-light"
-//         title="Attendance"
-//         subtitle="View your monthly attendance history and records."
-//         breadcrumbs={[
-//           "Student",
-//           "Attendance",
-//         ]}
-//       />
-
-//       {/* ============================== */}
-//       {/* Statistics */}
-//       {/* ============================== */}
-
-//       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-//         <StatCard
-//           label="Present"
-//           value={
-//             stats.present
-//           }
-//           tone="student"
-//           footerText="Days"
-//           footerColor="success"
-//         />
-
-//         <StatCard
-//           label="Absent"
-//           value={
-//             stats.absent
-//           }
-//           tone="student"
-//           footerText="Days"
-//           footerColor="danger"
-//         />
-
-//         <StatCard
-//           label="Leave"
-//           value={
-//             stats.leave
-//           }
-//           tone="student"
-//           footerText="Days"
-//           footerColor="warning"
-//         />
-
-//         <StatCard
-//           label="Attendance"
-//           value={`${stats.percentage}%`}
-//           tone="student"
-//           footerText="Current Month"
-//           footerColor="success"
-//         />
-//       </div>
-
-//       {/* ============================== */}
-//       {/* Attendance History */}
-//       {/* ============================== */}
-
-//       <Card>
-//         {/* Top Section */}
-
-//         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-//           <div>
-//             <h2 className="text-xl font-bold text-student-text">
-//               Attendance History
-//             </h2>
-
-//             <p className="mt-1 text-sm text-text-secondary">
-//               Daily attendance
-//               records for the
-//               selected month.
-//             </p>
-//           </div>
-
-//           <select
-//             value={
-//               selectedMonth
-//             }
-//             onChange={(
-//               e
-//             ) =>
-//               setSelectedMonth(
-//                 e.target
-//                   .value
-//               )
-//             }
-//             className="
-//               rounded-xl
-//               border
-//               border-student-border
-//               bg-white
-//               px-4
-//               py-3
-//               text-sm
-//               outline-none
-//               focus:border-student-primary
-//             "
-//           >
-//             {months.map(
-//               (
-//                 month
-//               ) => (
-//                 <option
-//                   key={
-//                     month
-//                   }
-//                   value={
-//                     month
-//                   }
-//                 >
-//                   {month}
-//                 </option>
-//               )
-//             )}
-//           </select>
-//         </div>
-
-//         {/* Month Heading */}
-
-//         <div className="mb-8 flex items-center gap-3">
-//           <Calendar
-//             size={22}
-//             className="text-student-primary"
-//           />
-
-//           <h3 className="text-lg font-bold text-student-text">
-//             {
-//               selectedMonth
-//             }{" "}
-//             {
-//               currentYear
-//             }
-//           </h3>
-//         </div>
-
-//         {/* Empty State */}
-
-//         {sortedAttendance.length ===
-//         0 ? (
-//           <div className="py-20 text-center text-text-secondary">
-//             No attendance
-//             records found for{" "}
-//             {
-//               selectedMonth
-//             }
-//             .
-//           </div>
-//         ) : (
-//           <div className="space-y-4">
-//             {sortedAttendance.map(
-//               (
-//                 item
-//               ) => (
-//                 <div
-//                   key={
-//                     item.id
-//                   }
-//                   className="
-//                     flex
-//                     flex-col
-//                     gap-4
-//                     rounded-2xl
-//                     border
-//                     border-student-border
-//                     bg-student-light
-//                     p-5
-//                     transition-all
-//                     duration-200
-//                     hover:shadow-md
-
-//                     md:flex-row
-//                     md:items-center
-//                     md:justify-between
-//                   "
-//                 >
-//                   {/* Left */}
-
-//                   <div className="flex items-center gap-4">
-//                     {item.status ===
-//                     "Present" ? (
-//                       <CheckCircle2
-//                         size={
-//                           28
-//                         }
-//                         className="text-green-600"
-//                       />
-//                     ) : item.status ===
-//                       "Absent" ? (
-//                       <XCircle
-//                         size={
-//                           28
-//                         }
-//                         className="text-red-600"
-//                       />
-//                     ) : (
-//                       <Clock3
-//                         size={
-//                           28
-//                         }
-//                         className="text-yellow-600"
-//                       />
-//                     )}
-
-//                     <div>
-//                       <p className="font-semibold text-text-primary">
-//                         {new Date(
-//                           item.date
-//                         ).toLocaleDateString(
-//                           "en-US",
-//                           {
-//                             weekday:
-//                               "long",
-//                             day: "numeric",
-//                             month:
-//                               "long",
-//                             year:
-//                               "numeric",
-//                           }
-//                         )}
-//                       </p>
-
-//                       <p className="mt-1 text-sm text-text-secondary">
-//                         Recorded
-//                         by Teacher #
-//                         {
-//                           item.marked_by_teacher_id
-//                         }
-//                       </p>
-//                     </div>
-//                   </div>
-
-//                   {/* Right */}
-
-//                   {getBadge(
-//                     item.status
-//                   )}
-//                 </div>
-//               )
-//             )}
-//           </div>
-//         )}
-//       </Card>
-//     </div>
-//   );
-// }
-
-// export default Attendance;
-
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -508,6 +6,8 @@ import {
   XCircle,
   Clock3,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 import { fetchAttendance } from "../../../store/studentThunks";
@@ -525,6 +25,8 @@ const STATUS_COLORS = {
   absent: ["#FB7185", "#E11D48"], // rose -> crimson
   leave: ["#FBBF24", "#D97706"], // amber -> orange
 };
+
+const ATTENDANCE_PER_PAGE = 8;
 
 /** Signature element: an animated multi-segment donut showing the
  *  present / absent / leave composition of the selected month, with
@@ -643,6 +145,82 @@ const STATUS_META = {
 };
 
 /* ------------------------------------------------------------------ */
+/*  Pagination controls                                                */
+/*  Prev/Next + a compact page-number strip, with ellipses once the    */
+/*  page count grows past what's comfortable to show in full.          */
+/* ------------------------------------------------------------------ */
+
+function Pagination({ currentPage, totalPages, onPageChange }) {
+  if (totalPages <= 1) return null;
+
+  const getPageNumbers = () => {
+    const pages = [];
+    const windowSize = 1;
+
+    for (let page = 1; page <= totalPages; page += 1) {
+      const isEdge = page === 1 || page === totalPages;
+      const isNearCurrent = Math.abs(page - currentPage) <= windowSize;
+
+      if (isEdge || isNearCurrent) {
+        pages.push(page);
+      } else if (pages[pages.length - 1] !== "...") {
+        pages.push("...");
+      }
+    }
+
+    return pages;
+  };
+
+  return (
+    <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+      <button
+        type="button"
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        className="flex h-9 w-9 items-center justify-center rounded-lg border border-student-border bg-white text-text-secondary transition-colors hover:enabled:border-student-primary/40 hover:enabled:text-student-primary disabled:cursor-not-allowed disabled:opacity-40"
+        aria-label="Previous page"
+      >
+        <ChevronLeft size={16} />
+      </button>
+
+      {getPageNumbers().map((page, index) =>
+        page === "..." ? (
+          <span
+            key={`ellipsis-${index}`}
+            className="flex h-9 w-9 items-center justify-center text-sm text-text-secondary"
+          >
+            …
+          </span>
+        ) : (
+          <button
+            key={page}
+            type="button"
+            onClick={() => onPageChange(page)}
+            className={`flex h-9 w-9 items-center justify-center rounded-lg text-sm font-semibold transition-colors ${
+              page === currentPage
+                ? "bg-student-primary text-white shadow-sm"
+                : "border border-student-border bg-white text-text-secondary hover:border-student-primary/40 hover:text-student-primary"
+            }`}
+          >
+            {page}
+          </button>
+        )
+      )}
+
+      <button
+        type="button"
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+        className="flex h-9 w-9 items-center justify-center rounded-lg border border-student-border bg-white text-text-secondary transition-colors hover:enabled:border-student-primary/40 hover:enabled:text-student-primary disabled:cursor-not-allowed disabled:opacity-40"
+        aria-label="Next page"
+      >
+        <ChevronRight size={16} />
+      </button>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  Main component                                                     */
 /* ------------------------------------------------------------------ */
 
@@ -654,6 +232,7 @@ function Attendance() {
   const currentYear = new Date().getFullYear();
 
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     dispatch(fetchAttendance());
@@ -685,6 +264,27 @@ function Attendance() {
   const sortedAttendance = useMemo(() => {
     return [...monthlyAttendance].sort((a, b) => new Date(b.date) - new Date(a.date));
   }, [monthlyAttendance]);
+
+  // Reset to page 1 whenever the selected month (or the underlying
+  // attendance data) changes, so the user isn't stranded on an empty page.
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedMonth, attendance]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(sortedAttendance.length / ATTENDANCE_PER_PAGE)
+  );
+
+  const paginatedAttendance = useMemo(() => {
+    const start = (currentPage - 1) * ATTENDANCE_PER_PAGE;
+    return sortedAttendance.slice(start, start + ATTENDANCE_PER_PAGE);
+  }, [sortedAttendance, currentPage]);
+
+  const handlePageChange = (page) => {
+    if (page < 1 || page > totalPages) return;
+    setCurrentPage(page);
+  };
 
   const getBadge = (status) => {
     switch (status) {
@@ -818,55 +418,72 @@ function Attendance() {
             </p>
           </div>
         ) : (
-          <div className="space-y-3">
-            {sortedAttendance.map((item, index) => {
-              const meta = STATUS_META[item.status] || {
-                icon: Clock3,
-                colors: ["#94A3B8", "#64748B"],
-              };
-              const StatusIcon = meta.icon;
+          <>
+            <div className="space-y-3">
+              {paginatedAttendance.map((item, index) => {
+                const meta = STATUS_META[item.status] || {
+                  icon: Clock3,
+                  colors: ["#94A3B8", "#64748B"],
+                };
+                const StatusIcon = meta.icon;
 
-              return (
-                <div
-                  key={item.id}
-                  style={{
-                    borderLeftColor: meta.colors[1],
-                    animationDelay: `${Math.min(index, 10) * 45}ms`,
-                  }}
-                  className="flex flex-col gap-4 rounded-2xl border border-student-border
-                             border-l-4 bg-student-light p-5 opacity-0 shadow-sm
-                             [animation-fill-mode:forwards] animate-[attendance-in_0.5s_ease-out]
-                             transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md
-                             md:flex-row md:items-center md:justify-between"
-                >
-                  <div className="flex items-center gap-4">
-                    <div
-                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-white shadow-sm"
-                      style={{ background: `linear-gradient(135deg, ${meta.colors[0]}, ${meta.colors[1]})` }}
-                    >
-                      <StatusIcon size={20} strokeWidth={2.25} />
+                return (
+                  <div
+                    key={item.id}
+                    style={{
+                      borderLeftColor: meta.colors[1],
+                      animationDelay: `${Math.min(index, 10) * 45}ms`,
+                    }}
+                    className="flex flex-col gap-4 rounded-2xl border border-student-border
+                               border-l-4 bg-student-light p-5 opacity-0 shadow-sm
+                               [animation-fill-mode:forwards] animate-[attendance-in_0.5s_ease-out]
+                               transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md
+                               md:flex-row md:items-center md:justify-between"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div
+                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-white shadow-sm"
+                        style={{ background: `linear-gradient(135deg, ${meta.colors[0]}, ${meta.colors[1]})` }}
+                      >
+                        <StatusIcon size={20} strokeWidth={2.25} />
+                      </div>
+
+                      <div>
+                        <p className="font-semibold text-text-primary">
+                          {new Date(item.date).toLocaleDateString("en-US", {
+                            weekday: "long",
+                            day: "numeric",
+                            month: "long",
+                            year: "numeric",
+                          })}
+                        </p>
+                        <p className="mt-1 text-sm text-text-secondary">
+                          Recorded by Teacher #{item.marked_by_teacher_id}
+                        </p>
+                      </div>
                     </div>
 
-                    <div>
-                      <p className="font-semibold text-text-primary">
-                        {new Date(item.date).toLocaleDateString("en-US", {
-                          weekday: "long",
-                          day: "numeric",
-                          month: "long",
-                          year: "numeric",
-                        })}
-                      </p>
-                      <p className="mt-1 text-sm text-text-secondary">
-                        Recorded by Teacher #{item.marked_by_teacher_id}
-                      </p>
-                    </div>
+                    {getBadge(item.status)}
                   </div>
+                );
+              })}
+            </div>
 
-                  {getBadge(item.status)}
-                </div>
-              );
-            })}
-          </div>
+            <div className="mt-6 flex flex-col items-center gap-2">
+              <p className="text-xs text-text-secondary">
+                Showing {(currentPage - 1) * ATTENDANCE_PER_PAGE + 1}
+                {"–"}
+                {Math.min(currentPage * ATTENDANCE_PER_PAGE, sortedAttendance.length)} of{" "}
+                {sortedAttendance.length} records
+              </p>
+
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
+            </div>
+          </>
         )}
       </Card>
 

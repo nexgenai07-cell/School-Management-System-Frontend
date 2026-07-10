@@ -78,7 +78,14 @@ const ActiveEventsCard = () => {
 
       {/* Body */}
 
-      <div className="mt-6 space-y-4">
+      <div
+        className="
+          mt-6 space-y-4
+          max-h-96 overflow-y-auto
+          pr-1
+          scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent
+        "
+      >
         {childEvents.length === 0 ? (
           <div className="rounded-xl bg-surface-muted p-6 text-center">
             <CalendarDays
