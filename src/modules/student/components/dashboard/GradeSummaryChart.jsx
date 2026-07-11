@@ -1,6 +1,6 @@
 // src/modules/student/components/dashboard/GradeSummaryChart.jsx
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { ClipboardX } from "lucide-react";
 
@@ -30,6 +30,34 @@ const TIERS = [
 ];
 
 const getTier = (percentage) => TIERS.find((tier) => percentage >= tier.min) || TIERS[TIERS.length - 1];
+
+/* ------------------------------------------------------------------ */
+/*  Exam-type filter pills                                             */
+/* ------------------------------------------------------------------ */
+
+const EXAM_FILTERS = ["All", "Mid-Term", "Final", "Quiz", "Assignment"];
+
+const ExamFilterBar = ({ value, onChange }) => (
+  <div className="flex flex-wrap items-center gap-2">
+    {EXAM_FILTERS.map((option) => {
+      const active = option === value;
+      return (
+        <button
+          key={option}
+          type="button"
+          onClick={() => onChange(option)}
+          className={`rounded-full border px-3 py-1 text-xs font-semibold transition-all duration-200 ${
+            active
+              ? "border-student-primary bg-student-primary text-white shadow-sm"
+              : "border-slate-200 bg-white text-text-secondary hover:border-student-primary/40 hover:text-student-primary"
+          }`}
+        >
+          {option === "All" ? "All Exams" : option}
+        </button>
+      );
+    })}
+  </div>
+);
 
 const CustomTooltip = ({ active, payload }) => {
   if (!active || !payload?.length) return null;
@@ -74,46 +102,79 @@ const Legend = () => (
 const GradeSummaryChart = () => {
   const { reportCard = {} } = useSelector((state) => state.student);
 
-  const chartData = useMemo(() => {
-    const grades = reportCard?.grades || [];
+  const [examFilter, setExamFilter] = useState("All");
 
-    return grades
+  const filteredGrades = useMemo(() => {
+    const grades = reportCard?.grades || [];
+    if (examFilter === "All") return grades;
+    return grades.filter((grade) => grade.exam_type === examFilter);
+  }, [reportCard, examFilter]);
+
+  const chartData = useMemo(() => {
+    return filteredGrades
       .map((grade) => ({
         subject: grade.subject_name,
         exam: grade.exam_type,
-        percentage: Math.round(
-          (Number(grade.obtained_marks) / Number(grade.total_marks)) * 100
-        ),
+       percentage: Number(
+  (
+    (Number(grade.obtained_marks) / Number(grade.total_marks)) *
+    100
+  ).toFixed(2)
+),
         obtained: Number(grade.obtained_marks),
         total: Number(grade.total_marks),
         teacher: grade.teacher_name,
       }))
       .sort((a, b) => b.percentage - a.percentage);
-  }, [reportCard]);
+  }, [filteredGrades]);
 
-  const average = useMemo(() => {
-    if (!chartData.length) return 0;
-    return Math.round(
-      chartData.reduce((sum, item) => sum + item.percentage, 0) / chartData.length
-    );
-  }, [chartData]);
+const average = useMemo(() => {
+  if (!filteredGrades.length) return 0;
+
+  const obtainedMarks = filteredGrades.reduce(
+    (sum, grade) => sum + Number(grade.obtained_marks),
+    0
+  );
+
+  const totalMarks = filteredGrades.reduce(
+    (sum, grade) => sum + Number(grade.total_marks),
+    0
+  );
+
+  return totalMarks
+    ? Number((((obtainedMarks / totalMarks) * 100).toFixed(2)))
+    : 0;
+}, [filteredGrades]);
 
   const chartHeight = Math.max(chartData.length * 46, 220);
 
   return (
     <Card hover={false} className="h-full">
       {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-semibold text-text-primary">Grade Summary</h2>
-          <p className="mt-1 text-sm text-text-secondary">
-            Performance across all examinations.
-          </p>
+      <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex items-center justify-between gap-4 lg:justify-start">
+          <div>
+            <h2 className="text-xl font-semibold text-text-primary">Grade Summary</h2>
+            <p className="mt-1 text-sm text-text-secondary">
+              {examFilter === "All"
+                ? "Performance across all examinations."
+                : `${examFilter} examination performance.`}
+            </p>
+          </div>
+
+          <div className="rounded-xl bg-student-light px-4 py-2 lg:hidden">
+            <p className="text-xs text-text-secondary">Average</p>
+            <h3 className="text-lg font-bold text-student-primary">{average}%</h3>
+          </div>
         </div>
 
-        <div className="rounded-xl bg-student-light px-4 py-2">
-          <p className="text-xs text-text-secondary">Overall Average</p>
-          <h3 className="text-lg font-bold text-student-primary">{average}%</h3>
+        <div className="flex flex-wrap items-center gap-3">
+          <ExamFilterBar value={examFilter} onChange={setExamFilter} />
+
+          <div className="hidden rounded-xl bg-student-light px-4 py-2 lg:block">
+            <p className="text-xs text-text-secondary">Average</p>
+            <h3 className="text-lg font-bold text-student-primary">{average}%</h3>
+          </div>
         </div>
       </div>
 
@@ -124,7 +185,9 @@ const GradeSummaryChart = () => {
           <div className="text-center">
             <p className="font-medium text-text-primary">No grades available</p>
             <p className="mt-1 text-sm text-text-secondary">
-              Grades will appear here after exams are published.
+              {examFilter === "All"
+                ? "Grades will appear here after exams are published."
+                : `No ${examFilter} grades found.`}
             </p>
           </div>
         </div>

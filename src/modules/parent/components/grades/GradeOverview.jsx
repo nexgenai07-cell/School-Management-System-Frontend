@@ -123,43 +123,43 @@ const GradeOverview = () => {
   =====================================================
   */
 
-  const cards = [
-    {
-      title: "Overall Average",
-      value: `${stats.average.toFixed(1)}%`,
-      icon: Award,
-      iconBg: "bg-parent-primary/10",
-      iconColor: "text-parent-primary",
-    },
-    {
-      title: "Subjects",
-      value: stats.subjects,
-      icon: BookOpen,
-      iconBg: "bg-blue-100",
-      iconColor: "text-blue-600",
-    },
-    {
-      title: "Highest Score",
-      value: `${stats.highest.toFixed(0)}%`,
-      icon: TrendingUp,
-      iconBg: "bg-green-100",
-      iconColor: "text-green-600",
-    },
-    {
-      title: "Lowest Score",
-      value: `${stats.lowest.toFixed(0)}%`,
-      icon: TrendingDown,
-      iconBg: "bg-red-100",
-      iconColor: "text-red-600",
-    },
-    {
-      title: "Marks",
-      value: `${stats.obtained} / ${stats.total}`,
-      icon: GraduationCap,
-      iconBg: "bg-purple-100",
-      iconColor: "text-purple-600",
-    },
-  ];
+const cards = [
+  {
+    title: "Overall Average",
+    value: `${stats.average.toFixed(2)}%`,
+    icon: Award,
+    iconBg: "bg-parent-primary/10",
+    iconColor: "text-parent-primary",
+  },
+  {
+    title: "Subjects",
+    value: stats.subjects,
+    icon: BookOpen,
+    iconBg: "bg-blue-100",
+    iconColor: "text-blue-600",
+  },
+  {
+    title: "Highest Score",
+    value: `${stats.highest.toFixed(2)}%`,
+    icon: TrendingUp,
+    iconBg: "bg-green-100",
+    iconColor: "text-green-600",
+  },
+  {
+    title: "Lowest Score",
+    value: `${stats.lowest.toFixed(2)}%`,
+    icon: TrendingDown,
+    iconBg: "bg-red-100",
+    iconColor: "text-red-600",
+  },
+  {
+    title: "Marks",
+    value: `${stats.obtained.toFixed(2)} / ${stats.total.toFixed(2)}`,
+    icon: GraduationCap,
+    iconBg: "bg-purple-100",
+    iconColor: "text-purple-600",
+  },
+];
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">

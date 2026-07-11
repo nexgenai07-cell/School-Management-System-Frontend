@@ -1,62 +1,47 @@
 // src/services/settingsService.js
 
-import * as studentMock from "../mocks/studentMock";
-import * as parentMock from "../mocks/parentMock";
-
-const getMock = (role) => {
-  switch (role) {
-  
-    case "parent":
-      return parentMock;
-    case "student":
-      return studentMock;
-    default:
-      return studentMock;
-  }
-};
+import api from "./api";
 
 const settingsService = {
   /**
    * GET /auth/profile
    */
-  getProfile: async (role) => {
-    return getMock(role).profile;
+  getProfile: async () => {
+    const { data } = await api.get("/auth/profile");
+    return data;
   },
 
   /**
    * PATCH /auth/profile
    */
-  updateProfile: async (role, profileData) => {
-    return {
-      ...getMock(role).profile,
-      ...profileData,
-    };
-
-    // Backend
-    // return api.patch("/auth/profile", profileData);
+  updateProfile: async (profileData) => {
+    const { data } = await api.patch(
+      "/auth/profile",
+      profileData
+    );
+    return data;
   },
 
   /**
    * PUT /auth/profile
    */
-  replaceProfile: async (role, profileData) => {
-    return profileData;
-
-    // Backend
-    // return api.put("/auth/profile", profileData);
+  replaceProfile: async (profileData) => {
+    const { data } = await api.put(
+      "/auth/profile",
+      profileData
+    );
+    return data;
   },
 
   /**
    * PUT /auth/change-password
    */
-  changePassword: async () => {
-    return {
-      success: true,
-      message: "Password updated successfully.",
-    };
-
-    // Backend
-    // return api.put("/auth/change-password", data);
+  changePassword: async (passwordData) => {
+    const { data } = await api.put(
+      "/auth/change-password",
+      passwordData
+    );
+    return data;
   },
 };
 

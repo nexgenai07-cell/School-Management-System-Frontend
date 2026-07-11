@@ -14,10 +14,15 @@ import Button from "../../../../components/ui/Button/Button";
 
 const ParticipationCard = ({
   participation,
+  certificates,
   onView,
 }) => {
   const hasCertificate =
-    Boolean(participation.certificate);
+  certificates.some(
+    (certificate) =>
+      certificate.student_name ===
+        participation.student_name
+  );
 
   const positionColor = {
     "1st": "bg-yellow-100 text-yellow-700",

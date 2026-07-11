@@ -9,8 +9,9 @@ import {
 import ChildGradeSelector from "../components/grades/ChildGradeSelector";
 import TermSelector from "../components/grades/TermSelector";
 import GradeOverview from "../components/grades/GradeOverview";
+import GradeChart from "../components/grades/GradeChart";
 import SubjectPerformanceTable from "../components/grades/SubjectPerformanceTable";
-import GradeSummary from "../components/grades/GradeSummary";
+
 
 const Grades = () => {
   const dispatch = useDispatch();
@@ -42,39 +43,36 @@ const Grades = () => {
           Selectors
       ===================================================== */}
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-1">
 
         <ChildGradeSelector />
 
-        <TermSelector />
+       
 
       </div>
 
       {/* =====================================================
           Overview Cards
       ===================================================== */}
-
+ <GradeChart />
       <GradeOverview />
+
+      {/* =====================================================
+          Performance Chart
+      ===================================================== */}
+<div className="xl:col-span-8">
+          <TermSelector />
+          <SubjectPerformanceTable />
+        </div>
+     
+         
 
       {/* =====================================================
           Main Content
       ===================================================== */}
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
 
-        {/* Left */}
-
-        <div className="xl:col-span-8">
-          <SubjectPerformanceTable />
-        </div>
-
-        {/* Right */}
-
-        <div className="xl:col-span-4">
-          <GradeSummary />
-        </div>
-
-      </div>
+      
 
     </div>
   );
