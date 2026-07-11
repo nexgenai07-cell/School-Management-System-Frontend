@@ -43,7 +43,7 @@ const getStatus = (eventDate) => {
   return { label: 'Scheduled', color: 'success' };
 };
 
-const ITEMS_PER_PAGE = 5;
+const ITEMS_PER_PAGE = 10;
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 export default function EventManagement() {

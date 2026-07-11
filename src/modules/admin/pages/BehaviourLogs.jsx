@@ -73,7 +73,7 @@ const getStatusIcon = (status) => {
   }
 };
 
-const ITEMS_PER_PAGE = 5;
+const ITEMS_PER_PAGE = 10;
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 export default function BehaviorLogs() {

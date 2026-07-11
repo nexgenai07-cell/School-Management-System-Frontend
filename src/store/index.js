@@ -8,7 +8,7 @@ import parentReducer from "./parentSlice";
 
 import adminReducer from "./admin/adminSlice";
 import teacherReducer from "./teacher/teacherSlice";
-
+import academicsReducer from "./admin/academicsSlice";
 // ----- Feature Slices  -----
 import complaintReducer from "./complaint/complaintSlice";
 import notificationReducer from "./notification/notificationSlice";
@@ -31,7 +31,7 @@ const store = configureStore({
     parent: parentReducer,
     admin: adminReducer,      
     teacher: teacherReducer,   
-
+    academics: academicsReducer,
     // Feature modules
     complaints: complaintReducer,
     notifications: notificationReducer,

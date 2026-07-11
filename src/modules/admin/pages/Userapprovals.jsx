@@ -110,7 +110,7 @@ const buildColumns = (onViewDetails) => [
     render: (row) => (
       <div className="flex justify-start">
         <Button
-          variant={row.status === "Pending" ? "outline" : "ghost"}
+          variant="outline"
           size="sm"
           tone="admin"
           onClick={() => onViewDetails(row)}
@@ -329,7 +329,7 @@ const columns = buildColumns(setSelectedUser);
       <PageHeader
         title="User Approvals"
         subtitle="Review and manage registration requests"
-        breadcrumbs={["Dashboard", "Admin", "User Approvals"]}
+        breadcrumbs={["Admin", "User Approvals"]}
         action={
           <SearchBar
             value={search}
@@ -421,7 +421,7 @@ const columns = buildColumns(setSelectedUser);
             emptyMessage="No requests found."
             mobileActions={(row) => (
               <Button
-                variant={row.status === "Pending" ? "outline" : "ghost"}
+                variant="outline"
                 size="sm"
                 tone="admin"
                 fullWidth
@@ -473,52 +473,6 @@ const columns = buildColumns(setSelectedUser);
         </div>
       </div>
 
-      {/* ── Bottom Insights ── */}
-      <div className="bg-white rounded-xl p-6 shadow-[0_1px_4px_rgba(0,0,0,0.06)] border border-gray-100">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="space-y-4">
-            <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-widest">
-              Insights
-            </p>
-            <div className="space-y-3">
-              {[
-                { icon: <TrendingUp size={16} className="text-[var(--color-teacher-primary)]" />, text: "18 requests processed today" },
-                { icon: <AlertCircle size={16} className="text-[var(--color-warning)]" />, text: `${stats.pending} pending over 24 hrs` },
-                { icon: <Timer size={16} className="text-[var(--color-admin-primary)]" />, text: "Avg. approval time: 4.2 hrs" },
-              ].map((item) => (
-                <div key={item.text} className="flex items-center gap-3">
-                  {item.icon}
-                  <span className="text-sm text-[var(--color-text-primary)]">{item.text}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-widest">
-              Recent Activity
-            </p>
-            <div className="space-y-2">
-              {[
-                { name: "Fatima Malik", action: "approved", time: "2m ago", color: "bg-[var(--color-success)]" },
-                { name: "Ayesha Siddiqui", action: "rejected", time: "15m ago", color: "bg-[var(--color-danger)]" },
-                { name: "Usman Khan", action: "approved", time: "1h ago", color: "bg-[var(--color-success)]" },
-              ].map((item) => (
-                <div key={item.name} className="flex items-center justify-between p-2.5 rounded-lg bg-gray-50">
-                  <div className="flex items-center gap-2.5">
-                    <span className={`w-2 h-2 rounded-full ${item.color}`} />
-                    <span className="text-sm text-[var(--color-text-primary)]">
-                      {item.name}{" "}
-                      <span className="text-[var(--color-text-secondary)]">{item.action}</span>
-                    </span>
-                  </div>
-                  <span className="text-xs text-[var(--color-text-muted)]">{item.time}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* ── Drawer ── */}
       <Drawer
