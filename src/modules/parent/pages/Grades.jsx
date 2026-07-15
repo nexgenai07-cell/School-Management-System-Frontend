@@ -1,5 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
+import { gsap } from "gsap";
 
 import {
   fetchGrades,
@@ -16,24 +17,76 @@ import SubjectPerformanceTable from "../components/grades/SubjectPerformanceTabl
 const Grades = () => {
   const dispatch = useDispatch();
 
+  const containerRef = useRef(null);
+  const titleRef = useRef(null);
+  const subtitleRef = useRef(null);
+  const selectorRef = useRef(null);
+  const chartRef = useRef(null);
+  const overviewRef = useRef(null);
+  const performanceRef = useRef(null);
+
   useEffect(() => {
     dispatch(fetchParentLinks());
     dispatch(fetchGrades());
   }, [dispatch]);
 
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+
+      tl.fromTo(
+        titleRef.current,
+        { opacity: 0, y: 16 },
+        { opacity: 1, y: 0, duration: 0.5 }
+      )
+        .fromTo(
+          subtitleRef.current,
+          { opacity: 0, y: 12 },
+          { opacity: 1, y: 0, duration: 0.45 },
+          "-=0.25"
+        )
+        .fromTo(
+          selectorRef.current,
+          { opacity: 0, y: 20 },
+          { opacity: 1, y: 0, duration: 0.55 },
+          "-=0.2"
+        )
+        .fromTo(
+          chartRef.current,
+          { opacity: 0, y: 24 },
+          { opacity: 1, y: 0, duration: 0.6 },
+          "-=0.3"
+        )
+        .fromTo(
+          overviewRef.current,
+          { opacity: 0, y: 24 },
+          { opacity: 1, y: 0, duration: 0.6 },
+          "-=0.4"
+        )
+        .fromTo(
+          performanceRef.current,
+          { opacity: 0, y: 24 },
+          { opacity: 1, y: 0, duration: 0.6 },
+          "-=0.35"
+        );
+    }, containerRef);
+
+    return () => ctx.revert();
+  }, []);
+
   return (
-    <div className="space-y-8">
+    <div ref={containerRef} className="space-y-8">
 
       {/* =====================================================
           Page Header
       ===================================================== */}
 
       <div>
-        <h1 className="text-3xl font-bold text-text-primary">
+        <h1 ref={titleRef} className="text-3xl font-bold text-text-primary">
           Academic Grades
         </h1>
 
-        <p className="mt-2 text-text-secondary">
+        <p ref={subtitleRef} className="mt-2 text-text-secondary">
           View your child's academic performance, exam
           results and subject-wise grades.
         </p>
@@ -43,36 +96,38 @@ const Grades = () => {
           Selectors
       ===================================================== */}
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-1">
+      <div ref={selectorRef} className="grid grid-cols-1 gap-6 lg:grid-cols-1">
 
         <ChildGradeSelector />
-
-       
 
       </div>
 
       {/* =====================================================
           Overview Cards
       ===================================================== */}
- <GradeChart />
-      <GradeOverview />
+
+      <div ref={chartRef}>
+        <GradeChart />
+      </div>
+
+      <div ref={overviewRef}>
+        <GradeOverview />
+      </div>
 
       {/* =====================================================
           Performance Chart
       ===================================================== */}
-<div className="xl:col-span-8">
-          <TermSelector />
-          <SubjectPerformanceTable />
-        </div>
-     
-         
+
+      <div ref={performanceRef} className="xl:col-span-8">
+        <TermSelector />
+        <SubjectPerformanceTable />
+      </div>
 
       {/* =====================================================
           Main Content
       ===================================================== */}
 
 
-      
 
     </div>
   );
