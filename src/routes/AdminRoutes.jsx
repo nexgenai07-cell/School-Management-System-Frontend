@@ -13,6 +13,7 @@ import TimetableManagement from "../modules/admin/pages/Timetablemanage";
 import CampaignLogs from "../modules/admin/pages/CampaignLogs";
 import NotificationManagement from "../modules/admin/pages/NotificationManagement";
 import Settings from "../modules/admin/pages/Settings"
+import BehaviorLogs from "../modules/admin/pages/BehaviorLogs";
 const AdminRoutes = (
   <Route
     element={
@@ -56,6 +57,10 @@ const AdminRoutes = (
     <Route
        path="/admin/timetable-builder"
        element={<TimetableManagement/>}
+    />
+     <Route
+       path="/admin/behavior-logs"
+       element={<BehaviorLogs/>}
     />
     <Route
        path="/admin/campaign-logs"

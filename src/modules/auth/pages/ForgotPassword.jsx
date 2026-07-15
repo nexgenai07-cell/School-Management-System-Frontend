@@ -1,10 +1,12 @@
+// src/pages/auth/ForgotPassword.jsx
+
 import { useState, useRef, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { Mail, ShieldCheck, Lock, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
 
 import { Input, Button, PasswordStrength } from '../../../components';
-import { forgotPassword, resetPasswordConfirm } from '../../../store/auth/authThunks';
+import { requestOtp, confirmOtpAndReset } from '../../../store/auth/authThunks';
 
 const OTP_LENGTH = 6;
 const RESEND_SECONDS = 30;
@@ -44,7 +46,8 @@ function ForgotPassword() {
     }
 
     try {
-      await dispatch(forgotPassword({ email })).unwrap();
+      // Updated: Using requestOtp instead of forgotPassword
+      await dispatch(requestOtp({ email })).unwrap();
       setStep('reset');
       setResendTimer(RESEND_SECONDS);
       setOtp(Array(OTP_LENGTH).fill(''));
@@ -61,7 +64,8 @@ function ForgotPassword() {
     setOtp(Array(OTP_LENGTH).fill(''));
     setResendTimer(RESEND_SECONDS);
     setError('');
-    dispatch(forgotPassword({ email }))
+    //  Using requestOtp instead of forgotPassword
+    dispatch(requestOtp({ email }))
       .unwrap()
       .catch((err) => setError(err.message || 'Failed to resend OTP.'));
   }
@@ -97,7 +101,7 @@ function ForgotPassword() {
     otpRefs.current[Math.min(digits.length, OTP_LENGTH - 1)]?.focus();
   }
 
-  // ── Step 2: Verify OTP + Reset Password (Single API Call) ─────
+  // ── Step 2: Verify OTP + Reset Password ─────────────────────
   async function handleResetPassword(e) {
     e.preventDefault();
     setError('');
@@ -117,7 +121,8 @@ function ForgotPassword() {
     }
 
     try {
-      await dispatch(resetPasswordConfirm({
+      //   Using confirmOtpAndReset instead of resetPasswordConfirm
+      await dispatch(confirmOtpAndReset({
         email,
         token: code,
         new_password: newPassword,
@@ -201,7 +206,7 @@ function ForgotPassword() {
         </form>
       )}
 
-      {/* ── Step 2: OTP + New Password (Merged) ── */}
+      {/* ── Step 2: OTP + New Password ── */}
       {step === 'reset' && (
         <form onSubmit={handleResetPassword} className="space-y-5">
           {/* OTP Inputs */}
@@ -250,8 +255,12 @@ function ForgotPassword() {
               onChange={(e) => { setError(''); setNewPassword(e.target.value); }}
               leftIcon={<Lock size={16} />}
               rightIcon={
-                <button type="button" onClick={() => setShowPassword((v) => !v)}
-                  className="text-text-muted hover:text-text-primary transition-colors" tabIndex={-1}>
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="text-text-muted hover:text-text-primary transition-colors"
+                  tabIndex={-1}
+                >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               }
@@ -269,8 +278,12 @@ function ForgotPassword() {
             onChange={(e) => { setError(''); setConfirmPassword(e.target.value); }}
             leftIcon={<Lock size={16} />}
             rightIcon={
-              <button type="button" onClick={() => setShowConfirm((v) => !v)}
-                className="text-text-muted hover:text-text-primary transition-colors" tabIndex={-1}>
+              <button
+                type="button"
+                onClick={() => setShowConfirm((v) => !v)}
+                className="text-text-muted hover:text-text-primary transition-colors"
+                tabIndex={-1}
+              >
                 {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             }

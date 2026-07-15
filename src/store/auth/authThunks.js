@@ -149,78 +149,70 @@ export const registerUser = createAsyncThunk(
   }
 );
 
-/*
-/*
-============================================
-4. Forgot Password Thunk (Request OTP)
-Purpose: Send OTP to user's email.
-Flow: POST /auth/password-reset -> Success -> User enters OTP
-============================================
-*/
-export const forgotPassword = createAsyncThunk(
-  "auth/forgotPassword",
-  async ({ email }, { dispatch }) => {
-    // eslint-disable-next-line no-useless-catch
+
+// ─── Request OTP (forgot password) ─────────────────────────────────────
+export const requestOtp = createAsyncThunk(
+  'auth/requestOtp',
+  async ({ email }, { rejectWithValue }) => {
     try {
-      const response = await fetch(`${API_BASE}/auth/password-reset`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch(`${API_BASE}/auth/request-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
-
       if (!response.ok) {
-        let errorMsg = "Failed to send OTP";
-        try {
-          const errorData = await response.json();
-          errorMsg = errorData.message || errorData.detail || errorMsg;
-        } catch (e) {
-          errorMsg = response.statusText || errorMsg;
-        }
-        throw new Error(errorMsg);
+        const errorData = await response.json();
+        throw new Error(errorData.message || errorData.detail || 'Failed to send OTP');
       }
-
-      const data = await response.json();
-      return data; // { message: "OTP sent to email" }
+      return await response.json(); // { detail: 'OTP sent' }
     } catch (error) {
-      // Don't dispatch loginFailure here, let component handle it
-      throw error;
+      return rejectWithValue(error.message);
     }
   }
 );
 
-/*
-============================================
-5. Reset Password Confirm Thunk (Verify OTP + Reset)
-Purpose: Verify OTP and set new password.
-Flow: POST /auth/password-reset/confirm -> Success -> Redirect to login
-============================================
-*/
-export const resetPasswordConfirm = createAsyncThunk(
-  "auth/resetPasswordConfirm",
-  async ({ email, token, new_password }, { dispatch }) => {
-    // eslint-disable-next-line no-useless-catch
+// ─── Confirm OTP & Reset Password ──────────────────────────────────────
+export const confirmOtpAndReset = createAsyncThunk(
+  'auth/confirmOtpAndReset',
+  async ({ email, token, new_password }, { rejectWithValue }) => {
     try {
-      const response = await fetch(`${API_BASE}/auth/password-reset/confirm`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch(`${API_BASE}/auth/request-otp/confirm`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, token, new_password }),
       });
-
       if (!response.ok) {
-        let errorMsg = "Failed to reset password";
-        try {
-          const errorData = await response.json();
-          errorMsg = errorData.message || errorData.detail || errorMsg;
-        } catch (e) {
-          errorMsg = response.statusText || errorMsg;
-        }
-        throw new Error(errorMsg);
+        const errorData = await response.json();
+        throw new Error(errorData.message || errorData.detail || 'Invalid OTP or reset failed');
       }
-
-      const data = await response.json();
-      return data; // { message: "Password reset successfully" }
+      return await response.json(); // { detail: 'Password reset successfully' }
     } catch (error) {
-      throw error;
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// ─── Change Password (authenticated user) ──────────────────────────────
+export const changePassword = createAsyncThunk(
+  'auth/changePassword',
+  async ({ old_password, new_password }, { getState, rejectWithValue }) => {
+    try {
+      const { accessToken } = getState().auth;
+      const response = await fetch(`${API_BASE}/auth/change-password`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ old_password, new_password }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || errorData.detail || 'Failed to change password');
+      }
+      return await response.json();
+    } catch (error) {
+      return rejectWithValue(error.message);
     }
   }
 );

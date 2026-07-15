@@ -415,11 +415,11 @@ export const COMPLAINT_TYPE_OPTIONS = [
 
 // Classes & Sections
 export const MOCK_CLASS_SECTIONS = [
-  { id: 1, class_name: '10', section: 'A', default_room_id: 1, created_at: '2025-01-15T08:00:00Z',display: "12-A (Science)" },
-  { id: 2, class_name: '10', section: 'B', default_room_id: 2, created_at: '2025-01-15T08:05:00Z', display: "11-B (Commerce)" },
-  { id: 3, class_name: '11', section: 'A', default_room_id: 3, created_at: '2025-01-16T09:00:00Z', display: "10-A (General)" },
-  { id: 4, class_name: '11', section: 'B', default_room_id: 4, created_at: '2025-01-16T09:05:00Z', display: "9-A (General)" },
-  { id: 5, class_name: '12', section: 'A', default_room_id: 5, created_at: '2025-01-17T10:00:00Z' , display: "8-B (General)" },
+  { id: 1, class_name: '10', section: 'A', default_room: 1, created_at: '2025-01-15T08:00:00Z',display: "12-A (Science)" },
+  { id: 2, class_name: '10', section: 'B', default_room: 2, created_at: '2025-01-15T08:05:00Z', display: "11-B (Commerce)" },
+  { id: 3, class_name: '11', section: 'A', default_room: 3, created_at: '2025-01-16T09:00:00Z', display: "10-A (General)" },
+  { id: 4, class_name: '11', section: 'B', default_room: 4, created_at: '2025-01-16T09:05:00Z', display: "9-A (General)" },
+  { id: 5, class_name: '12', section: 'A', default_room: 5, created_at: '2025-01-17T10:00:00Z' , display: "8-B (General)" },
 ];
 
 // Rooms

@@ -69,6 +69,12 @@ export const adminRoutes = [
     path: "/admin/timetable-builder",
     icon: CalendarDays,
   },
+  {
+    label: "Behavior Logs",
+    path: "/admin/behavior-logs",
+    icon: ClipboardList,
+  },
+  
 
   // Financial Management
   {

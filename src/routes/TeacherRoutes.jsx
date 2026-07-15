@@ -3,7 +3,7 @@ import { Route } from "react-router-dom";
 import RoleRoute from "./RolesRoutes";
 import TeacherDashboard from "../modules/teacher/pages/TeacherDashboard";
 import AttendanceRegister from "../modules/teacher/pages/AttendanceRegister";
-import AssignmentManagement from "../modules/teacher/pages/AssigmentManagement";
+import AssignmentManagement from "../modules/teacher/pages/AssignmentManagement";
 import GradeManagement from "../modules/teacher/pages/GradeManagement";
 import TimetableManagement from "../modules/teacher/pages/Timetable";
 import TeacherComplaint from "../modules/teacher/pages/TeacherComplaints";
