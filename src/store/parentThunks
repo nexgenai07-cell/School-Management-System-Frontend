@@ -1,0 +1,378 @@
+// src/store/parent/parentThunks.js
+
+import { createAsyncThunk } from "@reduxjs/toolkit";
+
+import parentService from "../services/parentService";
+import paymentService from "../services/paymentService";
+
+/*
+=====================================================
+PROFILE
+=====================================================
+*/
+
+export const fetchProfile = createAsyncThunk(
+  "parent/fetchProfile",
+  async (_, thunkAPI) => {
+    try {
+      return await parentService.getProfile();
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message
+      );
+    }
+  }
+);
+
+/*
+=====================================================
+PARENT LINKS
+=====================================================
+*/
+
+export const fetchParentLinks = createAsyncThunk(
+  "parent/fetchParentLinks",
+  async (_, thunkAPI) => {
+    try {
+      return await parentService.getParentLinks();
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message
+      );
+    }
+  }
+);
+
+export const createParentLink = createAsyncThunk(
+  "parent/createParentLink",
+  async (data, thunkAPI) => {
+    try {
+      return await parentService.createParentLink(data);
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message
+      );
+    }
+  }
+);
+
+export const updateParentLink = createAsyncThunk(
+  "parent/updateParentLink",
+  async ({ id, data }, thunkAPI) => {
+    try {
+      return await parentService.updateParentLink(id, data);
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message
+      );
+    }
+  }
+);
+
+export const patchParentLink = createAsyncThunk(
+  "parent/patchParentLink",
+  async ({ id, data }, thunkAPI) => {
+    try {
+      return await parentService.patchParentLink(id, data);
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message
+      );
+    }
+  }
+);
+
+export const deleteParentLink = createAsyncThunk(
+  "parent/deleteParentLink",
+  async (id, thunkAPI) => {
+    try {
+      return await parentService.deleteParentLink(id);
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message
+      );
+    }
+  }
+);
+
+/*
+=====================================================
+ATTENDANCE
+=====================================================
+*/
+
+export const fetchAttendance = createAsyncThunk(
+  "parent/fetchAttendance",
+  async (_, thunkAPI) => {
+    try {
+      return await parentService.getAttendance();
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message
+      );
+    }
+  }
+);
+
+/*
+=====================================================
+GRADES
+=====================================================
+*/
+
+export const fetchGrades = createAsyncThunk(
+  "parent/fetchGrades",
+  async (_, thunkAPI) => {
+    try {
+      return await parentService.getGrades();
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message
+      );
+    }
+  }
+);
+
+/*
+=====================================================
+BEHAVIOR LOGS
+=====================================================
+*/
+
+export const fetchBehaviorLogs = createAsyncThunk(
+  "parent/fetchBehaviorLogs",
+  async (_, thunkAPI) => {
+    try {
+      return await parentService.getBehaviorLogs();
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message
+      );
+    }
+  }
+);
+
+/*
+=====================================================
+FEES
+=====================================================
+*/
+
+export const fetchFees = createAsyncThunk(
+  "parent/fetchFees",
+  async (_, thunkAPI) => {
+    try {
+      return await parentService.getFees();
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message
+      );
+    }
+  }
+);
+
+/*
+=====================================================
+PAYMENTS
+=====================================================
+*/
+
+export const fetchPayments = createAsyncThunk(
+  "parent/fetchPayments",
+  async (_, thunkAPI) => {
+    try {
+      return await parentService.getPayments();
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message
+      );
+    }
+  }
+);
+export const createPaymentIntent =
+  createAsyncThunk(
+    "parent/createPaymentIntent",
+    async (paymentData, thunkAPI) => {
+      try {
+        return await paymentService.createPaymentIntent(
+          paymentData
+        );
+      } catch (error) {
+        return thunkAPI.rejectWithValue(
+          error.response?.data
+        );
+      }
+    }
+  );
+
+/*
+=====================================================
+NOTIFICATIONS
+=====================================================
+*/
+
+export const fetchNotifications = createAsyncThunk(
+  "parent/fetchNotifications",
+  async (_, thunkAPI) => {
+    try {
+      return await parentService.getNotifications();
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message
+      );
+    }
+  }
+);
+
+/*
+=====================================================
+COMPLAINTS
+=====================================================
+*/
+
+export const fetchComplaints = createAsyncThunk(
+  "parent/fetchComplaints",
+  async (_, thunkAPI) => {
+    try {
+      return await parentService.getComplaints();
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message
+      );
+    }
+  }
+);
+
+export const createComplaint = createAsyncThunk(
+  "parent/createComplaint",
+  async (data, thunkAPI) => {
+    try {
+      return await parentService.createComplaint(data);
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message
+      );
+    }
+  }
+);
+
+/*
+=====================================================
+EVENTS
+=====================================================
+*/
+
+export const fetchEvents = createAsyncThunk(
+  "parent/fetchEvents",
+  async (_, thunkAPI) => {
+    try {
+      return await parentService.getEvents();
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message
+      );
+    }
+  }
+);
+
+/*
+=====================================================
+CERTIFICATES
+=====================================================
+*/
+
+export const fetchCertificates = createAsyncThunk(
+  "parent/fetchCertificates",
+  async (_, thunkAPI) => {
+    try {
+      return await parentService.getCertificates();
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message
+      );
+    }
+  }
+);
+
+/*
+=====================================================
+SUBMISSIONS
+=====================================================
+*/
+
+export const fetchSubmissions = createAsyncThunk(
+  "parent/fetchSubmissions",
+  async (_, thunkAPI) => {
+    try {
+      return await parentService.getSubmissions();
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message
+      );
+    }
+  }
+);
+
+/*
+=====================================================
+CHAT SESSIONS
+=====================================================
+*/
+
+export const fetchChatSessions = createAsyncThunk(
+  "parent/fetchChatSessions",
+  async (_, thunkAPI) => {
+    try {
+      return await parentService.getChatSessions();
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message
+      );
+    }
+  }
+);
+
+export const createChatSession = createAsyncThunk(
+  "parent/createChatSession",
+  async (data, thunkAPI) => {
+    try {
+      return await parentService.createChatSession(data);
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message
+      );
+    }
+  }
+);
+
+/*
+=====================================================
+CHAT MESSAGES
+=====================================================
+*/
+
+export const fetchChatMessages = createAsyncThunk(
+  "parent/fetchChatMessages",
+  async (_, thunkAPI) => {
+    try {
+      return await parentService.getChatMessages();
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message
+      );
+    }
+  }
+);
+
+export const createChatMessage = createAsyncThunk(
+  "parent/createChatMessage",
+  async (data, thunkAPI) => {
+    try {
+      return await parentService.createChatMessage(data);
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message
+      );
+    }
+  }
+);

@@ -1,9 +1,7 @@
+import AppRoutes from "./routes/AppRoutes";
 
-
-const App = () => {
-  return (
-    <div className="bg-black text-white">App</div>
-  )
+function App() {
+  return <AppRoutes />;
 }
 
-export default App
+export default App;
