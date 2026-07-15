@@ -1,12 +1,14 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import {
   useDispatch,
   useSelector,
 } from "react-redux";
+import { gsap } from "gsap";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import PageHeader from "../../../components/global/PageHeader/PageHeader";
@@ -135,6 +137,22 @@ function Assignments() {
   );
 
   const [currentPage, setCurrentPage] = useState(1);
+
+  /*
+  =====================================================
+  GSAP refs
+  =====================================================
+  */
+
+  const containerRef = useRef(null);
+  const headerRef = useRef(null);
+  const statsRef = useRef(null);
+  const filtersRef = useRef(null);
+  const gridRef = useRef(null);
+  const cardRefs = useRef([]);
+  const paginationRef = useRef(null);
+
+  cardRefs.current = [];
 
   useEffect(() => {
   dispatch(fetchAssignments());
@@ -286,67 +304,146 @@ const handleDeleteSubmission = (submissionId) => {
     .catch(console.error);
 };
 
+  // Page-level entrance — header, stats, filters — runs once.
+  useEffect(() => {
+    if (loading) return;
+
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+
+      tl.fromTo(
+        headerRef.current,
+        { opacity: 0, y: 16 },
+        { opacity: 1, y: 0, duration: 0.5 }
+      )
+        .fromTo(
+          statsRef.current,
+          { opacity: 0, y: 20 },
+          { opacity: 1, y: 0, duration: 0.55 },
+          "-=0.25"
+        )
+        .fromTo(
+          filtersRef.current,
+          { opacity: 0, y: 16 },
+          { opacity: 1, y: 0, duration: 0.5 },
+          "-=0.3"
+        );
+    }, containerRef);
+
+    return () => ctx.revert();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading]);
+
+  // Card grid — re-fires whenever the visible page of results changes,
+  // so filtering, searching, or paging feels responsive rather than
+  // an instant swap.
+  useEffect(() => {
+    if (loading) return;
+
+    const targets = cardRefs.current.filter(Boolean);
+    if (!targets.length) return;
+
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        targets,
+        { opacity: 0, y: 18, scale: 0.98 },
+        {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          duration: 0.45,
+          ease: "power2.out",
+          stagger: 0.06,
+        }
+      );
+    });
+
+    return () => ctx.revert();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paginatedAssignments, loading]);
+
+  // Pagination controls fade in once there's more than one page.
+  useEffect(() => {
+    if (!paginationRef.current || totalPages <= 1) return;
+
+    gsap.fromTo(
+      paginationRef.current,
+      { opacity: 0, y: 8 },
+      { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }
+    );
+  }, [totalPages]);
+
   return (
-    <div className="space-y-8">
-      <PageHeader
-        title="Assignments"
-        subtitle="View and submit your homework assignments."
-        breadcrumbs={[
-          "Student",
-          "Assignments",
-        ]}
-      />
+    <div ref={containerRef} className="space-y-8">
+      <div ref={headerRef}>
+        <PageHeader
+          title="Assignments"
+          subtitle="View and submit your homework assignments."
+          breadcrumbs={[
+            "Student",
+            "Assignments",
+          ]}
+        />
+      </div>
 
-      <AssignmentStats
-    assignments={mergedAssignments}
-/>
+      <div ref={statsRef}>
+        <AssignmentStats
+      assignments={mergedAssignments}
+  />
+      </div>
 
-      <AssignmentFilters
-        search={search}
-        setSearch={
-          setSearch
-        }
-        status={status}
-        setStatus={
-          setStatus
-        }
-        subject={subject}
-        setSubject={
-          setSubject
-        }
-        subjects={
-          subjects
-        }
-      />
+      <div ref={filtersRef}>
+        <AssignmentFilters
+          search={search}
+          setSearch={
+            setSearch
+          }
+          status={status}
+          setStatus={
+            setStatus
+          }
+          subject={subject}
+          setSubject={
+            setSubject
+          }
+          subjects={
+            subjects
+          }
+        />
+      </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div ref={gridRef} className="grid gap-6 lg:grid-cols-2">
         {paginatedAssignments.map(
           (
             assignment
           ) => (
-     <AssignmentCard
-  key={assignment.id}
-  assignment={assignment}
-  onView={() =>
-    handleViewFile(assignment.submission)
-  }
-  onSubmit={() =>
-    setSelectedAssignment(assignment)
-  }
- onReplace={() => {
-  setSelectedAssignment(assignment);
-  setFileUrl(
-    assignment.submission?.file_url || ""
-  );
-}}
-  onDelete={handleDeleteSubmission}
-/>
+     <div
+       key={assignment.id}
+       ref={(el) => el && cardRefs.current.push(el)}
+     >
+       <AssignmentCard
+         assignment={assignment}
+         onView={() =>
+           handleViewFile(assignment.submission)
+         }
+         onSubmit={() =>
+           setSelectedAssignment(assignment)
+         }
+        onReplace={() => {
+         setSelectedAssignment(assignment);
+         setFileUrl(
+           assignment.submission?.file_url || ""
+         );
+       }}
+         onDelete={handleDeleteSubmission}
+       />
+     </div>
           )
         )}
       </div>
 
       {filtered.length === 0 ? null : (
-        <div className="flex flex-col items-center gap-2">
+        <div ref={paginationRef} className="flex flex-col items-center gap-2">
           <p className="text-xs text-text-secondary">
             Showing {(currentPage - 1) * ASSIGNMENTS_PER_PAGE + 1}
             {"–"}
