@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { gsap } from "gsap";
 
 import {
   CreditCard,
@@ -42,11 +43,26 @@ function FeesPayments() {
     detailsOpen,
     setDetailsOpen,
   ] = useState(false);
-const [clientSecret, setClientSecret] =
-  useState("");
+  const [clientSecret, setClientSecret] =
+    useState("");
 
-const [showStripe, setShowStripe] =
-  useState(false);
+  const [showStripe, setShowStripe] =
+    useState(false);
+
+  /*
+  =====================================
+  GSAP refs
+  =====================================
+  */
+
+  const containerRef = useRef(null);
+  const headerRef = useRef(null);
+  const walletIconRef = useRef(null);
+  const cardIconRef = useRef(null);
+  const summaryRef = useRef(null);
+  const tablePanelRef = useRef(null);
+  const historyRef = useRef(null);
+
   /*
   =====================================
   Initial Load
@@ -57,6 +73,88 @@ const [showStripe, setShowStripe] =
     dispatch(fetchFees());
     dispatch(fetchPayments());
   }, [dispatch]);
+
+  /*
+  =====================================
+  Entrance animations
+  =====================================
+  */
+
+  useEffect(() => {
+    if (loading) return;
+
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+
+      tl.fromTo(
+        headerRef.current,
+        { opacity: 0, y: 24, scale: 0.98 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.65 }
+      )
+        .fromTo(
+          [walletIconRef.current, cardIconRef.current],
+          { opacity: 0, scale: 0, rotate: -20 },
+          {
+            opacity: 1,
+            scale: 1,
+            rotate: 0,
+            duration: 0.5,
+            ease: "back.out(2.2)",
+            stagger: 0.12,
+          },
+          "-=0.3"
+        )
+        .fromTo(
+          summaryRef.current,
+          { opacity: 0, y: 24 },
+          { opacity: 1, y: 0, duration: 0.6 },
+          "-=0.25"
+        )
+        .fromTo(
+          tablePanelRef.current,
+          { opacity: 0, y: 24 },
+          { opacity: 1, y: 0, duration: 0.6 },
+          "-=0.35"
+        )
+        .fromTo(
+          historyRef.current,
+          { opacity: 0, y: 24 },
+          { opacity: 1, y: 0, duration: 0.6 },
+          "-=0.35"
+        );
+
+      // gentle idle float on the header icons
+      gsap.to([walletIconRef.current, cardIconRef.current], {
+        y: -4,
+        duration: 2,
+        ease: "sine.inOut",
+        repeat: -1,
+        yoyo: true,
+        stagger: 0.3,
+        delay: 1,
+      });
+    }, containerRef);
+
+    return () => ctx.revert();
+  }, [loading]);
+
+  const handleIconEnter = (ref) => {
+    gsap.to(ref.current, {
+      scale: 1.12,
+      rotate: 8,
+      duration: 0.3,
+      ease: "back.out(2.5)",
+    });
+  };
+
+  const handleIconLeave = (ref) => {
+    gsap.to(ref.current, {
+      scale: 1,
+      rotate: 0,
+      duration: 0.35,
+      ease: "power2.out",
+    });
+  };
 
   /*
   =====================================
@@ -93,35 +191,35 @@ const [showStripe, setShowStripe] =
   Stripe Payment
   =====================================
   */
-const handlePayment = async () => {
-  try {
-    const response = await dispatch(
-      createPaymentIntent({
-        fee_id: selectedFee.id,
-      })
-    ).unwrap();
+  const handlePayment = async () => {
+    try {
+      const response = await dispatch(
+        createPaymentIntent({
+          fee_id: selectedFee.id,
+        })
+      ).unwrap();
 
-    console.log("Payment Intent:", response);
+      console.log("Payment Intent:", response);
 
-    if (!response.client_secret) {
-      throw new Error(
-        "No client_secret returned from backend."
+      if (!response.client_secret) {
+        throw new Error(
+          "No client_secret returned from backend."
+        );
+      }
+
+      setClientSecret(response.client_secret);
+      setShowStripe(true);
+
+    } catch (error) {
+      console.error(error);
+
+      alert(
+        error?.response?.data?.detail ||
+        error?.message ||
+        "Unable to initialize payment."
       );
     }
-
-    setClientSecret(response.client_secret);
-    setShowStripe(true);
-
-  } catch (error) {
-    console.error(error);
-
-    alert(
-      error?.response?.data?.detail ||
-      error?.message ||
-      "Unable to initialize payment."
-    );
-  }
-};
+  };
   /*
   =====================================
   Loading
@@ -138,13 +236,13 @@ const handlePayment = async () => {
 
   return (
     <>
-    <div className="space-y-8">
+    <div ref={containerRef} className="space-y-8">
 
       {/* =====================================
       Header
       ===================================== */}
 
-      <Card className="overflow-hidden">
+      <Card ref={headerRef} className="overflow-hidden">
 
         <div className="flex flex-col gap-6 bg-gradient-to-r from-student-primary to-student-hover p-8 text-white lg:flex-row lg:items-center lg:justify-between">
 
@@ -171,7 +269,12 @@ const handlePayment = async () => {
 
           <div className="flex gap-4">
 
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/20">
+            <div
+              ref={walletIconRef}
+              onMouseEnter={() => handleIconEnter(walletIconRef)}
+              onMouseLeave={() => handleIconLeave(walletIconRef)}
+              className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/20"
+            >
 
               <Wallet
                 size={34}
@@ -179,7 +282,12 @@ const handlePayment = async () => {
 
             </div>
 
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/20">
+            <div
+              ref={cardIconRef}
+              onMouseEnter={() => handleIconEnter(cardIconRef)}
+              onMouseLeave={() => handleIconLeave(cardIconRef)}
+              className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/20"
+            >
 
               <CreditCard
                 size={34}
@@ -197,15 +305,17 @@ const handlePayment = async () => {
       Summary
       ===================================== */}
 
-      <FeeSummaryCards
-        fees={fees}
-      />
+      <div ref={summaryRef}>
+        <FeeSummaryCards
+          fees={fees}
+        />
+      </div>
 
       {/* =====================================
       Table + Payment
       ===================================== */}
 
-      <div className="grid gap-8 xl:grid-cols-3">
+      <div ref={tablePanelRef} className="grid gap-8 xl:grid-cols-3">
 
         <div className="xl:col-span-2">
 
@@ -243,12 +353,14 @@ const handlePayment = async () => {
       Payment History
       ===================================== */}
 
-      <PaymentHistory
-        payments={
-          payments
-        }
-        fees={fees}
-      />
+      <div ref={historyRef}>
+        <PaymentHistory
+          payments={
+            payments
+          }
+          fees={fees}
+        />
+      </div>
 
       {/* =====================================
       Fee Details
