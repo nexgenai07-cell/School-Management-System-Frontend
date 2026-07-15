@@ -8,28 +8,25 @@ import {
 } from "lucide-react";
 
 // Reusable components
-import { StatCard } from "../../../components/composite/Statcard";
-import { Badge }    from "../../../components/ui/Badge";
-import { Button }   from "../../../components/ui/Button";
+import { StatCard } from "../../../../components/composite/Statcard";
+import { Badge } from "../../../../components/ui/Badge";
+import { Button } from "../../../../components/ui/Button";
+// src/modules/admin/pages/AdminDashboard/index.jsx
 
-// Mock data
-import {
-  MOCK_DASHBOARD_STATS,
-  MOCK_NOTIFICATIONS,
-  MOCK_PENDING_APPROVALS,
-} from "../../../mocks/Adminmock";
+// ─── Custom hook ──────────────────────────────────────────────────────
+import { useDashboardData } from "./useDashboardData";
 
-// ─── Frontend-only constants ───────────────────────────────────────────────
-const REVENUE_TARGET = 1_000_000;
+// ─── Frontend-only constants ───────────────────────────────────────────
+const REVENUE_TARGET = 25000;
 
 const ROLE_COLORS = {
   Students: "var(--color-admin-primary)",
   Teachers: "var(--color-teacher-primary)",
-  Parents:  "var(--color-parent-primary)",
-  Pending:  "var(--color-warning)",
+  Parents: "var(--color-parent-primary)",
+  Pending: "var(--color-warning)",
 };
 
-// ─── helpers ─────────────────────────────────────────────────────────────────
+// ─── Helpers ────────────────────────────────────────────────────────────
 const formatCurrency = (n) =>
   new Intl.NumberFormat("en-PK", {
     style: "currency",
@@ -48,10 +45,10 @@ const daysUntil = (iso) =>
   Math.ceil((new Date(iso) - new Date()) / (1000 * 60 * 60 * 24));
 
 const NOTIF_META = {
-  behavior:  { icon: <ShieldAlert size={15} />,          color: "text-[var(--color-danger)]" },
+  behavior: { icon: <ShieldAlert size={15} />, color: "text-[var(--color-danger)]" },
   complaint: { icon: <MessageSquareWarning size={15} />, color: "text-[var(--color-warning)]" },
-  approval:  { icon: <UserCheck size={15} />,            color: "text-[var(--color-teacher-primary)]" },
-  fee:       { icon: <Wallet size={15} />,               color: "text-[var(--color-admin-primary)]" },
+  approval: { icon: <UserCheck size={15} />, color: "text-[var(--color-teacher-primary)]" },
+  fee: { icon: <Wallet size={15} />, color: "text-[var(--color-admin-primary)]" },
 };
 
 const ROLE_STYLES = {
@@ -72,34 +69,33 @@ const ROLE_STYLES = {
 const getInitials = (name) =>
   name.split(" ").slice(0, 2).map((n) => n[0]).join("").toUpperCase();
 
-// ─── Chart Components (unchanged) ───────────────────────────────────────────
+// ─── Chart Components ──────────────────────────────────────────────────
 function FeeBarChart({ data }) {
-  const max = REVENUE_TARGET;
+  // Find the maximum collected amount to scale the bars
+  const maxCollected = Math.max(...data.map(d => d.collected), 1);
+
   return (
     <div className="flex items-end gap-3 h-40 px-1">
       {data.map((d, i) => {
-        const isLast      = i === data.length - 1;
-        const collectedH  = (d.collected / max) * 100;
-        const targetH     = 100;
+        const height = (d.collected / maxCollected) * 100;
+        const isLast = i === data.length - 1;
         return (
           <div key={d.month} className="flex-1 flex flex-col items-center gap-1 group relative">
+            {/* Tooltip on hover */}
             <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-[var(--color-text-primary)] text-white text-[10px] px-2 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 pointer-events-none">
               {formatCurrency(d.collected)}
             </div>
-            <div className="w-full flex items-end gap-0.5 h-36">
-              <div className="flex-1 rounded-t-md bg-[var(--color-admin-light)]" style={{ height: `${targetH}%` }} />
+            <div className="w-full h-36 flex items-end">
               <div
-                className={`flex-1 rounded-t-md transition-all duration-300 ${
-                  isLast
+                className={`w-full rounded-t-md transition-all duration-300 ${isLast
                     ? "bg-[var(--color-admin-primary)] shadow-lg"
-                    : "bg-[var(--color-admin-primary)]/40 group-hover:bg-[var(--color-admin-primary)]"
-                }`}
-                style={{ height: `${collectedH}%` }}
+                    : "bg-[var(--color-admin-primary)]/60 group-hover:bg-[var(--color-admin-primary)]"
+                  }`}
+                style={{ height: `${height}%` }}
               />
             </div>
-            <span className={`text-[10px] font-semibold ${
-              isLast ? "text-[var(--color-admin-primary)]" : "text-[var(--color-text-muted)]"
-            }`}>
+            <span className={`text-[10px] font-semibold ${isLast ? "text-[var(--color-admin-primary)]" : "text-[var(--color-text-muted)]"
+              }`}>
               {d.month}
             </span>
           </div>
@@ -111,7 +107,7 @@ function FeeBarChart({ data }) {
 
 function AttendanceSparkline({ data }) {
   const width = 280, height = 60, padX = 8;
-  const step   = (width - padX * 2) / (data.length - 1);
+  const step = (width - padX * 2) / (data.length - 1);
   const points = data.map((d, i) => ({
     x: padX + i * step,
     y: height - (d.percentage / 100) * height,
@@ -122,7 +118,7 @@ function AttendanceSparkline({ data }) {
     <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-16">
       <defs>
         <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%"   stopColor="var(--color-teacher-primary)" stopOpacity="0.2" />
+          <stop offset="0%" stopColor="var(--color-teacher-primary)" stopOpacity="0.2" />
           <stop offset="100%" stopColor="var(--color-teacher-primary)" stopOpacity="0" />
         </linearGradient>
       </defs>
@@ -137,17 +133,17 @@ function AttendanceSparkline({ data }) {
 
 function DonutChart({ data }) {
   const total = data.reduce((a, b) => a + b.count, 0);
-  let offset  = 0;
-  const r     = 14;
-  const circ  = 2 * Math.PI * r;
+  let offset = 0;
+  const r = 14;
+  const circ = 2 * Math.PI * r;
   return (
     <svg viewBox="0 0 36 36" className="w-28 h-28 -rotate-90">
       <circle cx="18" cy="18" r={r} fill="none" stroke="#f1f5f9" strokeWidth="4" />
       {data.map((d, i) => {
-        const pct  = d.count / total;
+        const pct = d.count / total;
         const dash = pct * circ;
         const color = ROLE_COLORS[d.role] ?? "var(--color-text-muted)";
-        const el   = (
+        const el = (
           <circle
             key={i} cx="18" cy="18" r={r} fill="none"
             stroke={color} strokeWidth="4"
@@ -178,7 +174,7 @@ function QuickAction({ icon, label, onClick }) {
   );
 }
 
-// ─── Skeleton & Error ───────────────────────────────────────────────────────
+// ─── Skeleton & Error ─────────────────────────────────────────────────
 function DashboardSkeleton() {
   return (
     <div className="p-6 md:p-8 flex flex-col gap-7 min-h-screen bg-[var(--color-surface-dim)] animate-pulse">
@@ -215,61 +211,38 @@ function DashboardError({ message, onRetry }) {
   );
 }
 
-// ─── MAIN DASHBOARD ──────────────────────────────────────────────────────────
+// ─── MAIN DASHBOARD ─────────────────────────────────────────────────────
 export default function AdminDashboard() {
   const navigate = useNavigate();
+  const { loading, error, stats, pendingApprovals, recentNotifications, upcomingEvents } = useDashboardData();
 
-  // Local state (no Redux)
-  const [stats, setStats] = useState(null);
-  const [notifications, setNotifications] = useState([]);
-  const [pendingApprovals, setPendingApprovals] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  // Simulate API fetch
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        // Simulate network delay
-        await new Promise((resolve) => setTimeout(resolve, 600));
-
-        // Load mock data
-        setStats(MOCK_DASHBOARD_STATS);
-        setNotifications(MOCK_NOTIFICATIONS);
-        setPendingApprovals(MOCK_PENDING_APPROVALS);
-        setError(null);
-      } catch (err) {
-        setError("Failed to load dashboard data. Please try again.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
-
-  // Computed values
+  // ─── Derived values ──────────────────────────────────────────────────
   const revenuePercent = useMemo(
     () => stats ? Math.round((stats.monthly_revenue / REVENUE_TARGET) * 100) : 0,
     [stats]
   );
 
   const userDistributionWithMeta = useMemo(() => {
-    if (!stats?.user_distribution) return [];
-    const total = stats.user_distribution.reduce((a, b) => a + b.count, 0);
-    return stats.user_distribution.map((d) => ({
+    if (!stats) return [];
+    const dist = [
+      { role: 'Students', count: stats.total_students },
+      { role: 'Teachers', count: stats.total_teachers },
+      { role: 'Parents', count: stats.total_parents },
+    ];
+    const total = dist.reduce((a, b) => a + b.count, 0);
+    return dist.map((d) => ({
       ...d,
-      color:      ROLE_COLORS[d.role] ?? "var(--color-text-muted)",
+      color: ROLE_COLORS[d.role] ?? 'var(--color-text-muted)',
       percentage: Math.round((d.count / total) * 100),
     }));
   }, [stats]);
 
-  const unreadCount = notifications.filter((n) => !n.is_read).length;
+  const unreadCount = recentNotifications.filter((n) => !n.is_read).length;
 
+  // ─── Loading / Error ──────────────────────────────────────────────────
   if (loading && !stats) return <DashboardSkeleton />;
-  if (error && !stats)   return <DashboardError message={error} onRetry={() => window.location.reload()} />;
-  if (!stats)            return null;
+  if (error && !stats) return <DashboardError message={error} onRetry={() => window.location.reload()} />;
+  if (!stats) return null;
 
   return (
     <div className="p-6 md:p-0 flex flex-col gap-7 min-h-screen bg-[var(--color-surface-dim)]">
@@ -393,7 +366,7 @@ export default function AdminDashboard() {
               </p>
             </div>
             <button
-              onClick={() => navigate("/admin/approvals")}
+              onClick={() => navigate("/admin/user-approvals")}
               className="text-xs text-[var(--color-admin-primary)] font-semibold hover:underline flex items-center gap-1"
             >
               Review All <ChevronRight size={13} />
@@ -411,7 +384,8 @@ export default function AdminDashboard() {
           ) : (
             <div className="flex-1 space-y-2">
               {pendingApprovals.map((user) => {
-                const style = ROLE_STYLES[user.role] ?? ROLE_STYLES.student;
+                const roleKey = user.role_name?.toLowerCase() || "student";
+                const style = ROLE_STYLES[roleKey] ?? ROLE_STYLES.student;
                 return (
                   <div
                     key={user.id}
@@ -430,7 +404,7 @@ export default function AdminDashboard() {
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <Badge tone={style.tone}>
-                        {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                        {user.role_name || "Unknown"}
                       </Badge>
                       <Clock size={13} className="text-[var(--color-warning)]" />
                     </div>
@@ -443,14 +417,15 @@ export default function AdminDashboard() {
 
         <div className="lg:col-span-7 flex flex-col gap-5">
           {/* User Distribution Donut */}
+          {/* User Distribution Donut */}
           <div className="bg-white rounded-xl p-6 shadow-[0_1px_4px_rgba(0,0,0,0.06)] border border-gray-100">
             <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-5">User Distribution</h3>
             <div className="flex items-center gap-8">
               <div className="relative shrink-0">
-                <DonutChart data={stats.user_distribution} />
+                <DonutChart data={userDistributionWithMeta} />
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
                   <span className="text-lg font-bold text-[var(--color-text-primary)]">
-                    {stats.user_distribution.reduce((a, b) => a + b.count, 0).toLocaleString()}
+                    {userDistributionWithMeta.reduce((a, b) => a + b.count, 0).toLocaleString()}
                   </span>
                   <span className="text-[10px] text-[var(--color-text-muted)]">Total</span>
                 </div>
@@ -467,6 +442,16 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                 ))}
+                {/* ─── TOTAL CARD ─── */}
+                <div className="flex items-center gap-2.5 p-3 bg-[var(--color-admin-light)] rounded-xl border border-[var(--color-admin-primary)]/20">
+                  <span className="w-2.5 h-2.5 rounded-full shrink-0 bg-[var(--color-admin-primary)]" />
+                  <div>
+                    <p className="text-xs font-semibold text-[var(--color-text-primary)]">Total</p>
+                    <p className="text-[10px] text-[var(--color-text-muted)]">
+                      {userDistributionWithMeta.reduce((a, b) => a + b.count, 0).toLocaleString()} (100%)
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -474,9 +459,9 @@ export default function AdminDashboard() {
           {/* Quick Actions */}
           <div className="grid grid-cols-4 gap-3">
             <QuickAction icon={<ClipboardList size={20} />} label="Review Complaints" onClick={() => navigate("/admin/complaints")} />
-            <QuickAction icon={<BarChart3 size={20} />}     label="Monthly Report"    onClick={() => navigate("/admin/reports")} />
-            <QuickAction icon={<Settings2 size={20} />}     label="Manage Structure"  onClick={() => navigate("/admin/academic")} />
-            <QuickAction icon={<ScrollText size={20} />}    label="User Approvals"    onClick={() => navigate("/admin/approvals")} />
+            <QuickAction icon={<BarChart3 size={20} />} label="Manage Timetable" onClick={() => navigate("/admin/timetable-builder")} />
+            <QuickAction icon={<Settings2 size={20} />} label="Manage Structure" onClick={() => navigate("/admin/academics")} />
+            <QuickAction icon={<ScrollText size={20} />} label="User Approvals" onClick={() => navigate("/admin/user-approvals")} />
           </div>
         </div>
       </section>
@@ -495,13 +480,13 @@ export default function AdminDashboard() {
             </button>
           </div>
           <div className="space-y-3">
-            {stats.upcoming_events.length === 0 && (
+            {upcomingEvents.length === 0 && (
               <p className="text-sm text-[var(--color-text-muted)] text-center py-6">No upcoming events.</p>
             )}
-            {stats.upcoming_events.map((ev) => {
+            {upcomingEvents.map((ev) => {
               const days = daysUntil(ev.event_date);
               return (
-                <div key={ev.event_id} className="flex items-center justify-between p-3.5 rounded-xl bg-[var(--color-surface-dim)] hover:bg-[var(--color-admin-light)] transition-colors group">
+                <div key={ev.id} className="flex items-center justify-between p-3.5 rounded-xl bg-[var(--color-surface-dim)] hover:bg-[var(--color-admin-light)] transition-colors group">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-lg bg-[var(--color-admin-light)] text-[var(--color-admin-primary)] flex items-center justify-center group-hover:bg-[var(--color-admin-primary)] group-hover:text-white transition-colors">
                       <CalendarDays size={17} />
@@ -539,27 +524,25 @@ export default function AdminDashboard() {
             </button>
           </div>
           <div className="space-y-2">
-            {notifications.length === 0 && (
+            {recentNotifications.length === 0 && (
               <p className="text-sm text-[var(--color-text-muted)] text-center py-6">No notifications.</p>
             )}
-            {notifications.map((n) => {
+            {recentNotifications.map((n) => {
               const meta = NOTIF_META[n.type] ?? NOTIF_META.fee;
               return (
                 <div
                   key={n.id}
-                  className={`flex items-start gap-3 p-3 rounded-xl transition-colors ${
-                    n.is_read
+                  className={`flex items-start gap-3 p-3 rounded-xl transition-colors ${n.is_read
                       ? "bg-[var(--color-surface-dim)]"
                       : "bg-[var(--color-admin-light)]/60 border border-[var(--color-admin-border)]"
-                  }`}
+                    }`}
                 >
                   <span className={`mt-0.5 shrink-0 ${meta.color}`}>{meta.icon}</span>
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm leading-snug ${
-                      n.is_read
+                    <p className={`text-sm leading-snug ${n.is_read
                         ? "text-[var(--color-text-secondary)]"
                         : "text-[var(--color-text-primary)] font-medium"
-                    }`}>
+                      }`}>
                       {n.message}
                     </p>
                     <p className="text-[10px] text-[var(--color-text-muted)] mt-0.5">

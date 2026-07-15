@@ -12,7 +12,7 @@ import Pagination from "../../../../../components/ui/Pagination/Pagination";
 import EditDrawer from "./EditDrawer";
 import { Select } from "../../../../../components/ui/Select";
 
-import { fetchTeachers, updateTeacher, deleteUser } from "../../../../../store/admin/adminThunks";
+import { fetchTeachers,  updateTeacher, deleteTeacher } from "../../../../../store/admin/adminThunks";
 import { usePagination } from "../hooks/usePagination";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -101,24 +101,17 @@ function TeacherTab() {
     }
   };
 
-  // Delete Handlers
-  const handleDeleteClick = (id) => {
-    setDeleteTargetId(id);
-    setShowDeleteConfirm(true);
-  };
-
-  const handleConfirmDelete = async () => {
-    if (deleteTargetId) {
-      try {
-        await dispatch(deleteUser(deleteTargetId)).unwrap();
-      } catch (error) {
-        console.error("Failed to delete teacher:", error);
-        alert(error.message || "Failed to delete teacher");
-      }
+const handleConfirmDelete = async () => {
+  if (deleteTargetId) {
+    try {
+      await dispatch(deleteTeacher(deleteTargetId)).unwrap();
+    } catch (error) {
+      console.error("Failed to delete teacher:", error);
     }
-    setShowDeleteConfirm(false);
-    setDeleteTargetId(null);
-  };
+  }
+  setShowDeleteConfirm(false);
+  setDeleteTargetId(null);
+};
 
   // ─── Table Columns ───────────────────────────────────────────────────────
   const columns = [

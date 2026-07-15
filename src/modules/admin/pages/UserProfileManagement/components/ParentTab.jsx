@@ -8,7 +8,7 @@ import ResponsiveTable from "../../../components/ResponsiveTable";
 import { StatusBadge } from "../../../../../components/composite/Statusbadge";
 import Pagination from "../../../../../components/ui/Pagination/Pagination";
 import EditDrawer from "./EditDrawer";
-import { fetchParents, deleteUser, updateUser } from "../../../../../store/admin/adminThunks";
+import { fetchParents, deleteParent, updateParent } from "../../../../../store/admin/adminThunks";
 import { usePagination } from "../hooks/usePagination";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -60,31 +60,40 @@ function ParentTab() {
   }, [search]);
 
   // ─── Handlers ────────────────────────────────────────────────────────────
-  const handleSave = async (updatedData) => {
+// Delete handler
+const handleDelete = async (id) => {
+  if (window.confirm("Are you sure you want to delete this parent?")) {
     try {
-      await dispatch(updateUser({
-        id: updatedData.id,
-        data: {
-          full_name: updatedData.full_name,
-          email: updatedData.email,
-          // status: updatedData.status, // Agar status update dena hai toh uncomment karein
-        },
-      })).unwrap();
-      setSelectedParent(null);
+      await dispatch(deleteParent(id)).unwrap();
     } catch (error) {
-      console.error("Failed to update parent:", error);
+      console.error("Failed to delete parent:", error);
     }
-  };
+  }
+};
 
-  const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this parent?")) {
-      try {
-        await dispatch(deleteUser(id)).unwrap();
-      } catch (error) {
-        console.error("Failed to delete parent:", error);
-      }
-    }
-  };
+// Update handler
+const handleSave = async (updatedData) => {
+  try {
+    // updatedData.id should be the parent profile ID
+    console.log('Saving parent:', updatedData); // debug
+
+    const payload = {
+      user: Number(updatedData.user),   // user ID
+      full_name: updatedData.full_name,
+      email: updatedData.email,
+    };
+
+    await dispatch(updateParent({
+      id: updatedData.id,   // parent profile ID
+      data: payload,
+    })).unwrap();
+
+    setSelectedParent(null);
+  } catch (error) {
+    console.error("Failed to update parent:", error);
+    alert(`Error: ${error.message}`);
+  }
+};
 
   // ─── Table Columns ───────────────────────────────────────────────────────
   const columns = [

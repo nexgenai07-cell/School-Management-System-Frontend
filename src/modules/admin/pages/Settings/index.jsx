@@ -1,65 +1,62 @@
-import React, { useState, useMemo } from 'react';
+// src/modules/admin/pages/AdminSettings/index.jsx
+
+import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
-  User,
-  Mail,
-  Phone,
-  Lock,
-  Save,
-  Eye,
-  EyeOff,
-  Bell,
-  BellRing,
-  CheckCircle,
-  AlertCircle,
-  Calendar,
-  DollarSign,
-  FileText,
-  Settings,
-  Shield,
-  Trash2,
-  Download,
-  RefreshCw,
-  AlertTriangle,
-  ExternalLink,
-  ChevronRight,
-  TrendingUp,
-  Users,
-  CreditCard,
-  Clock,
+  User, Mail, Lock, Save, Bell, CheckCircle, AlertCircle,
+  Calendar, DollarSign, RefreshCw, AlertTriangle, Download,
+  Trash2, ExternalLink, ChevronRight, TrendingUp, Users, Clock,
+  Shield, EyeOff, Eye,
 } from 'lucide-react';
 
-// Reusable Components
-import { PageHeader } from '../../../components/global/pageheader';
-import { StatCard } from '../../../components/composite/statcard';
-import { Button } from '../../../components/ui/Button';
-import { Badge } from '../../../components/ui/Badge';
-import { Card } from '../../../components/ui/card';
-import ConfirmDialog from '../../../components/global/ConfirmDialog/ConfirmDialog';
+// ─── Reusable Components ──────────────────────────────────────────────
+import { PageHeader } from '../../../../components/global/PageHeader';
+import { StatCard } from '../../../../components/composite/Statcard';
+import { Button } from '../../../../components/ui/Button';
+import { Badge } from '../../../../components/ui/Badge';
+import ConfirmDialog from '../../../../components/global/ConfirmDialog/ConfirmDialog';
+import ChangePasswordModal from './ChangePasswordModal';
 
-// Mock Data
+// ─── Hooks ──────────────────────────────────────────────────────────────
+import { useSettingsData } from './useSettingsData';
+import { useDispatch } from 'react-redux';
 import {
-  MOCK_NOTIFICATIONS,
-  MOCK_DASHBOARD_STATS,
-} from '../../../mocks/Adminmock';
-import {
-  MOCK_FEE_STRUCTURES,
-  MOCK_FEES
-} from '../../../mocks/adminFeeDesk';
-import { useNavigate } from 'react-router-dom';
+  updateUser,
+  deleteUser,
+  generateChallans,
+  changePassword,
+} from '../../../../store/admin/adminThunks';
+import { fetchNotifications } from '../../../../store/admin/adminNotificationThunks';
+import { formatCurrency } from '../../../../utils/formatter';
 
-// ─── Main Component ──────────────────────────────────────────
+// ─── Main Component ──────────────────────────────────────────────────────
 export default function AdminSettings() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
+  const { user, adminId, feeStats, notifications, unreadCount, stats, refetch } = useSettingsData();
+
+  // ─── Profile form ────────────────────────────────────────────────────
   const [profileForm, setProfileForm] = useState({
-    full_name: 'Ahmed Khan',
-    email: 'admin@school.edu',
-    phone: '+92-300-1234567',
+    full_name: user?.full_name || '',
+    email: user?.email || '',
   });
 
+  // Sync when user loads
+  useState(() => {
+    if (user) {
+      setProfileForm({ full_name: user.full_name || '', email: user.email || '' });
+    }
+  }, [user]);
+
+  const [isUpdating, setIsUpdating] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // ── Dialog States ──
+  // ─── Password Modal ──────────────────────────────────────────────────
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+  // ─── Dialogs ──────────────────────────────────────────────────────────
   const [dialogState, setDialogState] = useState({
     isOpen: false,
     title: '',
@@ -69,42 +66,62 @@ export default function AdminSettings() {
     onConfirm: null,
   });
 
-  // ── Fee Data ──────────────────────────────────────────────
-  const feeRecords = MOCK_FEES;
-  const totalRevenue = feeRecords.reduce((sum, f) => sum + f.amount_paid, 0);
-  const totalBaseRevenue = feeRecords.reduce((sum, f) => sum + f.original_amount, 0);
-  const totalScholarship = feeRecords.reduce((sum, f) => sum + (f.original_amount - f.amount), 0);
-  const activeChallans = feeRecords.filter((f) => f.status === 'pending' || f.status === 'overdue').length;
-
-  // ── Notifications ──────────────────────────────────────────
-  const notifications = MOCK_NOTIFICATIONS;
-  const unreadCount = useMemo(
-    () => notifications.filter((n) => !n.is_read).length,
-    [notifications]
-  );
-
-  // ── Handlers ──────────────────────────────────────────────
-  const handleProfileUpdate = () => {
-    alert('Profile updated successfully!');
+  // ─── Handlers ──────────────────────────────────────────────────────────
+  const handleProfileUpdate = async () => {
+    if (!user?.id) return;
+    setIsUpdating(true);
+    try {
+      await dispatch(updateUser({
+        id: user.id,
+        data: {
+          full_name: profileForm.full_name,
+          email: profileForm.email,
+        },
+      })).unwrap();
+      alert('Profile updated successfully!');
+    } catch (err) {
+      alert('Failed to update profile: ' + err.message);
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
-  const handleMarkAllRead = () => {
-    alert('All notifications marked as read!');
+  const handleChangePassword = async (payload) => {
+    setIsChangingPassword(true);
+    try {
+      await dispatch(changePassword(payload)).unwrap();
+      alert('Password changed successfully!');
+      setIsPasswordModalOpen(false);
+    } catch (err) {
+      alert('Failed to change password: ' + err.message);
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
+  const handleMarkAllRead = async () => {
+    try {
+      // Mark all read via thunk – if you have it; otherwise just refresh
+      // For simplicity, we'll just refetch notifications
+      await dispatch(fetchNotifications());
+      alert('Notifications refreshed.');
+    } catch (err) {
+      alert('Failed to refresh notifications.');
+    }
   };
 
   const handleGenerateChallans = () => {
     setIsGenerating(true);
-    setTimeout(() => {
-      alert('Monthly challans generated successfully!');
-      setIsGenerating(false);
-    }, 1500);
+    dispatch(generateChallans({ month: new Date().toISOString().slice(0, 7) + '-01' }))
+      .unwrap()
+      .then((res) => {
+        alert(`Challans generated: ${res.created} created, ${res.skipped_existing} skipped.`);
+      })
+      .catch((err) => alert('Failed: ' + err.message))
+      .finally(() => setIsGenerating(false));
   };
 
-  const handleChangePassword = () => {
-    navigate('/forgot-password');
-  };
-
-  // ── Dialog Helpers ──
+  // ─── Danger Zone Actions ──────────────────────────────────────────────
   const showConfirmDialog = (title, message, confirmText, variant, onConfirm) => {
     setDialogState({
       isOpen: true,
@@ -119,48 +136,75 @@ export default function AdminSettings() {
     });
   };
 
-  const closeDialog = () => {
-    setDialogState({ ...dialogState, isOpen: false });
-  };
+  const closeDialog = () => setDialogState({ ...dialogState, isOpen: false });
 
-  // ── Danger Zone Actions ──
   const handleDeactivateAccount = () => {
     showConfirmDialog(
       'Deactivate Account?',
-      'This action will permanently deactivate your admin account. You will lose access to the system and all associated data. This cannot be undone. Are you sure you want to proceed?',
+      'This action will permanently delete your admin account. You will lose access to the system. Are you sure?',
       'Deactivate',
       'danger',
-      () => alert('Account deactivated successfully.')
+      async () => {
+        if (!user?.id) return;
+        try {
+          await dispatch(deleteUser(user.id)).unwrap();
+          alert('Account deactivated. Logging out...');
+          // Clear auth and redirect
+          localStorage.removeItem('auth_data');
+          window.location.href = '/login';
+        } catch (err) {
+          alert('Failed to deactivate: ' + err.message);
+        }
+      }
     );
   };
 
   const handleExportData = () => {
-    showConfirmDialog(
-      'Export All Data?',
-      'This will generate a complete export of all system data including student records, fee history, complaints, and settings. The export file will be sent to your email. Do you want to proceed?',
-      'Export',
-      'default',
-      () => alert('Data export started. You will receive an email with the download link.')
-    );
+    // Export summary CSV
+    const rows = [
+      ['Admin ID', adminId || ''],
+      ['Name', profileForm.full_name],
+      ['Email', profileForm.email],
+      ['Total Students', stats?.total_students || 0],
+      ['Total Teachers', stats?.total_teachers || 0],
+      ['Total Parents', stats?.total_parents || 0],
+      ['Active Challans', feeStats.activeChallans],
+      ['Total Revenue', feeStats.totalRevenue],
+      ['Total Scholarship', feeStats.totalScholarship],
+      ['Open Complaints', stats?.open_complaints || 0],
+    ];
+    const csv = rows.map((r) => r.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `settings_export_${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    alert('Export downloaded.');
   };
 
   const handleClearCache = () => {
     showConfirmDialog(
-      'Clear System Cache?',
-      'This will clear all cached data from the system. Users may experience slower performance temporarily while the cache rebuilds. Are you sure you want to proceed?',
-      'Clear Cache',
+      'Clear Cache?',
+      'This will clear all locally stored data and log you out. Proceed?',
+      'Clear',
       'default',
-      () => alert('Cache cleared successfully!')
+      () => {
+        localStorage.clear();
+        window.location.href = '/login';
+      }
     );
   };
 
-  // ── Render ──────────────────────────────────────────────
   return (
     <div className="p-4 md:p-6 space-y-6 bg-[var(--color-surface-dim)] min-h-screen">
       <PageHeader
         title="Admin Settings"
         subtitle="Manage your profile, fee cycles, and security settings."
-        breadcrumbs={['Dashboard', 'Admin', 'Settings']}
+        breadcrumbs={['Admin', 'Settings']}
         tone="admin"
         titleClassName="text-[var(--color-admin-primary)]"
         action={<Badge tone="admin" className="text-[11px]">Role: Admin</Badge>}
@@ -178,14 +222,20 @@ export default function AdminSettings() {
           <div className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">
+                Admin ID
+              </label>
+              <div className="text-sm text-text-primary bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">
+                {adminId || '—'}
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">
                 Full Name
               </label>
               <input
                 type="text"
                 value={profileForm.full_name}
-                onChange={(e) =>
-                  setProfileForm({ ...profileForm, full_name: e.target.value })
-                }
+                onChange={(e) => setProfileForm({ ...profileForm, full_name: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-admin-primary/20 outline-none text-sm"
               />
             </div>
@@ -196,22 +246,7 @@ export default function AdminSettings() {
               <input
                 type="email"
                 value={profileForm.email}
-                onChange={(e) =>
-                  setProfileForm({ ...profileForm, email: e.target.value })
-                }
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-admin-primary/20 outline-none text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">
-                Phone
-              </label>
-              <input
-                type="text"
-                value={profileForm.phone}
-                onChange={(e) =>
-                  setProfileForm({ ...profileForm, phone: e.target.value })
-                }
+                onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-admin-primary/20 outline-none text-sm"
               />
             </div>
@@ -222,6 +257,7 @@ export default function AdminSettings() {
                 size="sm"
                 leftIcon={<Save size={16} />}
                 onClick={handleProfileUpdate}
+                loading={isUpdating}
               >
                 Update Profile
               </Button>
@@ -230,13 +266,13 @@ export default function AdminSettings() {
                 tone="admin"
                 size="sm"
                 leftIcon={<Lock size={16} />}
-                onClick={handleChangePassword}
+                onClick={() => setIsPasswordModalOpen(true)}
               >
                 Change Password
               </Button>
             </div>
             <p className="text-xs text-text-secondary">
-              Password change will send an OTP to your registered email.
+              Password change requires current password and a new one.
             </p>
           </div>
         </div>
@@ -315,6 +351,7 @@ export default function AdminSettings() {
               size="sm"
               fullWidth
               leftIcon={<Bell size={16} />}
+              onClick={() => navigate('/admin/notifications')}
             >
               View All Notifications
             </Button>
@@ -322,9 +359,9 @@ export default function AdminSettings() {
         </div>
       </div>
 
-      {/* ─── Row 2: Monthly Fee Cycle (30%) + Danger Zone (70%) ─── */}
+      {/* ─── Row 2: Monthly Fee Cycle + Danger Zone ─── */}
       <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
-        {/* Fee Cycle Card (30% ≈ 3 columns) */}
+        {/* Fee Cycle Card */}
         <div className="lg:col-span-3 bg-gradient-to-br from-admin-primary via-admin-hover to-[#0a2a6e] rounded-xl p-6 shadow-lg text-white relative overflow-hidden">
           <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-white/10 blur-2xl" />
           <div className="absolute -bottom-16 -left-16 w-48 h-48 rounded-full bg-white/5 blur-xl" />
@@ -338,22 +375,22 @@ export default function AdminSettings() {
                 Monthly Fee Cycle
               </h3>
               <Badge className="bg-white/20 text-white border-none text-[10px]">
-                Active
+                {feeStats.activeChallans > 0 ? 'Active' : 'No pending'}
               </Badge>
             </div>
 
             <div className="grid grid-cols-3 gap-2 mb-5">
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2 text-center">
-                <p className="text-[9px] text-white/60 uppercase tracking-wider">Last Generated</p>
-                <p className="text-xs font-semibold">Aug 01, 2023</p>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2 text-center">
-                <p className="text-[9px] text-white/60 uppercase tracking-wider">Next Due</p>
-                <p className="text-xs font-semibold">Sep 10, 2023</p>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2 text-center">
                 <p className="text-[9px] text-white/60 uppercase tracking-wider">Active Challans</p>
-                <p className="text-xs font-semibold">{activeChallans}</p>
+                <p className="text-xs font-semibold">{feeStats.activeChallans}</p>
+              </div>
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2 text-center">
+                <p className="text-[9px] text-white/60 uppercase tracking-wider">Revenue</p>
+                <p className="text-xs font-semibold">PKR {(feeStats.totalRevenue).toFixed(0)}</p>
+              </div>
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2 text-center">
+                <p className="text-[9px] text-white/60 uppercase tracking-wider">Scholarship</p>
+                <p className="text-xs font-semibold">PKR {(feeStats.totalScholarship).toFixed(0)}</p>
               </div>
             </div>
 
@@ -362,15 +399,15 @@ export default function AdminSettings() {
                 <div>
                   <p className="text-[10px] text-white/60 uppercase tracking-wider">Expected Revenue</p>
                   <p className="text-lg font-bold text-white">
-                    PKR {(totalRevenue).toLocaleString()}
+                    PKR {feeStats.totalRevenue.toFixed(0)}
                   </p>
                 </div>
                 <div className="text-right">
                   <p className="text-[9px] text-white/50 line-through">
-                    PKR {(totalBaseRevenue).toLocaleString()}
+                    PKR {feeStats.totalBase.toFixed(0)}
                   </p>
                   <p className="text-[9px] text-parent-light font-semibold">
-                    - PKR {(totalScholarship).toLocaleString()} scholarship
+                    - PKR {feeStats.totalScholarship.toFixed(0)}
                   </p>
                 </div>
               </div>
@@ -378,7 +415,7 @@ export default function AdminSettings() {
                 <div
                   className="bg-parent-light h-full rounded-full"
                   style={{
-                    width: `${totalRevenue > 0 ? Math.min((totalRevenue / totalBaseRevenue) * 100, 100) : 0}%`,
+                    width: `${feeStats.totalBase > 0 ? Math.min((feeStats.totalRevenue / feeStats.totalBase) * 100, 100) : 0}%`,
                   }}
                 />
               </div>
@@ -393,15 +430,15 @@ export default function AdminSettings() {
               onClick={handleGenerateChallans}
               loading={isGenerating}
             >
-              {isGenerating ? 'Generating...' : 'Run September Cycle'}
+              {isGenerating ? 'Generating...' : 'Run Monthly Cycle'}
             </Button>
             <p className="text-[9px] text-white/50 text-center mt-2">
-              Generate challans for the upcoming month
+              Generate challans for current month
             </p>
           </div>
         </div>
 
-        {/* Danger Zone (70% ≈ 7 columns) */}
+        {/* Danger Zone */}
         <div className="lg:col-span-7 bg-white rounded-xl border-2 border-danger/20 p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-4">
             <div className="p-2 bg-danger/10 rounded-lg">
@@ -409,66 +446,51 @@ export default function AdminSettings() {
             </div>
             <div>
               <h3 className="text-lg font-bold text-danger">Danger Zone</h3>
-              <p className="text-sm text-text-secondary">
-                These actions are irreversible. Please proceed with caution.
-              </p>
+              <p className="text-sm text-text-secondary">These actions are irreversible.</p>
             </div>
           </div>
 
           <div className="divide-y divide-gray-200">
             <div className="py-4 flex flex-wrap items-center justify-between gap-4">
               <div>
-                <p className="font-medium text-text-primary">Export All Data</p>
-                <p className="text-sm text-text-secondary">
-                  Download all system data as a complete export package
-                </p>
+                <p className="font-medium text-text-primary">Export Data</p>
+                <p className="text-sm text-text-secondary">Download settings summary as CSV</p>
               </div>
-              <Button
-                variant="outline"
-                tone="admin"
-                leftIcon={<Download size={16} />}
-                onClick={handleExportData}
-              >
-                Export Data
+              <Button variant="outline" tone="admin" leftIcon={<Download size={16} />} onClick={handleExportData}>
+                Export CSV
               </Button>
             </div>
 
             <div className="py-4 flex flex-wrap items-center justify-between gap-4">
               <div>
-                <p className="font-medium text-text-primary">Clear System Cache</p>
-                <p className="text-sm text-text-secondary">
-                  Clear all cached data from the system
-                </p>
+                <p className="font-medium text-text-primary">Clear Cache</p>
+                <p className="text-sm text-text-secondary">Clear local storage and log out</p>
               </div>
-              <Button
-                variant="outline"
-                tone="admin"
-                leftIcon={<RefreshCw size={16} />}
-                onClick={handleClearCache}
-              >
-                Clear Cache
+              <Button variant="outline" tone="admin" leftIcon={<RefreshCw size={16} />} onClick={handleClearCache}>
+                Clear & Logout
               </Button>
             </div>
 
             <div className="py-4 flex flex-wrap items-center justify-between gap-4">
               <div>
                 <p className="font-medium text-danger">Deactivate Account</p>
-                <p className="text-sm text-text-secondary">
-                  Permanently deactivate your admin account. This will remove your access to the system.
-                </p>
+                <p className="text-sm text-text-secondary">Permanently delete your admin account</p>
               </div>
-              <Button
-                variant="danger"
-                tone="admin"
-                leftIcon={<Trash2 size={16} />}
-                onClick={handleDeactivateAccount}
-              >
-                Deactivate Account
+              <Button variant="danger" tone="admin" leftIcon={<Trash2 size={16} />} onClick={handleDeactivateAccount}>
+                Deactivate
               </Button>
             </div>
           </div>
         </div>
       </div>
+
+      {/* ─── Change Password Modal ─── */}
+      <ChangePasswordModal
+        isOpen={isPasswordModalOpen}
+        onClose={() => setIsPasswordModalOpen(false)}
+        onSubmit={handleChangePassword}
+        loading={isChangingPassword}
+      />
 
       {/* ─── Confirm Dialog ─── */}
       <ConfirmDialog

@@ -11,7 +11,7 @@ import { Button } from "../../../../../components/ui/Button";
 import Pagination from "../../../../../components/ui/Pagination/Pagination";
 import EditDrawer from "./EditDrawer";
 import { Select } from "../../../../../components/ui/Select";
-import { fetchStudents, updateStudent, deleteUser, fetchClassSections } from "../../../../../store/admin/adminThunks";
+import { fetchStudents, updateStudent, deleteStudent, fetchClassSections } from "../../../../../store/admin/adminThunks";
 import { usePagination } from "../hooks/usePagination";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -111,17 +111,17 @@ function StudentTab() {
     setShowDeleteConfirm(true);
   };
 
-  const handleConfirmDelete = async () => {
-    if (deleteTargetId) {
-      try {
-        await dispatch(deleteUser(deleteTargetId)).unwrap();
-      } catch (error) {
-        console.error("Failed to delete student:", error);
-      }
+const handleConfirmDelete = async () => {
+  if (deleteTargetId) {
+    try {
+      await dispatch(deleteStudent(deleteTargetId)).unwrap();
+    } catch (error) {
+      console.error("Failed to delete student:", error);
     }
-    setShowDeleteConfirm(false);
-    setDeleteTargetId(null);
-  };
+  }
+  setShowDeleteConfirm(false);
+  setDeleteTargetId(null);
+};
 
   // ─── Table Columns ───────────────────────────────────────────────────────
   const columns = [

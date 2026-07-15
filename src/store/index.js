@@ -2,10 +2,10 @@ import { configureStore } from "@reduxjs/toolkit";
 
 // ----- Core Auth -----
 import authReducer from "./auth/authSlice";
-
+import adminEventReducer from './admin/adminEventSlice';
 import studentReducer from "./studentSlice";   
 import parentReducer from "./parentSlice";     
-
+import adminComplaintReducer from "./admin/adminComplaintSlice";
 import adminReducer from "./admin/adminSlice";
 import teacherReducer from "./teacher/teacherSlice";
 import academicsReducer from "./admin/academicsSlice";
@@ -13,6 +13,7 @@ import academicsReducer from "./admin/academicsSlice";
 import complaintReducer from "./complaint/complaintSlice";
 import notificationReducer from "./notification/notificationSlice";
 import settingsReducer from "./setting/settingSlice";
+import adminNotificationReducer from './admin/adminNotificationSlice';
 
 /*
 ======================================================
@@ -25,17 +26,19 @@ const store = configureStore({
   reducer: {
     // Authentication
     auth: authReducer,
-
+    adminComplaint: adminComplaintReducer,
     // Role-based modules
     student: studentReducer,
     parent: parentReducer,
     admin: adminReducer,      
     teacher: teacherReducer,   
     academics: academicsReducer,
+    adminEvent: adminEventReducer,
     // Feature modules
     complaints: complaintReducer,
     notifications: notificationReducer,
     settings: settingsReducer,
+    adminNotification: adminNotificationReducer,
   },
 });
 

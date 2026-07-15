@@ -41,18 +41,7 @@ export const getStatusColor = (status) => {
   }
 };
 
-export const getStatusIcon = (status) => {
-  switch (status) {
-    case "Open":
-      return <AlertCircle size={14} />;
-    case "In Progress":
-      return <Clock size={14} />;
-    case "Resolved":
-      return <CheckCircle size={14} />;
-    default:
-      return <AlertCircle size={14} />;
-  }
-};
+
 
 export const COMPLAINT_STATUS_OPTIONS = [
   { value: "Open", label: "Open" },

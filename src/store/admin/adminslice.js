@@ -6,6 +6,7 @@ const initialState = {
   teachers: [],
   parents: [],
    classes: [], 
+    users: [], 
   loading: false,
   updating: false,
   error: null,
@@ -24,6 +25,19 @@ const adminSlice = createSlice({
   name: "admin",
   initialState,
   reducers: {
+    // ─── Add reducers ─────────────────────────────────────────────────────
+    fetchAllUsersStart: (state) => {
+      state.loading = true;
+      state.error = null;
+    },
+    fetchAllUsersSuccess: (state, action) => {
+      state.loading = false;
+      state.users = action.payload;   // store all users
+    },
+    fetchAllUsersFailure: (state, action) => {
+      state.loading = false;
+      state.error = action.payload;
+    },
     // ─── 1. APPROVALS (Existing) ──────────────────────────────────
     fetchApprovalsStart: (state) => {
       state.loading = true;
@@ -186,6 +200,9 @@ const adminSlice = createSlice({
 
 // ─── Export Actions ──────────────────────────────────────────────────────
 export const {
+   fetchAllUsersStart,
+  fetchAllUsersSuccess,
+  fetchAllUsersFailure,
   // Approvals
   fetchApprovalsStart,
   fetchApprovalsSuccess,

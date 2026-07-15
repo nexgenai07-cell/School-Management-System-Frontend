@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-
+import { clearSentNotifications } from '../admin/adminNotificationSlice';
 /*
 ============================================
 Authentication Slice
@@ -105,6 +105,7 @@ const authSlice = createSlice({
       state.loading = false;
       state.error = null;
       localStorage.removeItem('auth_data');
+      localStorage.removeItem('sentNotifications');
     },
   },
 });

@@ -1,6 +1,9 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import {
-fetchApprovalsStart,
+   fetchAllUsersStart,
+  fetchAllUsersSuccess,
+  fetchAllUsersFailure,
+  fetchApprovalsStart,
   fetchApprovalsSuccess,
   fetchApprovalsFailure,
   updateApprovalStart,
@@ -123,8 +126,7 @@ export const fetchAllUsers = createAsyncThunk(
   "admin/fetchAllUsers",
   async (_, { dispatch }) => {
     try {
-      dispatch(fetchApprovalsStart()); // Reuse loading state
-
+      dispatch(fetchAllUsersStart());
       const response = await fetch(`${API_BASE}/admin/users`, {
         method: "GET",
         headers: {
@@ -132,17 +134,15 @@ export const fetchAllUsers = createAsyncThunk(
           Authorization: `Bearer ${getToken()}`,
         },
       });
-
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || "Failed to fetch users");
       }
-
       const data = await response.json();
-      dispatch(fetchApprovalsSuccess(data)); // Approvals state mein save karein
+      dispatch(fetchAllUsersSuccess(data));
       return data;
     } catch (error) {
-      dispatch(fetchApprovalsFailure(error.message));
+      dispatch(fetchAllUsersFailure(error.message));
       throw error;
     }
   }
@@ -279,25 +279,22 @@ export const updateTeacher = createAsyncThunk(
 );
 
 // ─── Fetch Parents ──────────────────────────────────────────────────
+// ─── Fetch Parents ──────────────────────────────────────────────────
 export const fetchParents = createAsyncThunk(
   "admin/fetchParents",
   async (_, { getState, dispatch }) => {
     try {
-      dispatch(fetchParentsStart()); 
-
+      dispatch(fetchParentsStart());
       const { accessToken } = getState().auth;
-      const response = await fetch(`${API_BASE}/admin/users?role=4`, {
+      const response = await fetch(`${API_BASE}/admin/parent-profiles`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
-
       if (!response.ok) {
         throw new Error(`Failed to fetch parents (${response.status})`);
       }
-
       const data = await response.json();
-      
+      // The response is an array of parent profiles with fields: id, full_name, email, user
       dispatch(fetchParentsSuccess(data));
-      
       return data;
     } catch (error) {
       dispatch(fetchParentsFailure(error.message));
@@ -554,5 +551,124 @@ export const sendNotification = createAsyncThunk(
       dispatch(sendNotificationFailure(error.message));
       throw error;
     }
+  }
+);
+// ─── Delete Student ──────────────────────────────────────────────────
+export const deleteStudent = createAsyncThunk(
+  "admin/deleteStudent",
+  async (id, { dispatch, getState }) => {
+    const { accessToken } = getState().auth;
+    const response = await fetch(`${API_BASE}/admin/student-profiles/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!response.ok) throw new Error("Failed to delete student");
+    dispatch(deleteUserSuccess(id));
+    return id;
+  }
+);
+
+// ─── Delete Teacher ──────────────────────────────────────────────────
+export const deleteTeacher = createAsyncThunk(
+  "admin/deleteTeacher",
+  async (id, { dispatch, getState }) => {
+    const { accessToken } = getState().auth;
+    const response = await fetch(`${API_BASE}/admin/teacher-profiles/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!response.ok) throw new Error("Failed to delete teacher");
+    dispatch(deleteUserSuccess(id));
+    return id;
+  }
+);
+
+// ─── Delete Parent ──────────────────────────────────────────────────
+export const deleteParent = createAsyncThunk(
+  "admin/deleteParent",
+  async (id, { dispatch, getState }) => {
+    const { accessToken } = getState().auth;
+    const response = await fetch(`${API_BASE}/admin/parent-profiles/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!response.ok) throw new Error("Failed to delete parent");
+    dispatch(deleteUserSuccess(id));
+    return id;
+  }
+);
+
+// ─── Update Parent ──────────────────────────────────────────────────
+export const updateParent = createAsyncThunk(
+  "admin/updateParent",
+  async ({ id, data }, { getState, dispatch }) => {
+    const { accessToken } = getState().auth;
+    const response = await fetch(`${API_BASE}/admin/parent-profiles/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      let errorMessage = "Failed to update parent";
+      try {
+        const errorData = await response.json();
+        // Extract error messages from DRF error format
+        if (typeof errorData === 'object') {
+          const messages = Object.values(errorData).flat().join(' ');
+          if (messages) errorMessage = messages;
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.detail) {
+          errorMessage = errorData.detail;
+        }
+      } catch (e) {
+        errorMessage = response.statusText || errorMessage;
+      }
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    dispatch(fetchParents());
+    return result;
+  }
+);
+// ─── Dashboard Stats ─────────────────────────────────────────────────
+export const fetchDashboardStats = createAsyncThunk(
+  "admin/fetchDashboardStats",
+  async (_, { getState }) => {
+    const { accessToken } = getState().auth;
+    const response = await fetch(`${API_BASE}/admin/stats`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || "Failed to fetch dashboard stats");
+    }
+    const data = await response.json();
+    return data;
+  }
+);
+// ─── Change Password ──────────────────────────────────────────────────
+export const changePassword = createAsyncThunk(
+  "admin/changePassword",
+  async ({ old_password, new_password }, { getState }) => {
+    const { accessToken } = getState().auth;
+    const response = await fetch(`${API_BASE}/auth/change-password`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ old_password, new_password }),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || "Failed to change password");
+    }
+    return await response.json();
   }
 );
