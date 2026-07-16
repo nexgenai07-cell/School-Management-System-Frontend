@@ -14,7 +14,7 @@ import complaintReducer from "./complaint/complaintSlice";
 import notificationReducer from "./notification/notificationSlice";
 import settingsReducer from "./setting/settingSlice";
 import adminNotificationReducer from './admin/adminNotificationSlice';
-
+import chatReducer from './chat/chatSlice';
 /*
 ======================================================
 Redux Store Configuration
@@ -39,6 +39,7 @@ const store = configureStore({
     notifications: notificationReducer,
     settings: settingsReducer,
     adminNotification: adminNotificationReducer,
+    chat: chatReducer,
   },
 });
 
