@@ -6,7 +6,7 @@ import {
 
 import DashboardLayout from "../layouts/DashboardLayout";
 import ProtectedRoute from "./ProtectedRoutes";
-
+import AiWorkspacePage from "../modules/chat/pages/AiWorkspacePage/AiWorkspacePage";
 import PublicRoutes from "./PublicRoutes";
 import AdminRoutes from "./AdminRoutes";
 import TeacherRoutes from "./TeacherRoutes";
@@ -24,6 +24,8 @@ function AppRoutes() {
           {TeacherRoutes}
           {StudentRoutes}
           {ParentRoutes}
+          
+        <Route path="/ai-workspace" element={<AiWorkspacePage />} />
         </Route>
       </Route>
 
