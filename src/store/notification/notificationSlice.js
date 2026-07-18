@@ -1,5 +1,6 @@
-import { createSlice } from "@reduxjs/toolkit";
+// src/store/notification/notificationSlice.js
 
+import { createSlice } from "@reduxjs/toolkit";
 import {
   fetchNotifications,
   fetchUnreadNotifications,
@@ -7,9 +8,51 @@ import {
   markAllNotificationsAsRead,
 } from "./notificationThunk";
 
+/* ------------------------------------------------------------------ */
+/*  Dismissed-id persistence.                                          */
+/*                                                                      */
+/*  There's no DELETE endpoint yet, so "deleting" a notification can    */
+/*  only mean "hide it on this device forever" — we do that by keeping  */
+/*  a list of dismissed ids in localStorage and filtering every fetch   */
+/*  against it. Once a real endpoint exists, swap `removeNotification`  */
+/*  for a `deleteNotification` thunk and delete this whole block.       */
+/* ------------------------------------------------------------------ */
+
+const DISMISSED_KEY = "dismissedNotificationIds";
+
+const getDismissedIds = () => {
+  try {
+    const raw = window.localStorage.getItem(DISMISSED_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
+
+const addDismissedId = (id) => {
+  try {
+    const current = getDismissedIds();
+    if (!current.includes(id)) {
+      window.localStorage.setItem(
+        DISMISSED_KEY,
+        JSON.stringify([...current, id])
+      );
+    }
+  } catch {
+    // localStorage unavailable (private browsing, quota, etc.) — the
+    // delete still works for this session, it just won't survive reload.
+  }
+};
+
+const filterDismissed = (list) => {
+  const dismissed = getDismissedIds();
+  return dismissed.length
+    ? list.filter((n) => !dismissed.includes(n.id))
+    : list;
+};
+
 const initialState = {
   notifications: [],
-  unreadNotifications: [],
   loading: false,
   error: null,
 };
@@ -17,106 +60,47 @@ const initialState = {
 const notificationSlice = createSlice({
   name: "notifications",
   initialState,
-  reducers: {},
-
+  reducers: {
+    removeNotification: (state, action) => {
+      addDismissedId(action.payload);
+      state.notifications = state.notifications.filter(
+        (n) => n.id !== action.payload
+      );
+    },
+  },
   extraReducers: (builder) => {
     builder
-
-      /*
-      ===================================
-      Fetch Notifications
-      ===================================
-      */
-
       .addCase(fetchNotifications.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-
       .addCase(fetchNotifications.fulfilled, (state, action) => {
         state.loading = false;
-        state.notifications = action.payload;
+        state.notifications = filterDismissed(action.payload);
       })
-
       .addCase(fetchNotifications.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
 
-      /*
-      ===================================
-      Fetch Unread Notifications
-      ===================================
-      */
-
-      .addCase(fetchUnreadNotifications.pending, (state) => {
-        state.loading = true;
-      })
-
       .addCase(fetchUnreadNotifications.fulfilled, (state, action) => {
-        state.loading = false;
-        state.unreadNotifications = action.payload;
-      })
-
-      .addCase(fetchUnreadNotifications.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      })
-
-      /*
-      ===================================
-      Mark Single Notification Read
-      ===================================
-      */
-
-      .addCase(markNotificationAsRead.pending, (state) => {
-        state.loading = true;
+        if (Array.isArray(action.payload)) {
+          state.notifications = filterDismissed(action.payload);
+        }
       })
 
       .addCase(markNotificationAsRead.fulfilled, (state, action) => {
-        state.loading = false;
-
-        const index = state.notifications.findIndex(
-          (item) => item.id === action.payload.id
+        const item = state.notifications.find(
+          (n) => n.id === action.payload.id
         );
-
-        if (index !== -1) {
-          state.notifications[index] = action.payload;
-        }
-
-        state.unreadNotifications =
-          state.notifications.filter(
-            (item) => !item.is_read
-          );
+        if (item) item.is_read = true;
       })
 
-      .addCase(markNotificationAsRead.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      })
-
-      /*
-      ===================================
-      Mark All Notifications Read
-      ===================================
-      */
-
-      .addCase(markAllNotificationsAsRead.pending, (state) => {
-        state.loading = true;
-      })
-
-      .addCase(markAllNotificationsAsRead.fulfilled, (state, action) => {
-        state.loading = false;
-
-        state.notifications = action.payload;
-        state.unreadNotifications = [];
-      })
-
-      .addCase(markAllNotificationsAsRead.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
+      .addCase(markAllNotificationsAsRead.fulfilled, (state) => {
+        state.notifications.forEach((n) => (n.is_read = true));
       });
   },
 });
 
+export const { removeNotification } = notificationSlice.actions;
 export default notificationSlice.reducer;

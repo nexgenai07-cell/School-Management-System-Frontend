@@ -1,3 +1,5 @@
+// src/store/notification/notificationThunk.js
+
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import notificationService from "../../services/notificationService";
 
@@ -22,9 +24,10 @@ export const fetchNotifications = createAsyncThunk(
  */
 export const fetchUnreadNotifications = createAsyncThunk(
   "notifications/fetchUnreadNotifications",
-  async (role, { rejectWithValue }) => {
+  async (_role, { rejectWithValue }) => {
     try {
-      return await notificationService.getUnreadNotifications(role);
+      // getUnreadNotifications takes no args — role isn't part of this route
+      return await notificationService.getUnreadNotifications();
     } catch (error) {
       return rejectWithValue(
         error.message || "Failed to fetch unread notifications."
@@ -35,12 +38,18 @@ export const fetchUnreadNotifications = createAsyncThunk(
 
 /**
  * Mark notification as read
+ * payload = { role, id }
  */
 export const markNotificationAsRead = createAsyncThunk(
   "notifications/markNotificationAsRead",
   async ({ role, id }, { rejectWithValue }) => {
     try {
-      return await notificationService.markAsRead(role, id);
+      const data = await notificationService.markAsRead(id);
+
+      // Some backends return { message: "..." } instead of the updated
+      // notification. Fall back to just the id so the reducer can still
+      // reliably find and update the right item in state.
+      return { ...data, id: data?.id ?? id };
     } catch (error) {
       return rejectWithValue(
         error.message || "Failed to mark notification as read."
@@ -54,9 +63,10 @@ export const markNotificationAsRead = createAsyncThunk(
  */
 export const markAllNotificationsAsRead = createAsyncThunk(
   "notifications/markAllNotificationsAsRead",
-  async (role, { rejectWithValue }) => {
+  async (_role, { rejectWithValue }) => {
     try {
-      return await notificationService.markAllAsRead(role);
+      // markAllAsRead takes no args
+      return await notificationService.markAllAsRead();
     } catch (error) {
       return rejectWithValue(
         error.message || "Failed to mark all notifications as read."
