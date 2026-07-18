@@ -1,14 +1,18 @@
-import { LoadingSpinner } from "../../../../../components/ui/LoadingSpinner";
+// src/modules/admin/pages/UserProfileManagement/components/ParentTab.jsx
+
 import { useState, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import {Eye, Edit, Search, Filter } from "lucide-react";
+import { Edit, Filter, Trash2 } from "lucide-react";
 
+import { LoadingSpinner } from "../../../../../components/ui/LoadingSpinner";
+import ConfirmDialog from "../../../../../components/global/ConfirmDialog/ConfirmDialog";
 import { SearchBar } from "../../../../../components/global/Searchbar";
 import ResponsiveTable from "../../../components/ResponsiveTable";
 import { StatusBadge } from "../../../../../components/composite/Statusbadge";
 import Pagination from "../../../../../components/ui/Pagination/Pagination";
 import EditDrawer from "./EditDrawer";
-import { fetchParents, deleteParent, updateParent } from "../../../../../store/admin/adminThunks";
+import { Select } from "../../../../../components/ui/Select";
+import { fetchParents, deleteUser, updateUser } from "../../../../../store/admin/adminThunks";
 import { usePagination } from "../hooks/usePagination";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -22,12 +26,16 @@ const getInitials = (name) =>
 
 const ITEMS_PER_PAGE = 10;
 
-function ParentTab() {
+function ParentTab({ onRowClick }) {
   const dispatch = useDispatch();
   const { parents, loading, error } = useSelector((state) => state.admin);
 
   const [search, setSearch] = useState("");
   const [selectedParent, setSelectedParent] = useState(null);
+
+  // ─── Delete Dialog State ──────────────────────────────────────────────
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState(null);
 
   // ─── Fetch Parents ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -37,7 +45,6 @@ function ParentTab() {
   // ─── Filter Parents ─────────────────────────────────────────────────────
   const filtered = useMemo(() => {
     let list = parents;
-
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(
@@ -46,7 +53,6 @@ function ParentTab() {
           p.email?.toLowerCase().includes(q)
       );
     }
-
     return list;
   }, [parents, search]);
 
@@ -54,46 +60,59 @@ function ParentTab() {
   const { currentPage, totalPages, paginatedData, goToPage, resetPage, totalItems } =
     usePagination(filtered, ITEMS_PER_PAGE);
 
-  // Reset page on filter change
   useEffect(() => {
     resetPage();
   }, [search]);
 
   // ─── Handlers ────────────────────────────────────────────────────────────
-// Delete handler
-const handleDelete = async (id) => {
-  if (window.confirm("Are you sure you want to delete this parent?")) {
+
+  // ─── Update Handler ─────────────────────────────────────────────────────
+  const handleSave = async (updatedData) => {
     try {
-      await dispatch(deleteParent(id)).unwrap();
+      // Use the USER ID (updatedData.user) to update the linked user record
+      await dispatch(updateUser({
+        id: updatedData.user,   // user ID
+        data: {
+          full_name: updatedData.full_name,
+          email: updatedData.email,
+          role: 4,
+        },
+      })).unwrap();
+      setSelectedParent(null);
     } catch (error) {
-      console.error("Failed to delete parent:", error);
+      console.error("Failed to update parent:", error);
+      alert(`Error: ${error.message}`);
     }
-  }
-};
+  };
 
-// Update handler
-const handleSave = async (updatedData) => {
-  try {
-    // updatedData.id should be the parent profile ID
-    console.log('Saving parent:', updatedData); // debug
+  // ─── Delete Handler ─────────────────────────────────────────────────────
+  const handleDeleteClick = (id) => {
+    setDeleteTargetId(id);
+    setShowDeleteConfirm(true);
+  };
 
-    const payload = {
-      user: Number(updatedData.user),   // user ID
-      full_name: updatedData.full_name,
-      email: updatedData.email,
-    };
-
-    await dispatch(updateParent({
-      id: updatedData.id,   // parent profile ID
-      data: payload,
-    })).unwrap();
-
-    setSelectedParent(null);
-  } catch (error) {
-    console.error("Failed to update parent:", error);
-    alert(`Error: ${error.message}`);
-  }
-};
+  const handleConfirmDelete = async () => {
+    if (deleteTargetId) {
+      try {
+        // Find the parent object to get the user ID
+        const parent = parents.find(p => p.id === deleteTargetId);
+        if (parent) {
+          // Use the user ID to delete the user account
+          await dispatch(deleteUser(parent.user)).unwrap();
+        } else {
+          // Fallback: try deleting by the profile ID (if user endpoint doesn't work)
+          // But we know the user endpoint works, so we use parent.user.
+        }
+        // Refresh the list
+        dispatch(fetchParents());
+      } catch (error) {
+        console.error("Failed to delete parent:", error);
+        alert(`Error: ${error.message}`);
+      }
+    }
+    setShowDeleteConfirm(false);
+    setDeleteTargetId(null);
+  };
 
   // ─── Table Columns ───────────────────────────────────────────────────────
   const columns = [
@@ -108,6 +127,9 @@ const handleSave = async (updatedData) => {
           <div>
             <p className="text-sm font-medium text-[var(--color-text-primary)]">
               {row.full_name}
+            </p>
+            <p className="text-xs text-[var(--color-text-muted)]">
+              ID: {row.id} · User: {row.user}
             </p>
           </div>
         </div>
@@ -125,32 +147,48 @@ const handleSave = async (updatedData) => {
     {
       key: "status",
       label: "Status",
-      render: (row) => (
-        <StatusBadge status={row.status || "Unknown"} />
-      ),
+      render: (row) => {
+        // We don't have status directly from parent profile, so we derive from is_active
+        const status = row.is_active !== undefined ? (row.is_active ? "Active" : "Inactive") : "Active";
+        return <StatusBadge status={status} />;
+      },
       mobile: { role: "badge" },
     },
     {
-      key: "created_at",
-      label: "Joined",
+      key: "user",
+      label: "User ID",
       render: (row) => (
-        <span className="text-sm text-[var(--color-text-secondary)]">
-          {row.created_at ? new Date(row.created_at).toLocaleDateString() : "—"}
-        </span>
+        <span className="text-sm text-[var(--color-text-secondary)]">{row.user}</span>
       ),
-      mobile: { role: "detail", label: "Joined" },
+      mobile: { role: "detail", label: "User ID" },
     },
     {
       key: "actions",
       label: "Actions",
       render: (row) => (
         <div className="flex justify-start gap-2">
+          {/* Edit button – opens the drawer */}
           <button
-            onClick={() => setSelectedParent(row)}
+            onClick={(e) => {
+          e.stopPropagation();
+          setSelectedParent(row);
+        }}
+
             className="p-2 text-[var(--color-text-muted)] hover:text-[var(--color-admin-primary)] hover:bg-[var(--color-admin-light)] rounded-lg transition-colors"
-            title="View Profile"
+            title="Edit Profile"
           >
-            <Eye size={16} />
+            <Edit size={16} />
+          </button>
+          {/* Delete button */}
+          <button
+            onClick={(e) => {
+          e.stopPropagation();
+          handleDeleteClick(row.id);
+        }}
+            className="p-2 text-[var(--color-danger)] hover:bg-[var(--color-danger-bg)] rounded-lg transition-colors"
+            title="Delete"
+          >
+            <Trash2 size={16} />
           </button>
         </div>
       ),
@@ -158,26 +196,13 @@ const handleSave = async (updatedData) => {
     },
   ];
 
-  // ─── Loading & Error States ────────────────────────────────────────────
-  if (loading) {
-    return (
-      <div className="bg-white rounded-xl shadow border border-gray-100 min-h-[200px] flex items-center justify-center">
-        <LoadingSpinner size="lg" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="bg-white rounded-xl shadow border border-gray-100 p-6 text-center text-red-500">
-        Error: {error}
-      </div>
-    );
-  }
+  // ─── Loading & Error ─────────────────────────────────────────────────────
+  if (loading) return <LoadingSpinner size="lg" />;
+  if (error) return <div className="text-center text-red-500 py-8">Error: {error}</div>;
 
   return (
     <>
-      {/* ─── Search Bar ──────────────────────────────────────────────────── */}
+      {/* ─── Filters ──────────────────────────────────────────────────────── */}
       <div className="flex gap-4 items-center">
         <SearchBar
           value={search}
@@ -188,23 +213,40 @@ const handleSave = async (updatedData) => {
           size="sm"
           className="w-60 md:w-80"
         />
+        <div className="ml-auto text-xs text-[var(--color-text-muted)]">
+          Showing {paginatedData.length} of {totalItems} parents
+        </div>
       </div>
 
-      {/* ─── Table ───────────────────────────────────────────────────────── */}
+      {/* ─── Table ────────────────────────────────────────────────────────── */}
       <div className="bg-white rounded-xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] border border-gray-100 overflow-hidden">
         <ResponsiveTable
           columns={columns}
           data={paginatedData}
+          onRowClick={onRowClick}
           keyField="id"
           emptyMessage="No parents found matching your criteria."
           mobileActions={(row) => (
             <div className="flex items-center justify-end gap-3 pt-2">
               <button
-                onClick={() => setSelectedParent(row)}
+                 onClick={(e) => {
+                e.stopPropagation();
+                setSelectedParent(row);
+              }}
                 className="text-sm font-medium text-[var(--color-admin-primary)] hover:underline flex items-center gap-1.5 px-3 py-1.5 bg-[var(--color-admin-light)] rounded-lg"
               >
                 <Edit size={14} />
                 Edit Profile
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeleteClick(row.id);
+                }}
+                className="text-sm font-medium text-[var(--color-danger)] hover:underline flex items-center gap-1.5 px-3 py-1.5 bg-[var(--color-danger-bg)] rounded-lg"
+              >
+                <Trash2 size={14} />
+                Delete
               </button>
             </div>
           )}
@@ -219,7 +261,22 @@ const handleSave = async (updatedData) => {
         />
       </div>
 
-      {/* ─── Edit Drawer ─────────────────────────────────────────────────── */}
+      {/* ─── Confirm Dialog ──────────────────────────────────────────────── */}
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        title="Delete Parent?"
+        message="This action cannot be undone. Are you sure you want to delete this parent?"
+        variant="danger"
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => {
+          setShowDeleteConfirm(false);
+          setDeleteTargetId(null);
+        }}
+      />
+
+      {/* ─── Edit Drawer ──────────────────────────────────────────────────── */}
       <EditDrawer
         isOpen={!!selectedParent}
         onClose={() => setSelectedParent(null)}

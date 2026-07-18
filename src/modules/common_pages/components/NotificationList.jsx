@@ -12,6 +12,7 @@ import {
   fetchNotifications,
   markNotificationAsRead,
 } from "../../../store/notification/notificationThunk";
+import { removeNotification } from "../../../store/notification/notificationSlice";
 
 /* ------------------------------------------------------------------ */
 /*  Loading skeleton — mirrors the shape of a notification row so the */
@@ -48,6 +49,10 @@ const NotificationList = ({ role, filter, onUnreadCountChange }) => {
   const [selectedNotification, setSelectedNotification] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
 
+  // Ids currently mid fade-out, so we can play the exit animation before
+  // the item actually leaves Redux state (and therefore the DOM).
+  const [removingIds, setRemovingIds] = useState([]);
+
   useEffect(() => {
     const unread = notifications.filter(
       (notification) => !notification.is_read
@@ -80,6 +85,23 @@ const NotificationList = ({ role, filter, onUnreadCountChange }) => {
     if (!notification.is_read) {
       dispatch(markNotificationAsRead({ role, id: notification.id }));
     }
+  };
+
+  // No delete endpoint yet — this removes the item from Redux state only,
+  // so it's gone for this session but will come back on the next fetch.
+  // Swap the inner dispatch for a `deleteNotification` thunk once the API
+  // exists; the fade-out UX here can stay exactly as is.
+  const handleDelete = (event, notification) => {
+    event.stopPropagation();
+
+    if (removingIds.includes(notification.id)) return;
+
+    setRemovingIds((prev) => [...prev, notification.id]);
+
+    window.setTimeout(() => {
+      dispatch(removeNotification(notification.id));
+      setRemovingIds((prev) => prev.filter((id) => id !== notification.id));
+    }, 220);
   };
 
   if (loading) {
@@ -123,13 +145,18 @@ const NotificationList = ({ role, filter, onUnreadCountChange }) => {
           <div
             key={notification.id}
             style={{ animationDelay: `${Math.min(index, 10) * 60}ms` }}
-            className="opacity-0 [animation-fill-mode:forwards] animate-[notif-in_0.45s_cubic-bezier(0.22,1,0.36,1)]
-                       transition-transform duration-200 hover:-translate-y-0.5"
+            className={`opacity-0 [animation-fill-mode:forwards] transition-transform duration-200 hover:-translate-y-0.5
+                       ${
+                         removingIds.includes(notification.id)
+                           ? "animate-[notif-out_0.2s_ease-in_forwards]"
+                           : "animate-[notif-in_0.45s_cubic-bezier(0.22,1,0.36,1)]"
+                       }`}
           >
             <NotificationCard
               role={role}
               notification={notification}
               onView={handleView}
+              onDelete={handleDelete}
             />
           </div>
         ))}
@@ -147,8 +174,12 @@ const NotificationList = ({ role, filter, onUnreadCountChange }) => {
           from { opacity: 0; transform: translateY(10px); }
           to { opacity: 1; transform: translateY(0); }
         }
+        @keyframes notif-out {
+          from { opacity: 1; transform: translateY(0) scale(1); max-height: 200px; }
+          to { opacity: 0; transform: translateY(-6px) scale(0.98); max-height: 0; }
+        }
         @media (prefers-reduced-motion: reduce) {
-          [class*="animate-[notif-in"] {
+          [class*="animate-[notif-in"], [class*="animate-[notif-out"] {
             animation: none !important;
             opacity: 1 !important;
             transform: none !important;

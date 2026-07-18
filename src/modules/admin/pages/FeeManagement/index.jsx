@@ -213,7 +213,6 @@ export default function FeeManagement() {
         <FeeTable
           data={paginatedData}
           onView={handleView}
-          onNotify={handleNotify}
           onEdit={openEditChallan}
           onPay={openPaymentModal}
           currentPage={currentPage}

@@ -7,6 +7,9 @@ import Register from "../modules/auth/pages/Register";
 import ForgotPassword from "../modules/auth/pages/ForgotPassword";
 import PendingApproval from "../modules/auth/pages/PendingApproval";
 
+
+
+
 const PublicRoutes = (
   <>
     <Route path="/" element={<HomePage />} />

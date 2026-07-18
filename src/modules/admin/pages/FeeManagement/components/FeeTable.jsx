@@ -1,6 +1,6 @@
 // src/modules/admin/pages/FeeManagement/components/FeeTable.jsx
 
-import { Eye,Edit, Mail,DollarSign  } from 'lucide-react';
+import { Eye,Edit,DollarSign  } from 'lucide-react';
 import { Badge } from '../../../../../components/ui/Badge';
 import { StatusBadge } from '../../../../../components/composite/Statusbadge';
 import ResponsiveTable from '../../../components/ResponsiveTable';
@@ -10,7 +10,6 @@ import { formatCurrency, getStatusLabel } from '../utils/helpers';
 export default function FeeTable({
   data,
   onView,
-  onNotify,
   onPay, 
   currentPage,
   totalPages,
@@ -79,13 +78,6 @@ export default function FeeTable({
             title="View Details"
           >
             <Eye size={15} />
-          </button>
-          <button
-            onClick={() => onNotify(row)}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-[var(--color-parent-primary)] hover:bg-[var(--color-parent-light)] transition-colors"
-            title="Notify Parent"
-          >
-            <Mail size={15} />
           </button>
            <button
             onClick={() => onEdit(row)}
