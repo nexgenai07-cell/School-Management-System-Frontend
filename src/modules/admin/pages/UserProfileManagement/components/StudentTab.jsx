@@ -31,7 +31,7 @@ const SCHOLARSHIP_OPTIONS = [
   { value: 100, label: "100% (Full)" },
 ];
 
-function StudentTab() {
+function StudentTab({ onRowClick }) {
   const dispatch = useDispatch();
   const { students, classes, loading, error } = useSelector((state) => state.admin);
 
@@ -160,7 +160,7 @@ const handleConfirmDelete = async () => {
       key: "class_section",
       label: "Class",
       render: (row) => {
-        // 🔥 Use dynamic classOptions
+        //  Use dynamic classOptions
         const classLabel = classOptions.find(c => c.value === row.class_section)?.label || row.class_section;
         return <span className="text-sm text-[var(--color-text-primary)]">{classLabel}</span>;
       },
@@ -203,7 +203,10 @@ const handleConfirmDelete = async () => {
             variant="ghost"
             tone="admin"
             size="sm"
-            onClick={() => setSelectedStudent(row)}
+            onClick={(e) => {
+          e.stopPropagation(); 
+          setSelectedStudent(row);
+        }}
             leftIcon={<Edit size={16} />}
             title="Edit Profile"
           />
@@ -211,7 +214,10 @@ const handleConfirmDelete = async () => {
             variant="danger"
             tone="admin"
             size="sm"
-            onClick={() => handleDeleteClick(row.id)}
+            onClick={(e) => {
+          e.stopPropagation(); 
+          handleDeleteClick(row.id);
+        }}
             leftIcon={<Trash2 size={16} />}
             title="Delete"
           />
@@ -268,6 +274,7 @@ const handleConfirmDelete = async () => {
         <ResponsiveTable
           columns={columns}
           data={paginatedData}
+          onRowClick={onRowClick} 
           keyField="id"
           emptyMessage="No students found matching your criteria."
           mobileActions={(row) => (
@@ -276,7 +283,10 @@ const handleConfirmDelete = async () => {
                 variant="primary"
                 tone="admin"
                 size="sm"
-                onClick={() => setSelectedStudent(row)}
+                onClick={(e) => {
+                e.stopPropagation();
+                setSelectedStudent(row);
+              }}
                 leftIcon={<Edit size={14} />}
               >
               </Button>
@@ -284,7 +294,10 @@ const handleConfirmDelete = async () => {
                 variant="danger"
                 tone="admin"
                 size="sm"
-                onClick={() => handleDeleteClick(row.id)}
+                onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteClick(row.id);
+              }}
                 leftIcon={<Trash2 size={14} />}
               >
               </Button>

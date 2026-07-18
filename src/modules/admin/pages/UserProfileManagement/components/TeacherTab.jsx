@@ -21,7 +21,7 @@ const getInitials = (name) =>
 
 const ITEMS_PER_PAGE = 10;
 
-function TeacherTab() {
+function TeacherTab({ onRowClick }) {
   const dispatch = useDispatch();
   const { teachers, loading, error } = useSelector((state) => state.admin);
 
@@ -100,7 +100,12 @@ function TeacherTab() {
       console.error("Failed to update teacher:", error);
     }
   };
-
+// ─── Delete Click Handler ──────────────────────────────────────────────
+  const handleDeleteClick = (id) => {
+    setDeleteTargetId(id);
+    setShowDeleteConfirm(true);
+  };
+  
 const handleConfirmDelete = async () => {
   if (deleteTargetId) {
     try {
@@ -168,7 +173,10 @@ const handleConfirmDelete = async () => {
             variant="ghost"
             tone="admin"
             size="sm"
-            onClick={() => setSelectedTeacher(row)}
+             onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedTeacher(row);
+                }}
             leftIcon={<Edit size={16} />}
             title="Edit Profile"
           />
@@ -176,7 +184,10 @@ const handleConfirmDelete = async () => {
             variant="danger"
             tone="admin"
             size="sm"
-            onClick={() => handleDeleteClick(row.id)}
+             onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteClick(row.id);
+              }}
             leftIcon={<Trash2 size={16} />}
             title="Delete"
           />
@@ -225,6 +236,7 @@ const handleConfirmDelete = async () => {
         <ResponsiveTable
           columns={columns}
           data={paginatedData}
+          onRowClick={onRowClick} 
           keyField="id"
           emptyMessage="No teachers found matching your criteria."
           mobileActions={(row) => (
@@ -233,7 +245,10 @@ const handleConfirmDelete = async () => {
                 variant="primary"
                 tone="admin"
                 size="sm"
-                onClick={() => setSelectedTeacher(row)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedTeacher(row);
+                }}
                 leftIcon={<Edit size={14} />}
               >
                 Edit Profile
@@ -242,7 +257,10 @@ const handleConfirmDelete = async () => {
                 variant="danger"
                 tone="admin"
                 size="sm"
-                onClick={() => handleDeleteClick(row.id)}
+                 onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteClick(row.id);
+              }}
                 leftIcon={<Trash2 size={14} />}
               >
                 Delete

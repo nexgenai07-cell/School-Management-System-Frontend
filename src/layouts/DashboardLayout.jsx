@@ -1,6 +1,8 @@
-import { Outlet, useNavigate } from "react-router-dom";
+// src/layouts/DashboardLayout.jsx
+
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { useLocation } from "react-router-dom";
+import { useEffect } from "react";
 import { Navbar, Sidebar } from "../components";
 import { logout } from "../store/auth/authSlice";
 
@@ -12,7 +14,13 @@ import {
 } from "../utils/dashboardRoutes";
 import FloatingChatButton from "../modules/chat/components/FloatingChatButton";
 import ChatCompact from "../modules/chat/components/ChatCompact";
-import AiSidebar from '../modules/chat/pages/AiWorkspacePage/Sidebar'; 
+import AiSidebar from "../modules/chat/pages/AiWorkspacePage/Sidebar";
+
+// ─── Admin notification thunks ──────────────────────────
+import { fetchUnreadCount } from '../store/admin/adminNotificationThunks';
+// ─── Common notification thunks ─────────────────────────
+import { fetchUnreadNotifications } from '../store/notification/notificationThunk';
+
 /*
 ======================================================
 Role Configuration
@@ -25,21 +33,18 @@ const rolePortalConfig = {
     settingsPath: "/admin/settings",
     notificationsPath: "/admin/notifications",
   },
-
   teacher: {
     title: "Teacher Portal",
     subtitle: "Empower your class",
     settingsPath: "/teacher/settings",
     notificationsPath: "/teacher/notifications",
   },
-
   student: {
     title: "Student Portal",
     subtitle: "Achieve your goals",
     settingsPath: "/student/settings",
     notificationsPath: "/student/notifications",
   },
-
   parent: {
     title: "Parent Portal",
     subtitle: "Support your child",
@@ -70,7 +75,6 @@ const routesMap = {
 
 function DashboardLayout() {
   const user = useSelector((state) => state.auth.user);
-  const unreadNotifications = useSelector((state) => state.notifications?.unreadCount) ?? 0;
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
@@ -79,12 +83,33 @@ function DashboardLayout() {
   const config = rolePortalConfig[role] || defaultConfig;
   const sidebarItems = routesMap[role] || [];
 
+  // ─── Unread count selectors (role‑based) ──────────────────────────
+  const isAdmin = role === 'admin';
+  const adminUnread = useSelector(
+    (state) => state.adminNotification?.unreadCount || 0
+  );
+  const commonUnreadList = useSelector(
+    (state) => state.notifications?.unreadNotifications || []
+  );
+  const unreadCount = isAdmin ? adminUnread : commonUnreadList.length;
+
+  // ─── Fetch unread data on mount / role change ─────────────────────
+  useEffect(() => {
+    if (isAdmin) {
+      dispatch(fetchUnreadCount());
+    } else {
+      // For non‑admin roles, we need a valid role string
+      const roleParam = role || 'student'; // fallback
+      dispatch(fetchUnreadNotifications(roleParam));
+    }
+  }, [dispatch, isAdmin, role]);
+
+  // ─── Handlers ──────────────────────────────────────────────────────
   const handleLogout = () => {
     dispatch(logout());
     navigate('/login');
   };
 
-  // Check if we are on the AI workspace full‑screen page
   const isAiWorkspace = location.pathname === '/ai-workspace';
 
   return (
@@ -108,11 +133,11 @@ function DashboardLayout() {
           userRole={role}
           onLogout={handleLogout}
           onSettingsClick={() => navigate(config.settingsPath)}
-          notificationCount={unreadNotifications}
+          notificationCount={unreadCount}
           onNotificationClick={() => navigate(config.notificationsPath)}
         />
 
-        <main className={`flex-1 flex flex-col  overflow-y-auto ${isAiWorkspace ? 'p-0' : 'p-6'}`}>
+        <main className={`flex-1 overflow-y-auto ${isAiWorkspace ? 'p-0' : 'p-6'}`}>
           <Outlet />
         </main>
       </div>

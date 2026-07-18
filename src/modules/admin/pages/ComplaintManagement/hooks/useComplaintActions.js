@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { updateComplaintStatus } from "../../../../../store/admin/adminComplaintThunks";
-
+import { sendNotification } from '../../../../../store/admin/adminThunks';
 export function useComplaintActions({ refetch, showToast }) {
   const dispatch = useDispatch();
 
@@ -17,17 +17,34 @@ export function useComplaintActions({ refetch, showToast }) {
     setIsDrawerOpen(true);
   };
 
-  // ─── Update Status ──────────────────────────────────────────────────
+  // ─── Update Status + Send Notification ───────────────────────────
   const handleUpdate = async (id, status, admin_remarks) => {
     setIsSubmitting(true);
     try {
-      await dispatch(updateComplaintStatus({ id, status, admin_remarks })).unwrap();
-      showToast("Complaint updated successfully!", "success");
+      // 1. Update the complaint
+      const updated = await dispatch(
+        updateComplaintStatus({ id, status, admin_remarks })
+      ).unwrap();
+
+      // 2. Send a notification to the reporter
+      if (selectedComplaint?.reporter) {
+        const message = `Your complaint (#${id}) has been updated to "${status}". Admin remarks: ${admin_remarks || 'None provided.'}`;
+        await dispatch(
+          sendNotification({
+            message,
+            receiver_id: selectedComplaint.reporter, // reporter's user ID
+          })
+        ).unwrap();
+        showToast('Complaint updated and reporter notified!', 'success');
+      } else {
+        showToast('Complaint updated (no reporter to notify).', 'info');
+      }
+
       setIsDrawerOpen(false);
       setSelectedComplaint(null);
       refetch();
     } catch (err) {
-      showToast(`Failed: ${err.message}`, "error");
+      showToast(`Failed: ${err.message}`, 'error');
     } finally {
       setIsSubmitting(false);
     }
