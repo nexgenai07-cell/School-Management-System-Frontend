@@ -1,8 +1,10 @@
+// src/layouts/DashboardLayout.jsx
+
 import { useState, useRef, useEffect } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { useLocation } from "react-router-dom";
 import { ArrowUp } from "lucide-react";
+
 import { Navbar, Sidebar } from "../components";
 import { logout } from "../store/auth/authSlice";
 
@@ -14,8 +16,14 @@ import {
 } from "../utils/dashboardRoutes";
 import FloatingChatButton from "../modules/chat/components/FloatingChatButton";
 import ChatCompact from "../modules/chat/components/ChatCompact";
-import AiSidebar from '../modules/chat/pages/AiWorkspacePage/Sidebar';
-import AiNavbar from '../modules/chat/components/AiNavbar';
+import AiSidebar from "../modules/chat/pages/AiWorkspacePage/Sidebar";
+import AiNavbar from "../modules/chat/components/AiNavbar";
+
+// ─── Admin notification thunks ──────────────────────────
+import { fetchUnreadCount } from '../store/admin/adminNotificationThunks';
+// ─── Common notification thunks ─────────────────────────
+import { fetchUnreadNotifications } from '../store/notification/notificationThunk';
+
 /*
 ======================================================
 Role Configuration
@@ -28,21 +36,18 @@ const rolePortalConfig = {
     settingsPath: "/admin/settings",
     notificationsPath: "/admin/notifications",
   },
-
   teacher: {
     title: "Teacher Portal",
     subtitle: "Empower your class",
     settingsPath: "/teacher/settings",
     notificationsPath: "/teacher/notifications",
   },
-
   student: {
     title: "Student Portal",
     subtitle: "Achieve your goals",
     settingsPath: "/student/settings",
     notificationsPath: "/student/notifications",
   },
-
   parent: {
     title: "Parent Portal",
     subtitle: "Support your child",
@@ -76,7 +81,6 @@ const SCROLL_TOP_THRESHOLD = 20;
 
 function DashboardLayout() {
   const user = useSelector((state) => state.auth.user);
-  const unreadNotifications = useSelector((state) => state.notifications?.unreadCount) ?? 0;
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
@@ -85,12 +89,32 @@ function DashboardLayout() {
   const config = rolePortalConfig[role] || defaultConfig;
   const sidebarItems = routesMap[role] || [];
 
+  // ─── Unread count selectors (role‑based) ──────────────────────────
+  const isAdmin = role === 'admin';
+  const adminUnread = useSelector(
+    (state) => state.adminNotification?.unreadCount || 0
+  );
+  const commonUnreadList = useSelector(
+    (state) => state.notifications?.unreadNotifications || []
+  );
+  const unreadCount = isAdmin ? adminUnread : commonUnreadList.length;
+
+  // ─── Fetch unread data on mount / role change ─────────────────────
+  useEffect(() => {
+    if (isAdmin) {
+      dispatch(fetchUnreadCount());
+    } else {
+      const roleParam = role || 'student';
+      dispatch(fetchUnreadNotifications(roleParam));
+    }
+  }, [dispatch, isAdmin, role]);
+
+  // ─── Handlers ──────────────────────────────────────────────────────
   const handleLogout = () => {
     dispatch(logout());
     navigate('/login');
   };
 
-  // Check if we are on the AI workspace full‑screen page
   const isAiWorkspace = location.pathname === '/ai-workspace';
 
   // Shared open/close state for AiSidebar's mobile drawer, triggered
@@ -112,8 +136,6 @@ function DashboardLayout() {
     };
 
     el.addEventListener('scroll', handleScroll, { passive: true });
-    // Reset visibility whenever the route changes and re-check in case
-    // the new page loads already scrolled (e.g. restored scroll position).
     handleScroll();
 
     return () => el.removeEventListener('scroll', handleScroll);
@@ -141,14 +163,14 @@ function DashboardLayout() {
         />
       )}
 
-      <div className="flex min-w-0 min-h-0 flex-1 flex-col overflow-hidden relative">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden relative">
         {isAiWorkspace ? (
           <AiNavbar
             userName={user?.full_name}
             userRole={role}
             onLogout={handleLogout}
             onSettingsClick={() => navigate(config.settingsPath)}
-            notificationCount={unreadNotifications}
+            notificationCount={unreadCount}
             onNotificationClick={() => navigate(config.notificationsPath)}
             onMenuClick={() => setIsMobileSidebarOpen(true)}
           />
@@ -158,62 +180,62 @@ function DashboardLayout() {
             userRole={role}
             onLogout={handleLogout}
             onSettingsClick={() => navigate(config.settingsPath)}
-            notificationCount={unreadNotifications}
+            notificationCount={unreadCount}
             onNotificationClick={() => navigate(config.notificationsPath)}
           />
         )}
 
         <main
           ref={mainRef}
-          className={`flex-1 flex flex-col min-h-0 overflow-y-auto ${isAiWorkspace ? 'p-0' : 'p-6'}`}
+          className={`flex-1 overflow-y-auto ${isAiWorkspace ? 'p-0' : 'p-6'}`}
         >
           <Outlet />
         </main>
 
         {/* Scroll-to-top — only for regular portal pages; AI workspace
             scrolls its own message list and floats its own controls. */}
-  
+        {!isAiWorkspace && (
+          <button
+            onClick={scrollToTop}
+            aria-label="Scroll to top"
+            className={`
+              fixed
+              bottom-24 right-4
+              sm:bottom-28 sm:right-5
+              md:bottom-32 md:right-16
+              z-40
+              flex items-center justify-center
+              w-12 h-12
+              md:w-12 md:h-12
+              rounded-full
+              text-white
+              transition-all
+              duration-300
+              hover:scale-110
+              active:scale-95
+              ${
+                showScrollTop
+                  ? "opacity-100 translate-y-0 pointer-events-auto"
+                  : "opacity-0 translate-y-4 pointer-events-none"
+              }
+            `}
+            style={{
+              background:
+                "linear-gradient(135deg,#6366f1 0%,#3b82f6 55%,#06b6d4 100%)",
+              boxShadow:
+                "0 10px 30px rgba(99,102,241,.35),0 4px 12px rgba(15,23,42,.15)",
+              border: "1px solid rgba(255,255,255,.2)",
+              backdropFilter: "blur(12px)",
+            }}
+          >
+            <ArrowUp
+              size={20}
+              className="transition-transform duration-300 group-hover:-translate-y-0.5"
+            />
+          </button>
+        )}
       </div>
-     {!isAiWorkspace && (
-  <button
-    onClick={scrollToTop}
-    aria-label="Scroll to top"
-    className={`
-      fixed
-      bottom-24 right-4
-      sm:bottom-28 sm:right-5
-      md:bottom-32 md:right-16
-      z-40
-      flex items-center justify-center
-      w-12 h-12
-      md:w-12 md:h-12
-      rounded-full
-      text-white
-      transition-all
-      duration-300
-      hover:scale-110
-      active:scale-95
-      ${
-        showScrollTop
-          ? "opacity-100 translate-y-0 pointer-events-auto"
-          : "opacity-0 translate-y-4 pointer-events-none"
-      }
-    `}
-    style={{
-      background:
-        "linear-gradient(135deg,#6366f1 0%,#3b82f6 55%,#06b6d4 100%)",
-      boxShadow:
-        "0 10px 30px rgba(99,102,241,.35),0 4px 12px rgba(15,23,42,.15)",
-      border: "1px solid rgba(255,255,255,.2)",
-      backdropFilter: "blur(12px)",
-    }}
-  >
-    <ArrowUp
-      size={20}
-      className="transition-transform duration-300 group-hover:-translate-y-0.5"
-    />
-  </button>
-)}
+
       {/* AI floating button + compact chat (hidden on full workspace automatically) */}
       <FloatingChatButton />
       <ChatCompact />
