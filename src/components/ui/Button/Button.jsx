@@ -121,6 +121,24 @@ function Spinner({ size }) {
   );
 }
 
+// Wraps an icon (leftIcon/rightIcon) so it's actually forced to the target
+// size and centered on the text's baseline. Previously the wrapper span set
+// a Tailwind width/height, but that constraint never reached the icon's own
+// SVG — most icon libraries (Lucide, Heroicons, etc.) render at their own
+// default size regardless of the parent's dimensions, so the icon could
+// render larger than the box meant to contain it and throw off vertical
+// alignment with the button label, as seen with the arrow overflowing above
+// the "Submit Assignment" text.
+function IconSlot({ size, children }) {
+  return (
+    <span
+      className={`inline-flex shrink-0 items-center justify-center ${ICON_SIZE_CLASSES[size]} [&>svg]:h-full [&>svg]:w-full`}
+    >
+      {children}
+    </span>
+  );
+}
+
 const Button = React.forwardRef(function Button(
   {
     children,
@@ -143,7 +161,7 @@ const Button = React.forwardRef(function Button(
 
   const classes = [
     'inline-flex items-center justify-center',
-    'rounded-button font-medium',
+    'rounded-button font-medium leading-none',
     'transition-colors duration-150',
     'focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-brand-primary',
     'disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none',
@@ -166,14 +184,14 @@ const Button = React.forwardRef(function Button(
       {...rest}
     >
       {loading ? (
-        <Spinner size={size} />
+        <IconSlot size={size}>
+          <Spinner size={size} />
+        </IconSlot>
       ) : (
-        leftIcon && <span className={ICON_SIZE_CLASSES[size]}>{leftIcon}</span>
+        leftIcon && <IconSlot size={size}>{leftIcon}</IconSlot>
       )}
-      {children && <span>{children}</span>}
-      {!loading && rightIcon && (
-        <span className={ICON_SIZE_CLASSES[size]}>{rightIcon}</span>
-      )}
+      {children && <span className="leading-none">{children}</span>}
+      {!loading && rightIcon && <IconSlot size={size}>{rightIcon}</IconSlot>}
     </button>
   );
 });

@@ -10,8 +10,7 @@ import ComplaintStats from "../components/ComplaintStats";
 import ComplaintForm from "../components/ComplaintForm";
 import ComplaintList from "../components/ComplaintList";
 
-const Complaint = ( {role }) => {
-    console.log("Complaint component role:", role);
+const Complaint = ({ role }) => {
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -19,26 +18,21 @@ const Complaint = ( {role }) => {
   }, [dispatch, role]);
 
   return (
-    <div className="mx-auto max-w-full space-y-6">
+    <div className="mx-auto w-full max-w-full space-y-4 px-2">
       {/* Header */}
-
-      <ComplaintHeader role={role}/>
+      <ComplaintHeader role={role} />
 
       {/* Stats */}
-
-      <ComplaintStats role={role}/>
+      <ComplaintStats role={role} />
 
       {/* Main Content */}
-
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
+      <div className="grid grid-cols-1 gap-3 xl:grid-cols-12">
         {/* Left */}
-
         <div className="xl:col-span-4">
           <ComplaintForm role={role} />
         </div>
 
         {/* Right */}
-
         <div className="xl:col-span-8">
           <ComplaintList role={role} />
         </div>

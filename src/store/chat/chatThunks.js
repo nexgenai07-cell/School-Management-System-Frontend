@@ -16,7 +16,11 @@ const getToken = (thunkAPI) => {
 
 export const initChat = createAsyncThunk(
   'chat/initChat',
-  async ({ bot_type = 'general', title = 'New Chat', activeChild = null }, thunkAPI) => {
+  // resetMessages: true when the user explicitly starts a new chat (clears
+  // the message list). sendMessage sets this to false when it creates a
+  // session on the fly for a first message, so it doesn't wipe out the
+  // optimistic user bubble that was just pushed in sendMessage.pending.
+  async ({ bot_type = 'general', title = 'New Chat', activeChild = null, resetMessages = true }, thunkAPI) => {
     const token = getToken(thunkAPI);
     const session = await createSession({ bot_type, title, active_child: activeChild });
     await startChatSocket(session.id, token);
@@ -24,19 +28,19 @@ export const initChat = createAsyncThunk(
   }
 );
 
+// The user's message is pushed into state optimistically (see chatSlice's
+// sendMessage.pending case) so it renders immediately, before the assistant
+// replies. This thunk only needs to resolve with the assistant's reply.
 export const sendMessage = createAsyncThunk(
   'chat/sendMessage',
   async ({ content }, thunkAPI) => {
     const state = thunkAPI.getState();
     let session = state.chat.currentSession;
     if (!session) {
-      session = await thunkAPI.dispatch(initChat({})).unwrap();
+      session = await thunkAPI.dispatch(initChat({ resetMessages: false })).unwrap();
     }
     const assistantMessage = await sendMessageOverSocket(content);
-    return {
-      userMessage: { role: 'user', content, created_at: new Date().toISOString() },
-      assistantMessage,
-    };
+    return { assistantMessage };
   }
 );
 
@@ -62,6 +66,20 @@ export const removeSession = createAsyncThunk(
   async (sessionId, thunkAPI) => {
     await deleteSession(sessionId);
     return sessionId;
+  }
+);
+
+// Deletes every session currently in state. There's no bulk-clear endpoint
+// wired up in chatService yet, so this fans out a deleteSession call per
+// session and waits for them all to finish. If the backend later exposes a
+// single "clear all" endpoint, swap the Promise.all below for that call.
+export const clearAllHistory = createAsyncThunk(
+  'chat/clearAllHistory',
+  async (_, thunkAPI) => {
+    const state = thunkAPI.getState();
+    const sessionIds = state.chat.sessions.map((s) => s.id);
+    await Promise.all(sessionIds.map((id) => deleteSession(id)));
+    return sessionIds;
   }
 );
 

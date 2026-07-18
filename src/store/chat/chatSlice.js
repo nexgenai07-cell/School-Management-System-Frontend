@@ -6,6 +6,7 @@ import {
   loadHistory,
   openSession,
   removeSession,
+  clearAllHistory,
 } from './chatThunks';
 
 const chatSlice = createSlice({
@@ -53,28 +54,56 @@ const chatSlice = createSlice({
         state.loading = false;
         state.currentSession = action.payload;
         state.sessions.unshift(action.payload);
-        state.messages = [];
+        // Skip when sendMessage created this session internally for a first
+        // message — action.meta.arg.resetMessages is false in that case —
+        // so the optimistic user bubble already in state.messages survives.
+        if (action.meta.arg.resetMessages !== false) {
+          state.messages = [];
+        }
       })
       .addCase(initChat.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message;
       })
       // sendMessage
-      .addCase(sendMessage.pending, (state) => {
+      .addCase(sendMessage.pending, (state, action) => {
         state.loading = true;
+        // Optimistically show the user's message right away, before the
+        // assistant's reply comes back. action.meta.arg is the original
+        // { content } passed to dispatch(sendMessage(...)).
+        state.messages.push({
+          role: 'user',
+          content: action.meta.arg.content,
+          created_at: new Date().toISOString(),
+          pending: true, // lets the UI mark it as "sending" if desired
+        });
       })
       .addCase(sendMessage.fulfilled, (state, action) => {
         state.loading = false;
-        const { userMessage, assistantMessage } = action.payload;
-        state.messages.push(userMessage, assistantMessage);
+        const { assistantMessage } = action.payload;
+
+        // Clear the pending flag on the user message we already pushed.
+        const lastUser = [...state.messages].reverse().find((m) => m.role === 'user' && m.pending);
+        if (lastUser) delete lastUser.pending;
+
+        state.messages.push(assistantMessage);
+
         // Auto‑title the session after first user message
         if (state.currentSession && state.messages.length === 2) {
-          state.currentSession.title = userMessage.content.slice(0, 40);
+          state.currentSession.title = state.messages[0].content.slice(0, 40);
         }
       })
       .addCase(sendMessage.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message;
+
+        // Roll back the optimistic user message so the UI doesn't show a
+        // message that never actually sent. Mark it failed instead if you'd
+        // rather keep it visible with a retry affordance.
+        const idx = [...state.messages].reverse().findIndex((m) => m.role === 'user' && m.pending);
+        if (idx !== -1) {
+          state.messages.splice(state.messages.length - 1 - idx, 1);
+        }
       })
       // loadHistory
       .addCase(loadHistory.pending, (state) => {
@@ -115,6 +144,20 @@ const chatSlice = createSlice({
         }
       })
       .addCase(removeSession.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message;
+      })
+      // clearAllHistory
+      .addCase(clearAllHistory.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(clearAllHistory.fulfilled, (state) => {
+        state.loading = false;
+        state.sessions = [];
+        state.currentSession = null;
+        state.messages = [];
+      })
+      .addCase(clearAllHistory.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message;
       })

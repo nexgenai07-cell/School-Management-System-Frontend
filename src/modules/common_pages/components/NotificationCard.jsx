@@ -1,4 +1,4 @@
-import { Bell, Mail, ChevronRight } from "lucide-react";
+import { Bell, Mail, ChevronRight, Trash2 } from "lucide-react";
 
 import Badge from "../../../components/ui/Badge/Badge";
 import Button from "../../../components/ui/Button/Button";
@@ -38,7 +38,7 @@ const formatTimestamp = (value) => {
   });
 };
 
-const NotificationCard = ({ notification, role, onView }) => {
+const NotificationCard = ({ notification, role, onView, onDelete }) => {
   const { sender_name, type, message, is_read, created_at } = notification;
   const { icon: Icon, colors } = getTypeStyle(type);
 
@@ -114,21 +114,36 @@ const NotificationCard = ({ notification, role, onView }) => {
           </div>
         </div>
 
-        {/* View Button */}
-        <Button
-          variant="ghost"
-          tone={role}
-          rightIcon={
-            <ChevronRight
-              size={16}
-              className="transition-transform duration-200 group-hover:translate-x-0.5"
-            />
-          }
-          onClick={() => onView(notification)}
-          className="shrink-0"
-        >
-          View
-        </Button>
+        {/* Actions: Delete + View, side by side */}
+        <div className="flex shrink-0 items-center gap-1">
+          {onDelete && (
+            <button
+              type="button"
+              onClick={(event) => onDelete(event, notification)}
+              title="Delete notification"
+              aria-label="Delete notification"
+              className="rounded-lg p-2 text-text-secondary opacity-0 transition-colors
+                         hover:bg-danger/10 hover:text-danger
+                         group-hover:opacity-100 focus-visible:opacity-100"
+            >
+              <Trash2 size={16} />
+            </button>
+          )}
+
+          <Button
+            variant="ghost"
+            tone={role}
+            rightIcon={
+              <ChevronRight
+                size={16}
+                className="transition-transform duration-200 group-hover:translate-x-0.5"
+              />
+            }
+            onClick={() => onView(notification)}
+          >
+            View
+          </Button>
+        </div>
       </div>
     </div>
   );
