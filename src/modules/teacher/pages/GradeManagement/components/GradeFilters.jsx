@@ -9,10 +9,12 @@ export default function GradeFilters({
   setFilterExamType,
   subjectOptions,
   examTypeOptions,
+  filterExamDate,       
+  setFilterExamDate, 
 }) {
   return (
     <div className="lg:col-span-3 bg-white rounded-xl p-5 shadow-soft border border-gray-100">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Select
           label="Subject / Class"
           tone="teacher"
@@ -29,6 +31,25 @@ export default function GradeFilters({
           options={examTypeOptions}
           placeholder="Select exam"
         />
+         <div>
+          <label className="block text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider mb-1">
+            Exam Date
+          </label>
+          <input
+            type="date"
+            value={filterExamDate}
+            onChange={(e) => setFilterExamDate(e.target.value)}
+            className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--color-teacher-primary)] outline-none text-sm"
+          />
+          {filterExamDate && (
+            <button
+              onClick={() => setFilterExamDate('')}
+              className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-danger)] mt-1 transition-colors"
+            >
+              Clear date
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

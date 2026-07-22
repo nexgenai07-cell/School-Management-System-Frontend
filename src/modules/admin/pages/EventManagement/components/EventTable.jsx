@@ -22,10 +22,11 @@ export default function EventTable({
     {
       key: 'event',
       label: 'Event Details',
+      highlight:true,
       mobile: { role: 'title' },
       render: (row) => (
         <div>
-          <p className="text-sm font-medium text-[var(--color-text-primary)]">{row.event_name}</p>
+          <p className="text-sm font-medium ">{row.event_name}</p>
           <p className="text-xs text-[var(--color-text-muted)]">{row.venue}</p>
         </div>
       ),
@@ -80,21 +81,21 @@ export default function EventTable({
         <div className="flex items-center gap-1">
           <button
             onClick={() => onEdit(row)}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-[var(--color-admin-primary)] hover:bg-[var(--color-admin-light)] transition-colors"
+            className="p-1.5 rounded-lg text-[var(--color-admin-primary)] bg-[var(--color-admin-light)] transition-colors"
             title="Edit Event"
           >
             <Edit size={15} />
           </button>
           <button
             onClick={() => onDelete(row)}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-[var(--color-danger)] hover:bg-[var(--color-danger-bg)] transition-colors"
+            className="p-1.5 rounded-lg text-[var(--color-danger)] bg-[var(--color-danger-bg)] transition-colors"
             title="Delete Event"
           >
             <Trash2 size={15} />
           </button>
           <button
             onClick={() => onViewParticipants(row)}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-[var(--color-teacher-primary)] hover:bg-[var(--color-teacher-light)] transition-colors"
+            className="p-1.5 rounded-lg text-[var(--color-teacher-primary)] bg-[var(--color-teacher-light)] transition-colors"
             title="Manage Participants"
           >
             <Users size={15} />
@@ -109,6 +110,7 @@ export default function EventTable({
       <ResponsiveTable
         columns={columns}
         data={data}
+        animateRows={true}
         keyField="id"
         emptyMessage="No events found."
         mobileActions={(row) => (

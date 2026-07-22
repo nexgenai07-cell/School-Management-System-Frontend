@@ -24,12 +24,12 @@ export default function ComplaintTable({
       render: (row) => (
         <div className="flex items-center gap-3">
           <div
-            className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
+            className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold ${
               row.reporter_role === "Student"
-                ? "bg-[var(--color-student-light)] text-[var(--color-student-primary)]"
+                ? "bg-[var(--color-student-primary)] text-[var(--color-white)]"
                 : row.reporter_role === "Teacher"
-                ? "bg-[var(--color-teacher-light)] text-[var(--color-teacher-primary)]"
-                : "bg-[var(--color-parent-light)] text-[var(--color-parent-primary)]"
+                ? "bg-[var(--color-teacher-primary)] text-[var(--color-white)]"
+                : "bg-[var(--color-parent-primary)] text-[var(--color-white)]"
             }`}
           >
             {getInitials(row.reporter_name)}
@@ -87,9 +87,10 @@ export default function ComplaintTable({
       render: (row) => (
         <button
           onClick={() => onView(row)}
-          className="p-2 rounded-full hover:bg-[var(--color-admin-light)] text-[var(--color-admin-primary)] transition-colors"
-          title="View Details"
+           className="p-1.5 rounded-full text-[var(--color-admin-primary)] bg-[var(--color-admin-light)] hover:bg-[var(--color-admin-primary)] hover:text-white transition-colors"
+            title="View Details"
         >
+
           <Eye size={18} />
         </button>
       ),
@@ -101,6 +102,7 @@ export default function ComplaintTable({
       <ResponsiveTable
         columns={columns}
         data={data}
+        animateRows={true}
         keyField="id"
         emptyMessage="No complaints found matching your criteria."
         mobileActions={(row) => (

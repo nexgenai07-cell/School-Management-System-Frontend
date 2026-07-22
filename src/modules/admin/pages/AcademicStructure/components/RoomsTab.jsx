@@ -126,6 +126,7 @@ export default function RoomsTab() {
     {
       key: "name",
       label: "Room Name",
+      highlight:true,
       render: (row) => <span className="font-medium">{row.name}</span>,
       mobile: { role: "title" },
     },
@@ -152,14 +153,14 @@ export default function RoomsTab() {
         <div className="flex justify-start gap-1">
           <button
             onClick={() => handleEdit(row)}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-[var(--color-admin-primary)] hover:bg-[var(--color-admin-light)] transition-colors"
+            className="p-1.5 rounded-lg text-[var(--color-admin-primary)] bg-[var(--color-admin-light)] hover:bg-[var(--color-admin-primary)] hover:text-white transition-colors"
             title="Edit"
           >
             <Edit size={15} />
           </button>
           <button
             onClick={() => handleDelete(row)}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-[var(--color-danger)] hover:bg-[var(--color-danger-bg)] transition-colors"
+            className="p-1.5 rounded-lg text-[var(--color-danger)] bg-[var(--color-danger-bg)] hover:bg-[var(--color-danger)] hover:text-white transition-colors"
             title="Delete"
           >
             <Trash2 size={15} />
@@ -202,10 +203,11 @@ export default function RoomsTab() {
       </div>
 
       {/* ─── Table ────────────────────────────────────────────────────────── */}
-      <div className="px-2 pb-2">
+      <div className=" pb-2">
         <ResponsiveTable
           columns={columns}
           data={paginatedData}
+          animateRows={true}
           keyField="id"
           emptyMessage="No rooms found"
           mobileActions={(row) => (

@@ -7,7 +7,7 @@ import { PageHeader } from "../../../../components/global/pageheader";
 import { SearchBar } from "../../../../components/global/Searchbar";
 import { Button } from "../../../../components/ui/Button";
 import { LoadingSpinner } from "../../../../components/ui/LoadingSpinner";
-
+import { FadeIn } from "../../components/animations";
 import { useComplaintData } from "./hooks/useComplaintData";
 import { useComplaintActions } from "./hooks/useComplaintActions";
 
@@ -80,54 +80,63 @@ export default function ComplaintManagement() {
         </div>
       )}
 
-      {/* Page Header */}
-      <PageHeader
-        title="Complaint Management"
-        subtitle="View and resolve user complaints"
-        breadcrumbs={["Dashboard", "Admin", "Complaints"]}
-        action={
-          <SearchBar
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onSearch={(val) => setSearch(val)}
-            placeholder="Search by ID, user, or keyword..."
-            tone="admin"
-            size="md"
-          />
-        }
-      />
+ {/* Page Header */}
+      <FadeIn y={10} duration={0.5}>
+        <PageHeader
+          title="Complaint Management"
+          subtitle="View and resolve user complaints"
+          breadcrumbs={["Dashboard", "Admin", "Complaints"]}
+          action={
+            <SearchBar
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onSearch={(val) => setSearch(val)}
+              placeholder="Search by ID, user, or keyword..."
+              tone="admin"
+              size="md"
+            />
+          }
+        />
+      </FadeIn>
 
-      {/* Stats */}
-      <ComplaintStats
-        stats={stats}
-        latestComplaints={latestComplaints}
-        onViewAll={() => {
-          document.querySelector("[data-table]")?.scrollIntoView({ behavior: "smooth" });
-        }}
-        onViewDetail={handleView}
-      />
+      {/* Stats – already contains internal stagger */}
+      <FadeIn y={15} delay={0.1}>
+        <ComplaintStats
+          stats={stats}
+          latestComplaints={latestComplaints}
+          onViewAll={() => {
+            document.querySelector("[data-table]")?.scrollIntoView({ behavior: "smooth" });
+          }}
+          onViewDetail={handleView}
+        />
+      </FadeIn>
 
       {/* Filters */}
-      <ComplaintFilters
-        filterStatus={filterStatus}
-        setFilterStatus={setFilterStatus}
-        filterType={filterType}
-        setFilterType={setFilterType}
-        onExport={() => exportCSV(filtered)}
-      />
-
-      {/* Table */}
-      <div data-table>
-        <ComplaintTable
-          data={paginatedData}
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalItems={totalItems}
-          itemsPerPage={itemsPerPage}
-          onPageChange={goToPage}
-          onView={handleView}
+      <FadeIn y={10} delay={0.2}>
+        <ComplaintFilters
+          filterStatus={filterStatus}
+          setFilterStatus={setFilterStatus}
+          filterType={filterType}
+          setFilterType={setFilterType}
+          onExport={() => exportCSV(filtered)}
         />
-      </div>
+      </FadeIn>
+
+      {/* Table – with fade and row stagger */}
+      <FadeIn y={15} delay={0.3}>
+        <div data-table>
+          <ComplaintTable
+            data={paginatedData}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+            onPageChange={goToPage}
+            onView={handleView}
+            animateRows={true}   // if ComplaintTable supports it
+          />
+        </div>
+      </FadeIn>
 
       {/* Drawer */}
       <ComplaintDrawer

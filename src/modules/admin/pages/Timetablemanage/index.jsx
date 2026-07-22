@@ -13,7 +13,7 @@ import ClassSelector from "./components/ClassSelector";
 import TimetableGrid from "./components/TimetableGrid";
 import TimetableDrawer from "./components/TimetableDrawer";
 import TimetableCards from "./components/TimetableCards";
-
+import { FadeIn, StaggerGroup, StaggerItem } from "../../components/animations";
 import {
   fetchTimetable,
   createTimetable,
@@ -287,7 +287,7 @@ const subjectOptions = useMemo(() => {
   // ─── Render ──────────────────────────────────────────────────────────────
   return (
     <div className="p-4 md:p-6 flex flex-col gap-5 min-h-screen bg-[var(--color-surface-dim)]">
-
+      <FadeIn y={10} duration={0.5}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">Timetable Management</h1>
@@ -305,9 +305,9 @@ const subjectOptions = useMemo(() => {
           Add Timetable
         </Button>
       </div>
-
+      </FadeIn>
       <StatsCards stats={stats} />
-
+       <FadeIn y={10} delay={0.1}>
       <ClassSelector
         selectedClass={selectedClass}
         setSelectedClass={setSelectedClass}
@@ -315,7 +315,8 @@ const subjectOptions = useMemo(() => {
         setSearchTerm={setSearchTerm}
         classOptions={classOptions}
       />
-
+       </FadeIn>
+       <FadeIn y={15} delay={0.2}>
       <div className="bg-white rounded-xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] border border-gray-100 overflow-hidden p-4">
       {isMobile ? (
         //  Mobile: Card View — all days entries
@@ -335,7 +336,7 @@ const subjectOptions = useMemo(() => {
         />
       )}
     </div>
-
+     </FadeIn>
       <TimetableDrawer
         isOpen={isDrawerOpen}
         onClose={() => {

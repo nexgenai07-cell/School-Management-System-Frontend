@@ -4,7 +4,7 @@ import { Search, Download } from "lucide-react";
 import { Button } from "../../../../../components/ui/Button";
 import { Select } from "../../../../../components/ui/Select";
 import { SEVERITY_OPTIONS } from "../utils/helpers";
-
+import { FadeIn } from "../../../components/animations";
 export default function BehaviorFilters({
   search,
   setSearch,
@@ -13,6 +13,7 @@ export default function BehaviorFilters({
   onExport,
 }) {
   return (
+    <FadeIn y={10} delay={0.2}>
     <div className="bg-white rounded-xl p-4 shadow-[0_1px_4px_rgba(0,0,0,0.06)] border border-gray-100 flex flex-wrap items-center gap-3">
       <div className="relative flex-1 min-w-[200px]">
         <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" />
@@ -46,5 +47,6 @@ export default function BehaviorFilters({
         </Button>
       </div>
     </div>
+    </FadeIn>
   );
 }

@@ -4,8 +4,7 @@ import { BarChart3 } from 'lucide-react';
 
 export default function GradeStats({ stats }) {
   return (
-    <div className="lg:col-span-2 bg-[var(--color-teacher-light)]/30 rounded-xl p-5 border border-[var(--color-teacher-primary)]/20 flex flex-col justify-between">
-      <div className="flex items-center justify-between">
+    <div className="lg:col-span-2 bg-[var(--color-teacher-light)]/30 rounded-xl p-5 border border-[var(--color-teacher-primary)]/20 flex flex-col justify-between border-t-[3px] border-t-[var(--color-teacher-primary)]">  <div className="flex items-center justify-between">
         <p className="text-xs font-semibold text-[var(--color-teacher-primary)] uppercase tracking-wider">
           Class Analytics
         </p>
