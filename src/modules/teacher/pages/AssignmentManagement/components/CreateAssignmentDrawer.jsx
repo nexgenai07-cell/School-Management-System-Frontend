@@ -1,11 +1,14 @@
 // src/modules/teacher/pages/AssignmentManagement/components/CreateAssignmentDrawer.jsx
 
+import { useMemo } from 'react';
+import { useSelector } from 'react-redux';
 import { AlertCircle, Send } from 'lucide-react';
 import Input from '../../../../../components/ui/Input/Input';
 import Textarea from '../../../../../components/ui/textarea/TextArea';
 import Select from '../../../../../components/ui/Select/Select';
 import Button from '../../../../../components/ui/Button/Button';
 import Drawer from '../../../../admin/components/Drawer';
+// SUBJECT_LIST ab zaroori nahi, hata sakte hain
 
 export default function CreateAssignmentDrawer({
   isOpen,
@@ -16,9 +19,15 @@ export default function CreateAssignmentDrawer({
   onSave,
   loading,
   classOptions,
-  subjectOptions,
+  getSubjectsForClass,   
 }) {
   const isCreate = mode === 'create';
+
+  // ─── INDEPENDENT SUBJECT OPTIONS (based on teacher's existing assignments) ──
+  const drawerSubjectOptions = useMemo(() => {
+    if (!formData.class_section) return [];
+    return getSubjectsForClass(formData.class_section);
+  }, [formData.class_section, getSubjectsForClass]);
 
   return (
     <Drawer
@@ -37,7 +46,7 @@ export default function CreateAssignmentDrawer({
             fullWidth
             leftIcon={<Send size={14} />}
             onClick={onSave}
-            disabled={loading || !formData.title || !formData.subject || !formData.class_section || !formData.due_date}
+            disabled={loading || !formData.title || !formData.class_section || !formData.subject || !formData.due_date}
           >
             {isCreate ? 'Publish' : 'Update'}
           </Button>
@@ -61,24 +70,36 @@ export default function CreateAssignmentDrawer({
           placeholder="Detailed instructions for students..."
           rows={3}
         />
+
+        {/* CLASS FIRST */}
+        <Select
+          label="Class & Section"
+          tone="teacher"
+          value={formData.class_section}
+          onChange={(val) => {
+            setFormData(prev => ({
+              ...prev,
+              class_section: val,
+              subject: '', // Reset subject when class changes
+            }));
+          }}
+          options={classOptions.filter(opt => opt.value !== 'all')}
+          placeholder="Select class"
+          required
+        />
+
+        {/* SUBJECT SECOND (filtered by teacher's existing assignments) */}
         <Select
           label="Subject"
           tone="teacher"
           value={formData.subject}
           onChange={(val) => setFormData(prev => ({ ...prev, subject: val }))}
-          options={subjectOptions.filter(opt => opt.value !== 'all')}
-          placeholder="Select subject"
+          options={drawerSubjectOptions}
+          placeholder={formData.class_section ? 'Select subject' : 'Select class first'}
           required
+          disabled={!formData.class_section || drawerSubjectOptions.length === 0}
         />
-        <Select
-          label="Class & Section"
-          tone="teacher"
-          value={formData.class_section}
-          onChange={(val) => setFormData(prev => ({ ...prev, class_section: val }))}
-          options={classOptions.filter(opt => opt.value !== 'all')}
-          placeholder="Select class"
-          required
-        />
+
         <Input
           label="Due Date"
           type="date"

@@ -12,9 +12,8 @@ import {
 } from 'lucide-react';
 import Badge from '../../../../../components/ui/Badge/Badge';
 import { formatDate, getAssignmentStatus, getStatusColor, getSubjectColor } from '../utils/helpers';
-
-export default function AssignmentCard({ assignment, submissions, onEdit, onDelete, onGrade ,getClassName,
-  getSubjectName}) {
+import { getSubjectName } from '../../../../../utils/subjectMapping';
+export default function AssignmentCard({ assignment, submissions, onEdit, onDelete, onGrade ,getClassName}) {
   const status = getAssignmentStatus(assignment.due_date);
   const isActive = status === 'Active';
   const subjectColor = getSubjectColor(assignment.subject);

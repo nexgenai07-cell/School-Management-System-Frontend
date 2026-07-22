@@ -15,7 +15,7 @@ import GradeSubmissionsDrawer from './components/GradeSubmissionsDrawer';
 
 import { useAssignmentData } from './hooks/useAssignmentData';
 import { useAssignmentActions } from './hooks/useAssignmentActions';
-
+import { FadeIn } from '../../../admin/components/animations';
 export default function AssignmentManagement() {
   const [toast, setToast] = useState({ message: '', type: '', visible: false });
   const showToast = (message, type = 'success') => {
@@ -25,7 +25,7 @@ export default function AssignmentManagement() {
 
   const {
     getClassName,
-  getSubjectName,
+    getSubjectName,       
     assignments,
     submissions,
     loading,
@@ -44,6 +44,7 @@ export default function AssignmentManagement() {
     stats,
     getSubmissionsForAssignment,
     refetch,
+    getSubjectsForClass,  
   } = useAssignmentData();
 
   const {
@@ -89,50 +90,58 @@ export default function AssignmentManagement() {
         </div>
       )}
 
-      <PageHeader
-        title="Assignment Management"
-        subtitle="Create, manage, and grade student assignments."
-        breadcrumbs={['Dashboard', 'Teacher', 'Assignments']}
-        tone="teacher"
-        titleClassName="text-[var(--color-teacher-primary)]"
-        action={
-          <Button
-            variant="primary"
-            tone="teacher"
-            size="sm"
-            leftIcon={<Plus size={16} />}
-            onClick={handleCreateOpen}
-          >
-            Create New Assignment
-          </Button>
-        }
-      />
+      <FadeIn y={10} duration={0.5}>
+        <PageHeader
+          title="Assignment Management"
+          subtitle="Create, manage, and grade student assignments."
+          breadcrumbs={['Teacher', 'Assignments']}
+          tone="teacher"
+          titleClassName="text-[var(--color-teacher-primary)]"
+          action={
+            <Button
+              variant="primary"
+              tone="teacher"
+              size="sm"
+              leftIcon={<Plus size={16} />}
+              onClick={handleCreateOpen}
+            >
+              Create New Assignment
+            </Button>
+          }
+        />
+      </FadeIn>
 
-      <AssignmentStats stats={stats} />
+      <FadeIn y={15} delay={0.1}>
+        <AssignmentStats stats={stats} />
+      </FadeIn>
 
-      <AssignmentFilters
-        search={search}
-        setSearch={setSearch}
-        filterStatus={filterStatus}
-        setFilterStatus={setFilterStatus}
-        filterClass={filterClass}
-        setFilterClass={setFilterClass}
-        filterSubject={filterSubject}
-        setFilterSubject={setFilterSubject}
-        classOptions={classOptions}
-        subjectOptions={subjectOptions}
-      />
+      <FadeIn y={10} delay={0.2}>
+        <AssignmentFilters
+          search={search}
+          setSearch={setSearch}
+          filterStatus={filterStatus}
+          setFilterStatus={setFilterStatus}
+          filterClass={filterClass}
+          setFilterClass={setFilterClass}
+          filterSubject={filterSubject}
+          setFilterSubject={setFilterSubject}
+          classOptions={classOptions}
+          subjectOptions={subjectOptions}
+        />
+      </FadeIn>
 
-      <AssignmentGrid
-        assignments={filtered}
-        onEdit={handleEditOpen}
-        onDelete={handleDelete}
-        onGrade={openGradeDrawer}
-        submissions={submissions}
-        getSubmissionsForAssignment={getSubmissionsForAssignment}
-        getClassName={getClassName}
-        getSubjectName={getSubjectName}
-      />
+      <FadeIn y={15} delay={0.3}>
+        <AssignmentGrid
+          assignments={filtered}
+          onEdit={handleEditOpen}
+          onDelete={handleDelete}
+          onGrade={openGradeDrawer}
+          submissions={submissions}
+          getSubmissionsForAssignment={getSubmissionsForAssignment}
+          getClassName={getClassName}
+          getSubjectName={getSubjectName}
+        />
+      </FadeIn>
 
       <CreateAssignmentDrawer
         isOpen={isCreateDrawerOpen}
@@ -143,7 +152,7 @@ export default function AssignmentManagement() {
         onSave={handleSaveAssignment}
         loading={loading}
         classOptions={classOptions}
-        subjectOptions={subjectOptions}
+        getSubjectsForClass={getSubjectsForClass} 
       />
 
       <GradeSubmissionsDrawer

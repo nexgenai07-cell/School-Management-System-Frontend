@@ -11,12 +11,14 @@ export default function InventoryTable({
   onEdit,
   onDelete,
   columns,
+  animateRows,
   mobileActions,
 }) {
   return (
     <ResponsiveTable
       columns={columns}
       data={data}
+      animateRows={animateRows || false}
       emptyMessage="No inventory items found."
       mobileActions={mobileActions}
     />

@@ -3,7 +3,7 @@
 import { useMemo, useCallback } from 'react';
 import { ResponsiveTable } from '../../../../admin/components/ResponsiveTable';
 import { Badge } from '../../../../../components/ui/Badge';
-import { getSubjectName } from '../utils/classSubjectMapping';
+import { getSubjectName } from '../../../../../utils/SubjectMapping';
 
 // ─── Default total marks per exam type ──────────────────────────
 const DEFAULT_TOTAL_MARKS = {
@@ -142,6 +142,7 @@ export default function GradeTable({
 
       <ResponsiveTable
         columns={columns}
+        animateRows={true}
         data={grades}
         keyField="id"
         emptyMessage="No grades found. Adjust filters to view student grades."

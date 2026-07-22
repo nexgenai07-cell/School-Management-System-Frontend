@@ -1,47 +1,58 @@
+// src/modules/teacher/pages/AssignmentManagement/hooks/useAssignmentData.js
+
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchAssignments, fetchSubmissions } from '../../../../../store/teacher/teacherThunks';
+import { fetchAssignments, fetchSubmissions, fetchTeacherClasses } from '../../../../../store/teacher/teacherThunks';
 import { getAssignmentStatus } from '../utils/helpers';
-import { getClassName, getSubjectName } from '../utils/classSubjectMapping';
+import { SUBJECT_LIST, getSubjectName } from '../../../../../utils/subjectMapping';
+
 export function useAssignmentData() {
   const dispatch = useDispatch();
-  const { assignments = [], submissions = [], loading, error } = useSelector(state => state.teacher || {});
+  const { assignments = [], submissions = [], classes = [], loading, error } = useSelector(state => state.teacher || {});
 
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterClass, setFilterClass] = useState('all');
   const [filterSubject, setFilterSubject] = useState('all');
 
-  // ─── Fetch on mount ──────────────────────────────────────
   useEffect(() => {
     dispatch(fetchAssignments());
     dispatch(fetchSubmissions());
+    dispatch(fetchTeacherClasses());
   }, [dispatch]);
 
-  // ─── Class & subject options from assignments ──────────
   const classOptions = useMemo(() => {
-    const unique = [...new Set(assignments.map(a => a.class_section))];
     return [
       { value: 'all', label: 'All Classes' },
-      ...unique.map(c => ({
-        value: String(c),
-        label: getClassName(c),
+      ...classes.map(c => ({
+        value: String(c.id),
+        label: `${c.class_name}-${c.section}`,
       })),
     ];
-  }, [assignments]);
+  }, [classes]);
 
   const subjectOptions = useMemo(() => {
-    const unique = [...new Set(assignments.map(a => a.subject))];
+    const assignmentSubjectIds = new Set(assignments.map(a => a.subject));
+
+    let subjectsForClass = [];
+    if (filterClass === 'all') {
+      subjectsForClass = SUBJECT_LIST.filter(s => assignmentSubjectIds.has(s.id));
+    } else {
+      const classId = parseInt(filterClass);
+      subjectsForClass = SUBJECT_LIST.filter(
+        s => s.class_section === classId && assignmentSubjectIds.has(s.id)
+      );
+    }
+
     return [
       { value: 'all', label: 'All Subjects' },
-      ...unique.map(s => ({
-        value: String(s),
-        label: getSubjectName(s),
+      ...subjectsForClass.map(s => ({
+        value: String(s.id),
+        label: s.subject_name,
       })),
     ];
-  }, [assignments]);
+  }, [filterClass, assignments]);
 
-  // ─── Filtered assignments ──────────────────────────────
   const filtered = useMemo(() => {
     let list = assignments;
     if (search.trim()) {
@@ -60,7 +71,6 @@ export function useAssignmentData() {
     return list;
   }, [assignments, search, filterStatus, filterClass, filterSubject]);
 
-  // ─── Stats ──────────────────────────────────────────────
   const stats = useMemo(() => {
     const total = assignments.length;
     const active = assignments.filter(a => getAssignmentStatus(a.due_date) === 'Active').length;
@@ -69,7 +79,6 @@ export function useAssignmentData() {
     return { total, active, completed, totalSubmissions };
   }, [assignments, submissions]);
 
-  // ─── Helper to get submissions for an assignment ──────
   const getSubmissionsForAssignment = useCallback((assignmentId) => {
     return submissions.filter(s => s.assignment === assignmentId);
   }, [submissions]);
@@ -79,9 +88,36 @@ export function useAssignmentData() {
     dispatch(fetchSubmissions());
   }, [dispatch]);
 
+  const getClassName = useCallback((classId) => {
+    const cls = classes.find(c => c.id === classId);
+    if (cls) return `${cls.class_name}-${cls.section}`;
+    return `Class ${classId}`;
+  }, [classes]);
+
+  // ─── Helper: Get subjects for a specific class (with fallback) ───
+  const getSubjectsForClass = useCallback((classId) => {
+    if (!classId) return [];
+    const classIdNum = parseInt(classId);
+
+    // Step 1: Check if there are existing assignments for this class
+    const subjectIdsFromAssignments = new Set(
+      assignments.filter(a => a.class_section === classIdNum).map(a => a.subject)
+    );
+
+    if (subjectIdsFromAssignments.size > 0) {
+      // Existing assignments → show only those subjects that have been used
+      return SUBJECT_LIST
+        .filter(s => subjectIdsFromAssignments.has(s.id) && s.class_section === classIdNum)
+        .map(s => ({ value: String(s.id), label: s.subject_name }));
+    }
+
+    // Step 2: Fallback – no assignments yet → show ALL subjects for that class
+    return SUBJECT_LIST
+      .filter(s => s.class_section === classIdNum)
+      .map(s => ({ value: String(s.id), label: s.subject_name }));
+  }, [assignments]);
+
   return {
-    getClassName, 
-    getSubjectName,
     assignments,
     submissions,
     loading,
@@ -100,5 +136,7 @@ export function useAssignmentData() {
     stats,
     getSubmissionsForAssignment,
     refetch,
+    getClassName,
+    getSubjectsForClass,
   };
 }

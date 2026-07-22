@@ -8,7 +8,8 @@ import RecentActivity from "./components/RecentActivity";
 import ClassesTab from "./components/ClassesTab";
 import SubjectsTab from "./components/SubjectsTab";
 import RoomsTab from "./components/RoomsTab";
-
+import { motion } from "framer-motion";
+import { FadeIn, StaggerGroup, StaggerItem } from "../../components/animations";
 import {
   fetchClasses,
   fetchSubjects,
@@ -24,7 +25,7 @@ const TABS = [
 
 export default function AcademicStructure() {
   const dispatch = useDispatch();
-  const { classes, subjects, rooms ,teachers } = useSelector((state) => state.academics);
+  const { classes, subjects, rooms, teachers } = useSelector((state) => state.academics);
   const [activeTab, setActiveTab] = useState("classes");
 
   useEffect(() => {
@@ -57,28 +58,33 @@ export default function AcademicStructure() {
 
   return (
     <div className="p-4 md:p-6 flex flex-col gap-5 min-h-screen bg-[var(--color-surface-dim)]">
-      <div>
-        <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">Academic Structure</h1>
-        <p className="text-sm text-[var(--color-text-secondary)] mt-0.5">
-          Configure and manage your school's foundational academic hierarchy
-        </p>
-      </div>
+      <FadeIn y={10} duration={0.5}>
+        <div>
+          <h1 className="text-2xl font-bold text-[var(--color-admin-primary)]">Academic Structure</h1>
+          <p className="text-sm text-[var(--color-admin-text)] mt-0.5">
+            Configure and manage your school's foundational academic hierarchy
+          </p>
+        </div>
+      </FadeIn>
+
 
       {/* Stats + Recent Activity */}
-      <div className="bg-white rounded-xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] border border-gray-100 overflow-hidden">
-        <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="flex items-center justify-center">
-            <StatsDonut data={statsData} />
+      <StaggerGroup className="bg-white rounded-xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] border border-gray-100 overflow-hidden">
+        <StaggerItem>
+          <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="flex items-center justify-center">
+              <StatsDonut data={statsData} />
+            </div>
+            <div className="border-t lg:border-t-0 lg:border-l border-gray-100 pt-4 lg:pt-0 lg:pl-6">
+              <RecentActivity teachers={teachers} />
+            </div>
           </div>
-          <div className="border-t lg:border-t-0 lg:border-l border-gray-100 pt-4 lg:pt-0 lg:pl-6">
-            <RecentActivity teachers={teachers}/>
-          </div>
-        </div>
-      </div>
+        </StaggerItem>
+      </StaggerGroup>
 
       {/* Tabs + Content */}
       <div className="bg-white rounded-xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] border border-gray-100 overflow-hidden">
-        <div className="flex border-b border-gray-200 px-2 overflow-x-auto scrollbar-hide">
+        <div className="flex border-b border-gray-200 px-2 overflow-x-auto scrollbar-hide relative">
           {TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -86,39 +92,50 @@ export default function AcademicStructure() {
               tab.id === "classes"
                 ? classes.length
                 : tab.id === "subjects"
-                ? subjects.length
-                : tab.id === "rooms"
-                ? rooms.length
-                : subjects.filter((s) => s.assigned_teacher !== null).length;
+                  ? subjects.length
+                  : tab.id === "rooms"
+                    ? rooms.length
+                    : subjects.filter((s) => s.assigned_teacher !== null).length;
 
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-3 text-sm font-medium flex items-center gap-2 border-b-2 transition-all whitespace-nowrap ${
-                  isActive
-                    ? `border-[var(--color-${tab.color}-primary)] text-[var(--color-${tab.color}-primary)]`
-                    : "border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
-                }`}
+                className={`px-4 py-3 text-sm font-medium flex items-center gap-2 transition-all whitespace-nowrap relative ${isActive
+                    ? `text-[var(--color-${tab.color}-primary)]`
+                    : "text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
+                  }`}
               >
                 <Icon size={16} className={isActive ? `text-[var(--color-${tab.color}-primary)]` : ""} />
                 {tab.label}
                 <span
-                  className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                    isActive
+                  className={`text-[10px] px-1.5 py-0.5 rounded-full transition-colors ${isActive
                       ? `bg-[var(--color-${tab.color}-light)] text-[var(--color-${tab.color}-primary)]`
                       : "bg-gray-100 text-gray-400"
-                  }`}
+                    }`}
                 >
                   {count}
                 </span>
+                {/* Animated underline */}
+                {isActive && (
+                   <div className={`absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--color-${tab.color}-primary)]`}
+                   />
+                )}
               </button>
             );
           })}
         </div>
 
-        {/* Tab Content */}
-        {ActiveComponent && <ActiveComponent />}
+        {/* Tab Content with fade-in */}
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.3 }}
+        >
+          {ActiveComponent && <ActiveComponent />}
+        </motion.div>
       </div>
     </div>
   );
