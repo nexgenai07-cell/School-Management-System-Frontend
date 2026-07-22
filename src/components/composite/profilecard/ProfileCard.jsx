@@ -13,6 +13,8 @@ Purpose:
 - Supports avatar image or generated initials avatar.
 - Shows basic information such as name, role, and email.
 - Provides an additional section for extra details.
+- Fully responsive: stacks vertically on small screens,
+  goes side-by-side from `sm` breakpoint up.
 
 Common Use Cases:
 - Student Profile Card
@@ -73,7 +75,7 @@ Features:
 - Automatic initials avatar
 - Profile image support
 - Additional information section
-- Responsive card design
+- Responsive card design (mobile-first, adapts at sm/md)
 - Custom background and styling support
 ======================================================
 */
@@ -98,14 +100,29 @@ function ProfileCard({
         from-white
         via-slate-50
         to-blue-50
+        w-full
         ${className}
       `}
     >
       {/* ==================================================
           Profile Header
-          Displays avatar and basic user information
+          Displays avatar and basic user information.
+          Stacks vertically + centered on very small screens,
+          switches to a horizontal row from `sm` upward.
       ================================================== */}
-      <div className="flex items-start gap-4">
+      <div
+        className="
+          flex
+          flex-col
+          items-center
+          text-center
+          gap-3
+          sm:flex-row
+          sm:items-start
+          sm:text-left
+          sm:gap-4
+        "
+      >
         {/* Avatar */}
         {avatar ? (
           /*
@@ -117,12 +134,15 @@ function ProfileCard({
             src={avatar}
             alt={name}
             className="
-              h-16
-              w-16
+              h-14
+              w-14
+              shrink-0
               rounded-full
               object-cover
               ring-4
               ring-brand-primary/20
+              sm:h-16
+              sm:w-16
             "
           />
         ) : (
@@ -134,18 +154,22 @@ function ProfileCard({
           <div
             className="
               flex
-              h-16
-              w-16
+              h-14
+              w-14
+              shrink-0
               items-center
               justify-center
               rounded-full
               bg-gradient-to-br
               from-brand-primary
               to-parent-primary
-              text-2xl
+              text-xl
               font-bold
               text-white
               shadow-lg
+              sm:h-16
+              sm:w-16
+              sm:text-2xl
             "
           >
             {name?.charAt(0)}
@@ -155,23 +179,46 @@ function ProfileCard({
         {/* ==================================================
             User Information
         ================================================== */}
-        <div className="flex-1">
+        <div className="w-full min-w-0 flex-1">
           {/* User Name */}
-          <h3 className="text-xl font-bold text-text-primary">
+          <h3 className="truncate text-lg font-bold text-text-primary sm:text-xl">
             {name}
           </h3>
 
           {/* User Role */}
-          <div className="mt-1 flex items-center gap-2 text-text-secondary">
-            <UserRound size={16} />
-            <span>{role}</span>
+          <div
+            className="
+              mt-1
+              flex
+              items-center
+              justify-center
+              gap-2
+              text-sm
+              text-text-secondary
+              sm:justify-start
+              sm:text-base
+            "
+          >
+            <UserRound size={16} className="shrink-0" />
+            <span className="truncate">{role}</span>
           </div>
 
           {/* User Email */}
           {email && (
-            <div className="mt-2 flex items-center gap-2 text-text-secondary">
-              <Mail size={16} />
-              <span>{email}</span>
+            <div
+              className="
+                mt-2
+                flex
+                items-center
+                justify-center
+                gap-2
+                text-sm
+                text-text-secondary
+                sm:justify-start
+              "
+            >
+              <Mail size={16} className="shrink-0" />
+              <span className="truncate">{email}</span>
             </div>
           )}
         </div>
@@ -183,24 +230,24 @@ function ProfileCard({
           extra information is provided
       ================================================== */}
       {(subtitle || meta1 || meta2) && (
-        <div className="mt-6 border-t border-slate-200 pt-4">
+        <div className="mt-5 border-t border-slate-200 pt-4 text-center sm:mt-6 sm:text-left">
           {/* Subtitle */}
           {subtitle && (
-            <p className="text-sm text-text-primary">
+            <p className="text-sm text-text-primary break-words">
               {subtitle}
             </p>
           )}
 
           {/* First Metadata Line */}
           {meta1 && (
-            <p className="mt-2 text-sm text-text-secondary">
+            <p className="mt-2 text-sm text-text-secondary break-words">
               {meta1}
             </p>
           )}
 
           {/* Second Metadata Line */}
           {meta2 && (
-            <p className="mt-1 text-sm text-text-secondary">
+            <p className="mt-1 text-sm text-text-secondary break-words">
               {meta2}
             </p>
           )}
