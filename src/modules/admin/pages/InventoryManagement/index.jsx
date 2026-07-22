@@ -24,7 +24,7 @@ import {
   updateInventory,
   deleteInventory,
 } from '../../../../store/admin/academicsThunks';
-
+import { FadeIn, StaggerGroup, StaggerItem } from '../../components/animations'; 
 import { getCategoryStyle, formatDate, getStatus } from './utils/helpers';
 
 export default function InventoryManagement() {
@@ -225,14 +225,14 @@ export default function InventoryManagement() {
         <div className="flex justify-start gap-1">
           <button
             onClick={() => handleEdit(row)}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-[var(--color-admin-primary)] hover:bg-[var(--color-admin-light)] transition-colors"
+            className="p-1.5 rounded-lg text-[var(--color-admin-primary)] bg-[var(--color-admin-light)] hover:bg-[var(--color-admin-primary)] hover:text-white transition-colors"
             title="Edit"
           >
             <Edit size={15} />
           </button>
           <button
             onClick={() => handleDelete(row)}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-[var(--color-danger)] hover:bg-[var(--color-danger-bg)] transition-colors"
+            className="p-1.5 rounded-lg text-[var(--color-danger)] bg-[var(--color-danger-bg)] hover:bg-[var(--color-danger)] hover:text-white transition-colors"
             title="Delete"
           >
             <Trash2 size={15} />
@@ -254,51 +254,57 @@ export default function InventoryManagement() {
   // ─── Render ────────────────────────────────────────────────────────
   return (
     <div className="p-4 md:p-6 flex flex-col gap-4 min-h-screen bg-[var(--color-surface-dim)]">
-      <PageHeader
-        title="Inventory Overview"
-        subtitle="Manage and track school physical assets across departments."
-        breadcrumbs={[ "Admin", "Inventory Management"]}
-        action={
-          <div className="flex gap-2">
-            <Button variant="outline" tone="admin" size="sm" leftIcon={<Download size={14} />} onClick={exportCSV}>
-              Export CSV
-            </Button>
-            <Button variant="primary" tone="admin" size="sm" leftIcon={<Plus size={14} />} onClick={handleAdd}>
-              Add Item
-            </Button>
-          </div>
-        }
-      />
-
-      {/* ─── Stats ──────────────────────────────────────────────────── */}
-      <StatsCards stats={stats} />
-
-      {/* ─── Table ──────────────────────────────────────────────────── */}
-      <div className="bg-white rounded-xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] border border-gray-100 overflow-hidden">
-        <InventoryFilters
-          search={search}
-          setSearch={setSearch}
-          filterCategory={filterCategory}
-          setFilterCategory={setFilterCategory}
-          categoryOptions={categoryOptions}
-        />
-
-        <InventoryTable
-          data={paginatedData}
-          columns={columns}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          mobileActions={(row) => (
+      <FadeIn y={10} duration={0.5}>
+        <PageHeader
+          title="Inventory Overview"
+          subtitle="Manage and track school physical assets across departments."
+          breadcrumbs={["Admin", "Inventory Management"]}
+          action={
             <div className="flex gap-2">
-              <Button variant="outline" tone="admin" size="sm" fullWidth leftIcon={<Edit size={13} />} onClick={() => handleEdit(row)}>
-                Edit
+              <Button variant="outline" tone="admin" size="sm" leftIcon={<Download size={14} />} onClick={exportCSV}>
+                Export CSV
               </Button>
-              <Button variant="outline" tone="danger" size="sm" fullWidth leftIcon={<Trash2 size={13} />} onClick={() => handleDelete(row)}>
-                Delete
+              <Button variant="primary" tone="admin" size="sm" leftIcon={<Plus size={14} />} onClick={handleAdd}>
+                Add Item
               </Button>
             </div>
-          )}
+          }
         />
+      </FadeIn>
+
+      {/* ─── Stats ──────────────────────────────────────────────────── */}
+      <FadeIn y={15} delay={0.1}>
+        <StatsCards stats={stats} />
+      </FadeIn>
+
+      {/* ─── Table ──────────────────────────────────────────────────── */}
+      <FadeIn y={15} delay={0.2}>
+        <div className="bg-white rounded-xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] border border-gray-100 overflow-hidden">
+          <InventoryFilters
+            search={search}
+            setSearch={setSearch}
+            filterCategory={filterCategory}
+            setFilterCategory={setFilterCategory}
+            categoryOptions={categoryOptions}
+          />
+
+          <InventoryTable
+            data={paginatedData}
+            columns={columns}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            animateRows={true}   
+            mobileActions={(row) => (
+              <div className="flex gap-2">
+                <Button variant="outline" tone="admin" size="sm" fullWidth leftIcon={<Edit size={13} />} onClick={() => handleEdit(row)}>
+                  Edit
+                </Button>
+                <Button variant="outline" tone="danger" size="sm" fullWidth leftIcon={<Trash2 size={13} />} onClick={() => handleDelete(row)}>
+                  Delete
+                </Button>
+              </div>
+            )}
+          />
 
         {/* Pagination */}
         {totalPages > 1 && (
@@ -319,11 +325,10 @@ export default function InventoryManagement() {
                 <button
                   key={page}
                   onClick={() => goToPage(page)}
-                  className={`w-7 h-7 rounded-lg text-xs font-semibold transition-colors ${
-                    currentPage === page
+                  className={`w-7 h-7 rounded-lg text-xs font-semibold transition-colors ${currentPage === page
                       ? 'bg-[var(--color-admin-primary)] text-white'
                       : 'hover:bg-gray-100 text-[var(--color-text-primary)]'
-                  }`}
+                    }`}
                 >
                   {page}
                 </button>
@@ -339,13 +344,13 @@ export default function InventoryManagement() {
           </div>
         )}
       </div>
-
+      </FadeIn>
       {/* ─── Bottom Section ────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2">
+      <StaggerGroup className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <StaggerItem className="lg:col-span-2">
           <LowStockItems items={lowStockItems} totalLowStock={stats.lowStock} />
-        </div>
-        <div className="lg:col-span-1">
+        </StaggerItem>
+        <StaggerItem className="lg:col-span-1">
           <CategoryList
             categories={stats.categoriesList}
             totalCategories={stats.categories}
@@ -354,8 +359,8 @@ export default function InventoryManagement() {
               setSearch('');
             }}
           />
-        </div>
-      </div>
+        </StaggerItem>
+      </StaggerGroup>
 
       {/* ─── Drawer ──────────────────────────────────────────────────── */}
       <InventoryDrawer

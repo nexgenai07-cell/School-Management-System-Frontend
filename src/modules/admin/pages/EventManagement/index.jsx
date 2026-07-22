@@ -7,7 +7,7 @@ import { PageHeader } from '../../../../components/global/pageheader';
 import { Button } from '../../../../components/ui/Button';
 import { LoadingSpinner } from '../../../../components/ui/LoadingSpinner';
 import ConfirmDialog from '../../../../components/global/ConfirmDialog/ConfirmDialog';
-
+import { FadeIn, StaggerGroup, StaggerItem } from '../../components/animations';
 import EventStats from './components/EventStats';
 import EventFilters from './components/EventFilters';
 import EventTable from './components/EventTable';
@@ -111,62 +111,76 @@ export default function EventManagement() {
         </div>
       )}
 
-      <PageHeader
-        title="Event Management"
-        subtitle="Coordinate school events, participant registries, and award certifications."
-        breadcrumbs={[ 'Admin', 'Events']}
-        action={
-          <div className="flex gap-2">
-            <Button variant="primary" tone="admin" size="sm" leftIcon={<Plus size={14} />} onClick={handleAddEvent}>
-              Create Event
-            </Button>
-          </div>
-        }
-      />
-
-      <EventStats stats={stats} />
-
-      <EventFilters
-        search={search}
-        setSearch={setSearch}
-        filterStatus={filterStatus}
-        setFilterStatus={setFilterStatus}
-      />
-
-      <EventTable
-        data={paginatedData}
-        currentPage={currentPage}
-        totalPages={totalPages}
-        totalItems={totalItems}
-        itemsPerPage={itemsPerPage}
-        onPageChange={goToPage}
-        onEdit={handleEditEvent}
-        onDelete={handleDeleteEvent}
-        getParticipantCount={getParticipantCount}
-        onViewParticipants={handleOpenParticipantsWrapper}
-      />
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <CertificateIssuance
-          events={events}
-          selectedEventId={certificateEventId}
-          setSelectedEventId={setCertificateEventId}
-          participants={participants}
-          onGenerate={handleGenerateCertificates}
+      <FadeIn y={10} duration={0.5}>
+        <PageHeader
+          title="Event Management"
+          subtitle="Coordinate school events, participant registries, and award certifications."
+          breadcrumbs={['Admin', 'Events']}
+          action={
+            <div className="flex gap-2">
+              <Button variant="primary" tone="admin" size="sm" leftIcon={<Plus size={14} />} onClick={handleAddEvent}>
+                Create Event
+              </Button>
+            </div>
+          }
         />
-        <ParticipantManagement
-          events={events}
-          selectedEvent={participantEvent}
-          setSelectedEvent={(event) => {
-            setParticipantEvent(event);
-            setSelectedEventId(event?.id);
-          }}
-          participants={participants}
-          onViewParticipants={() => setIsParticipantDrawerOpen(true)}
-          onAddParticipant={() => setIsAddParticipantDrawerOpen(true)}
-          stats={stats}
+      </FadeIn>
+
+      <FadeIn y={15} delay={0.1}>
+        <EventStats stats={stats} />
+      </FadeIn>
+
+      <FadeIn y={10} delay={0.2}>
+        <EventFilters
+          search={search}
+          setSearch={setSearch}
+          filterStatus={filterStatus}
+          setFilterStatus={setFilterStatus}
         />
-      </div>
+      </FadeIn>
+
+      <FadeIn y={15} delay={0.3}>
+        <EventTable
+          data={paginatedData}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          itemsPerPage={itemsPerPage}
+          onPageChange={goToPage}
+          onEdit={handleEditEvent}
+          onDelete={handleDeleteEvent}
+          getParticipantCount={getParticipantCount}
+          onViewParticipants={handleOpenParticipantsWrapper}
+          animateRows={true}   // if EventTable supports it
+        />
+      </FadeIn>
+
+      {/* Bottom Section – staggered */}
+      <StaggerGroup className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <StaggerItem>
+          <CertificateIssuance
+            events={events}
+            selectedEventId={certificateEventId}
+            setSelectedEventId={setCertificateEventId}
+            participants={participants}
+            onGenerate={handleGenerateCertificates}
+          />
+        </StaggerItem>
+        <StaggerItem>
+          <ParticipantManagement
+            events={events}
+            selectedEvent={participantEvent}
+            setSelectedEvent={(event) => {
+              setParticipantEvent(event);
+              setSelectedEventId(event?.id);
+            }}
+            participants={participants}
+            onViewParticipants={() => setIsParticipantDrawerOpen(true)}
+            onAddParticipant={() => setIsAddParticipantDrawerOpen(true)}
+            stats={stats}
+          />
+        </StaggerItem>
+      </StaggerGroup>
 
       <EventDrawer
         isOpen={isEventDrawerOpen}

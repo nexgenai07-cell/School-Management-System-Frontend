@@ -24,16 +24,13 @@ export default function BehaviorTable({
     {
       key: "student",
       label: "Student",
+      highlight:true,
       mobile: { role: "title" },
       render: (row) => (
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-[var(--color-student-light)] flex items-center justify-center text-[var(--color-student-primary)] text-xs font-bold">
-            {getInitials(row.student_name)}
-          </div>
-          <span className="text-sm font-medium text-[var(--color-text-primary)]">
+       
+          <span className="text-sm font-medium ">
             {row.student_name}
           </span>
-        </div>
       ),
     },
     {
@@ -107,6 +104,7 @@ export default function BehaviorTable({
     <div className="bg-white rounded-xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] border border-gray-100 overflow-hidden">
       <ResponsiveTable
         columns={columns}
+        animateRows={true}
         data={data}
         keyField="id"
         emptyMessage="No behavior logs found."

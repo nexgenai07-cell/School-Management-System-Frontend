@@ -1,18 +1,15 @@
-import React, { useState, useEffect, useMemo } from 'react';
+// src/modules/teacher/pages/Dashboard/index.jsx
+
+import { useEffect, useMemo } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { Link } from 'react-router-dom';
 import {
   TrendingUp,
-  TrendingDown,
   ChevronRight,
-  Calendar,
-  Clock,
-  Users,
   Building,
-  PlusCircle,
-  UserCheck,
-  ClipboardPlus,
-  Upload,
-  MessageCircle,
-  Bell,             // ← added for notifications icon
+  Users,
+  Bell,
+  ClipboardPlus, Upload, MessageCircle
 } from 'lucide-react';
 import {
   LineChart,
@@ -24,31 +21,29 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
-// Reusable Components
-import { PageHeader } from '../../../components/global/pageheader';
-import { StatCard } from '../../../components/composite/statcard';
+import PageHeader from '../../../components/global/pageheader/PageHeader';
+import { StatCard } from '../../../components/composite/Statcard';
 import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
+import LoadingSpinner from '../../../components/ui/LoadingSpinner/LoadingSpinner';
 
-// Mock Data
 import {
-  MOCK_TIMETABLE,
-  MOCK_DASHBOARD_STATS,
-} from '../../../mocks/Teachermock';
+  fetchTeacherDashboard,
+  fetchTeacherTimetable,
+  fetchTeacherClasses,
+} from '../../../store/teacher/teacherThunks';
+import { SUBJECT_LIST } from '../../../utils/subjectMapping';
 
-// ─── Helpers ──────────────────────────────────────────────
+// ─── Animation Components ──────────────────────────────────────────────
+import { FadeIn, StaggerGroup, StaggerItem } from '../../admin/components/animations';
+
+// ─── Helpers  ──────────────────────────────
 const getCurrentDayShort = () => {
   const map = {
-    Sunday: 'Sun',
-    Monday: 'Mon',
-    Tuesday: 'Tue',
-    Wednesday: 'Wed',
-    Thursday: 'Thu',
-    Friday: 'Fri',
-    Saturday: 'Sat',
+    Sunday: 'Sun', Monday: 'Mon', Tuesday: 'Tue', Wednesday: 'Wed',
+    Thursday: 'Thu', Friday: 'Fri', Saturday: 'Sat',
   };
-  const date = new Date();
-  const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
+  const dayName = new Date().toLocaleDateString('en-US', { weekday: 'long' });
   return map[dayName];
 };
 
@@ -65,330 +60,339 @@ const isCurrentSlot = (dayShort, startTime) => {
   const slotStart = h * 60 + m;
   const [nH, nM] = now.split(':').map(Number);
   const nowMinutes = nH * 60 + nM;
-  return nowMinutes >= slotStart && nowMinutes < slotStart + 90;
+  return nowMinutes >= slotStart && nowMinutes < slotStart + 60;
 };
 
-// ─── Main Component ──────────────────────────────────────────
 export default function TeacherDashboard() {
-  const [statsData, setStatsData] = useState(null);
-  const [timetableData, setTimetableData] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const dispatch = useDispatch();
+  const { dashboard, timetable, classes } = useSelector((state) => state.teacher);
+  const user = useSelector((state) => state.auth.user);
+  const teacherName = user?.first_name || user?.full_name || 'Teacher';
+
+  const { summary, trend, loading, error } = dashboard;
 
   useEffect(() => {
-    Promise.all([
-      new Promise((resolve) =>
-        setTimeout(() => resolve(MOCK_DASHBOARD_STATS), 300)
-      ),
-      new Promise((resolve) =>
-        setTimeout(() => resolve(MOCK_TIMETABLE), 400)
-      ),
-    ]).then(([stats, timetable]) => {
-      setStatsData(stats);
-      setTimetableData(timetable);
-      setIsLoading(false);
+    dispatch(fetchTeacherDashboard());
+    dispatch(fetchTeacherTimetable());
+    dispatch(fetchTeacherClasses());
+  }, [dispatch]);
+
+  const enrichedTimetable = useMemo(() => {
+    return (timetable.data || []).map((entry) => {
+      const subjectInfo = SUBJECT_LIST.find((s) => s.id === entry.subject);
+      const classInfo = classes.find((c) => c.id === entry.class_section);
+      return {
+        ...entry,
+        subjectName: subjectInfo?.subject_name || `Subject ${entry.subject}`,
+        className: classInfo ? `${classInfo.class_name}-${classInfo.section}` : `Class ${entry.class_section}`,
+        roomName: `Room ${entry.room}`,
+        startSlot: entry.start_time.slice(0, 5),
+      };
     });
-  }, []);
+  }, [timetable.data, classes]);
 
   const todayShort = getCurrentDayShort();
   const todaySchedule = useMemo(() => {
-    return timetableData
+    return enrichedTimetable
       .filter((entry) => entry.day === todayShort)
       .sort((a, b) => a.start_time.localeCompare(b.start_time));
-  }, [timetableData, todayShort]);
+  }, [enrichedTimetable, todayShort]);
 
   const upNext = useMemo(() => {
     const now = getCurrentTime();
-    const future = todaySchedule
-      .filter((e) => e.start_time > now)
-      .sort((a, b) => a.start_time.localeCompare(b.start_time));
-    return future[0] || null;
+    return todaySchedule
+      .filter((e) => e.startSlot > now)
+      .sort((a, b) => a.startSlot.localeCompare(b.startSlot))[0] || null;
   }, [todaySchedule]);
 
-  if (isLoading) {
+  if (loading || timetable.loading || classes.length === 0) {
+    return <LoadingSpinner size="lg" />;
+  }
+
+  if (error) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teacher-primary mx-auto" />
-          <p className="mt-4 text-text-secondary">Loading dashboard...</p>
-        </div>
+      <div className="p-6 text-center text-red-500">
+        Failed to load dashboard data. Please try again.
       </div>
     );
   }
 
   return (
     <div className="p-4 md:p-6 space-y-6 bg-[var(--color-surface-dim)] min-h-screen">
-      {/* Page Header */}
-      <PageHeader
-        title="Welcome back, Prof. Jenkins"
-        subtitle="Here is your academic overview for today."
-        breadcrumbs={['Dashboard', 'Teacher']}
-        tone="teacher"
-        titleClassName="text-[var(--color-teacher-primary)]"
-        action={
-          <Button
-            variant="primary"
-            tone="teacher"
-            size="sm"
-            leftIcon={<PlusCircle size={16} />}
-          >
-            Take Attendance
-          </Button>
-        }
-      />
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* 1st Card: Today's Classes with footer icon + text */}
-        <StatCard
-          label="Today's Classes"
-          value={statsData.summary.todayClasses}
+      {/* ─── Page Header ──────────────────────────────────────────────── */}
+      <FadeIn y={10} duration={0.5}>
+        <PageHeader
+          title={`Welcome back, ${teacherName}`}
+          subtitle="Here is your academic overview for today."
+          breadcrumbs={['Teacher', 'Dashboard']}
           tone="teacher"
-          footerColor="success"
-          footerIcon={<TrendingUp size={14} />}
-          footerText="Live Now"
-          glow={false}
-          className="relative"
-        >
-          <div className="absolute top-3 right-3">
-            <Badge tone="teacher" className="text-[10px]">Live</Badge>
-          </div>
-        </StatCard>
+          titleClassName="text-[var(--color-teacher-primary)]"
+          action={
+            <Link to="/teacher/attendance">
+              <Button
+                variant="primary"
+                tone="teacher"
+                size="sm"
+                leftIcon={<Users size={16} />}
+              >
+                Take Attendance
+              </Button>
+            </Link>
+          }
+        />
+      </FadeIn>
 
-        <StatCard
-          label="Pending Assignments"
-          value={statsData.summary.pendingAssignments}
-          tone="admin"
-          footerColor="warning"
-          footerText="High priority"
-          footerIcon={<TrendingUp size={14} />}
-          className="relative"
-        >
-          <div className="absolute top-3 right-3">
-            <Badge tone="admin" className="text-[10px]">Pending</Badge>
+      {/* ─── Stats Cards ────────────────────────────────────────────── */}
+      <StaggerGroup className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StaggerItem className="h-full">
+          <div className="h-full rounded-xl border-t-[3px] border-t-[var(--color-teacher-primary)] border border-gray-100 bg-white shadow-sm hover:shadow-md transition-all">
+            <StatCard
+              label="Today's Classes"
+              value={summary.todayClasses}
+              tone="teacher"
+              footerColor="success"
+              footerIcon={<TrendingUp size={14} />}
+              footerText="Live Now"
+              className="h-full"
+            >
+              <div className="absolute top-3 right-3">
+                <Badge tone="teacher" className="text-[10px]">Live</Badge>
+              </div>
+            </StatCard>
           </div>
-        </StatCard>
+        </StaggerItem>
 
-        <StatCard
-          label="Attendance Marked"
-          value={`${statsData.summary.attendancePercentage}%`}
-          tone="parent"
-          footerColor="success"
-          footerText="Today"
-          className="relative"
-        >
-          <div className="absolute top-3 right-3">
-            <Badge tone="parent" className="text-[10px]">Completed</Badge>
+        <StaggerItem className="h-full">
+          <div className="h-full rounded-xl border-t-[3px] border-t-[var(--color-admin-primary)] border border-gray-100 bg-white shadow-sm hover:shadow-md transition-all">
+            <StatCard
+              label="Pending Assignments"
+              value={summary.pendingAssignments}
+              tone="admin"
+              footerColor="warning"
+              footerText="High priority"
+              footerIcon={<TrendingUp size={14} />}
+              className="h-full"
+            >
+              <div className="absolute top-3 right-3">
+                <Badge tone="admin" className="text-[10px]">Pending</Badge>
+              </div>
+            </StatCard>
           </div>
-        </StatCard>
+        </StaggerItem>
 
-        {/* 4th Card: Notifications with footer icon + text */}
-        <StatCard
-          label="Notifications"
-          value={statsData.summary.notificationsCount}
-          tone="student"
-          footerColor="neutral"
-          footerIcon={<Bell size={14} />}
-          footerText="Unread"
-          className="relative"
-        >
-          <div className="absolute top-3 right-3">
-            <Badge tone="student" className="text-[10px]">New</Badge>
+        <StaggerItem className="h-full">
+          <div className="h-full rounded-xl border-t-[3px] border-t-[var(--color-parent-primary)] border border-gray-100 bg-white shadow-sm hover:shadow-md transition-all">
+            <StatCard
+              label="Attendance Marked"
+              value={`${summary.attendancePercentage}%`}
+              tone="parent"
+              footerColor="success"
+              footerText="Today"
+              className="h-full"
+            >
+              <div className="absolute top-3 right-3">
+                <Badge tone="parent" className="text-[10px]">Completed</Badge>
+              </div>
+            </StatCard>
           </div>
-        </StatCard>
-      </div>
+        </StaggerItem>
 
-      {/* Main Layout: Today's Schedule + Quick Actions + Chart */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Today's Schedule */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
-              Today's Schedule
-            </h3>
-            <Button variant="link" tone="teacher" size="sm">
-              View Full Calendar
-            </Button>
+        <StaggerItem className="h-full">
+          <div className="h-full rounded-xl border-t-[3px] border-t-[var(--color-student-primary)] border border-gray-100 bg-white shadow-sm hover:shadow-md transition-all">
+            <StatCard
+              label="Notifications"
+              value={summary.notificationsCount}
+              tone="student"
+              footerColor="neutral"
+              footerIcon={<Bell size={14} />}
+              footerText="Unread"
+              className="h-full"
+            >
+              <div className="absolute top-3 right-3">
+                <Badge tone="student" className="text-[10px]">New</Badge>
+              </div>
+            </StatCard>
           </div>
+        </StaggerItem>
+      </StaggerGroup>
 
-          <div className="space-y-4">
-            {todaySchedule.length === 0 ? (
-              <p className="text-text-secondary">No classes today.</p>
-            ) : (
-              todaySchedule.map((entry) => {
-                const isNow = isCurrentSlot(entry.day, entry.start_time);
-                return (
-                  <div
-                    key={entry.id}
-                    className="flex flex-wrap items-center gap-4 bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all"
-                  >
-                    <div className="flex flex-col items-center min-w-[80px] border-r border-gray-200 pr-4">
-                      <span className="text-xs text-text-secondary uppercase">
-                        {entry.start_time}
-                      </span>
-                      <span className="text-sm font-bold text-text-primary">
-                        {entry.start_time.slice(0, 5)}
-                      </span>
-                    </div>
-                    <div className="flex-1 min-w-[150px]">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {isNow && (
-                          <Badge tone="teacher" className="text-[10px] animate-pulse">
-                            In Progress
-                          </Badge>
-                        )}
-                        <h4 className="font-medium text-text-primary">
-                          {entry.subject.name}
-                        </h4>
+      {/* ─── Main Layout ──────────────────────────────────────────────── */}
+      <StaggerGroup className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column: Today's Schedule & Chart */}
+        <StaggerItem className="lg:col-span-2 space-y-6">
+          <FadeIn y={10} delay={0.1} className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
+                Today's Schedule
+              </h3>
+              <Link to="/teacher/timetable">
+                <Button variant="link" tone="teacher" size="sm">
+                  View Full Calendar
+                </Button>
+              </Link>
+            </div>
+
+            <div className="space-y-4">
+              {todaySchedule.length === 0 ? (
+                <p className="text-text-secondary">No classes today.</p>
+              ) : (
+                todaySchedule.map((entry) => {
+                  const isNow = isCurrentSlot(entry.day, entry.startSlot);
+                  return (
+                    <div
+                      key={entry.id}
+                      className="flex flex-wrap items-center gap-4 bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all"
+                    >
+                      <div className="flex flex-col items-center min-w-[80px] border-r border-gray-200 pr-4">
+                        <span className="text-xs text-text-secondary uppercase">
+                          {entry.startSlot}
+                        </span>
+                        <span className="text-sm font-bold text-text-primary">
+                          {entry.startSlot}
+                        </span>
                       </div>
-                      <div className="flex flex-wrap items-center gap-4 text-sm text-text-secondary">
-                        <div className="flex items-center gap-1">
-                          <Building size={14} />
-                          <span>{entry.room.room_number}</span>
+                      <div className="flex-1 min-w-[150px]">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {isNow && (
+                            <Badge tone="teacher" className="text-[10px] animate-pulse">
+                              In Progress
+                            </Badge>
+                          )}
+                          <h4 className="font-medium text-text-primary">
+                            {entry.subjectName}
+                          </h4>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <Users size={14} />
-                          <span>
-                            {entry.class_section
-                              ? `${entry.class_section.class_name}${entry.class_section.section}`
-                              : '—'}
-                          </span>
+                        <div className="flex flex-wrap items-center gap-4 text-sm text-text-secondary">
+                          <div className="flex items-center gap-1">
+                            <Building size={14} />
+                            <span>{entry.roomName}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Users size={14} />
+                            <span>{entry.className}</span>
+                          </div>
                         </div>
                       </div>
+                      <Link to="/teacher/attendance" className="ml-auto">
+                        <Button variant="primary" tone="teacher" size="sm">
+                          Mark Attendance
+                        </Button>
+                      </Link>
                     </div>
+                  );
+                })
+              )}
+            </div>
+          </FadeIn>
+
+          {/* Attendance Trend Chart */}
+          <FadeIn y={10} delay={0.2}>
+            <div className="bg-white p-5 rounded-xl border border-gray-200">
+              <h4 className="text-sm font-semibold text-text-primary mb-4">
+                Attendance Trend (Last 7 Days)
+              </h4>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={trend}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis
+                      dataKey="date"
+                      tickFormatter={(date) =>
+                        new Date(date).toLocaleDateString('en-US', { weekday: 'short' })
+                      }
+                      tick={{ fontSize: 12 }}
+                    />
+                    <YAxis
+                      domain={[0, 100]}
+                      tickFormatter={(value) => `${value}%`}
+                      tick={{ fontSize: 12 }}
+                    />
+                    <Tooltip
+                      formatter={(value) => `${value}%`}
+                      labelFormatter={(label) =>
+                        new Date(label).toLocaleDateString('en-US', {
+                          weekday: 'long',
+                          month: 'short',
+                          day: 'numeric',
+                        })
+                      }
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="attendanceRate"
+                      stroke="#059669"
+                      strokeWidth={2}
+                      dot={{ fill: '#059669', strokeWidth: 2 }}
+                      activeDot={{ r: 6 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </FadeIn>
+        </StaggerItem>
+
+        {/* Right Column: Quick Actions + Up Next */}
+        <StaggerItem className="space-y-6">
+          {/* Quick Actions */}
+          <FadeIn y={10} delay={0.15}>
+            <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+              <h3 className="text-[15px] font-medium text-neutral-900 mb-4">Quick Actions</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <Link to="/teacher/attendance">
+                  <Button variant="outline" tone="teacher" size="md" fullWidth leftIcon={<Users size={16} />}>
+                    Attendance
+                  </Button>
+                </Link>
+                <Link to="/teacher/assignments">
+                  <Button variant="outline" tone="teacher" size="md" fullWidth leftIcon={<ClipboardPlus size={16} />}>
+                    Assignment
+                  </Button>
+                </Link>
+                <Link to="/teacher/marks-entry">
+                  <Button variant="outline" tone="teacher" size="md" fullWidth leftIcon={<Upload size={16} />}>
+                    Upload
+                  </Button>
+                </Link>
+                <Link to="/teacher/complaints">
+                  <Button variant="outline" tone="teacher" size="md" fullWidth leftIcon={<MessageCircle size={16} />}>
+                    Complaint
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </FadeIn>
+
+          {/* Up Next */}
+          <FadeIn y={10} delay={0.25}>
+            <div className="bg-teacher-primary rounded-xl p-5 text-on-primary shadow-soft">
+              <div className="flex items-center gap-2">
+                <ChevronRight size={18} className="text-white" />
+                <h4 className="font-label-sm font-bold uppercase tracking-wider text-white">Up Next</h4>
+              </div>
+              {upNext ? (
+                <>
+                  <h3 className="text-xl text-white font-bold mt-2">{upNext.subjectName}</h3>
+                  <p className="text-sm text-white/80">
+                    {upNext.className} • {upNext.startSlot}
+                  </p>
+                  <Link to="/teacher/attendance">
                     <Button
                       variant="primary"
                       tone="teacher"
-                      size="sm"
-                      className="ml-auto"
+                      className="mt-4 text-teacher-primary hover:bg-on-primary/90"
                     >
-                      Mark Attendance
+                      Take Attendance
                     </Button>
-                  </div>
-                );
-              })
-            )}
-          </div>
-
-          {/* Attendance Trend Chart */}
-          <div className="bg-white p-5 rounded-xl border border-gray-200">
-            <h4 className="text-sm font-semibold text-text-primary mb-4">
-              Attendance Trend (Last 7 Days)
-            </h4>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={statsData.trend}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis
-                    dataKey="date"
-                    tickFormatter={(date) =>
-                      new Date(date).toLocaleDateString('en-US', { weekday: 'short' })
-                    }
-                    tick={{ fontSize: 12 }}
-                  />
-                  <YAxis
-                    domain={[0, 100]}
-                    tickFormatter={(value) => `${value}%`}
-                    tick={{ fontSize: 12 }}
-                  />
-                  <Tooltip
-                    formatter={(value) => `${value}%`}
-                    labelFormatter={(label) =>
-                      new Date(label).toLocaleDateString('en-US', {
-                        weekday: 'long',
-                        month: 'short',
-                        day: 'numeric',
-                      })
-                    }
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="attendanceRate"
-                    stroke="#059669"
-                    strokeWidth={2}
-                    dot={{ fill: '#059669', strokeWidth: 2 }}
-                    activeDot={{ r: 6 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+                  </Link>
+                </>
+              ) : (
+                <p className="text-sm text-white/80 mt-2">No more classes today</p>
+              )}
             </div>
-          </div>
-        </div>
-
-        {/* Right Column: Quick Actions + Up Next */}
-        <div className="space-y-6">
-          {/* ─── Quick Actions (without extra centering classes) ─── */}
-          <div className="relative bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-            <h3 className="text-[15px] font-medium text-neutral-900 mb-4">Quick Actions</h3>
-            <div className="grid grid-cols-2 gap-3">
-              <Button
-                variant="outline"
-                tone="teacher"
-                size="md"
-                fullWidth
-                leftIcon={<UserCheck size={16} />}
-              >
-                Attendance
-              </Button>
-              <Button
-                variant="outline"
-                tone="teacher"
-                size="md"
-                fullWidth
-                leftIcon={<ClipboardPlus size={16} />}
-              >
-                Assignment
-              </Button>
-              <Button
-                variant="outline"
-                tone="teacher"
-                size="md"
-                fullWidth
-                leftIcon={<Upload size={16} />}
-              >
-                Upload
-              </Button>
-              <Button
-                variant="outline"
-                tone="teacher"
-                size="md"
-                fullWidth
-                leftIcon={<MessageCircle size={16} />}
-              >
-                Message
-              </Button>
-            </div>
-          </div>
-
-          {/* Up Next Card */}
-          <div className="bg-teacher-primary rounded-xl p-5 text-on-primary shadow-soft">
-            <div className="flex items-center gap-2">
-              <ChevronRight size={18} className='text-white'/>
-              <h4 className="font-label-sm font-bold uppercase tracking-wider text-white">
-                Up Next
-              </h4>
-            </div>
-            {upNext ? (
-              <>
-                <h3 className="text-xl font-bold mt-2">{upNext.subject.name}</h3>
-                <p className="text-sm text-white/80">
-                  {upNext.class_section
-                    ? `${upNext.class_section.class_name}${upNext.class_section.section} • ${upNext.start_time.slice(0,5)}`
-                    : `Room ${upNext.room.room_number} • ${upNext.start_time.slice(0,5)}`}
-                </p>
-                <Button
-                  variant="primary"
-                  tone="teacher"
-                  className="mt-4 bg-white text-teacher-primary hover:bg-white/90"
-                >
-                  Take Attendance
-                </Button>
-              </>
-            ) : (
-              <p className="text-sm text-white/80 mt-2">No more classes today</p>
-            )}
-          </div>
-        </div>
-      </div>
+          </FadeIn>
+        </StaggerItem>
+      </StaggerGroup>
     </div>
   );
 }

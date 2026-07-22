@@ -19,7 +19,7 @@ import {
   deleteClass,
   fetchRooms,
 } from "../../../../../store/admin/academicsThunks";
-
+import { motion } from "framer-motion";
 const ITEMS_PER_PAGE = 10;
 
 const formatDate = (iso) => {
@@ -180,6 +180,7 @@ export default function ClassesTab() {
     {
       key: "name",
       label: "Class & Section",
+      highlight: true,
       render: (row) => <span className="font-medium">{row.class_name}-{row.section}</span>,
       mobile: { role: "title" },
     },
@@ -203,17 +204,17 @@ export default function ClassesTab() {
       key: "actions",
       label: "Actions",
       render: (row) => (
-        <div className="flex justify-start gap-1">
+        <div className="flex justify-start gap-1.5">
           <button
             onClick={() => handleEdit(row)}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-[var(--color-admin-primary)] hover:bg-[var(--color-admin-light)] transition-colors"
+            className="p-1.5 rounded-lg text-[var(--color-admin-primary)] bg-[var(--color-admin-light)] hover:bg-[var(--color-admin-primary)] hover:text-white transition-colors"
             title="Edit"
           >
             <Edit size={15} />
           </button>
           <button
             onClick={() => handleDelete(row)}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-[var(--color-danger)] hover:bg-[var(--color-danger-bg)] transition-colors"
+            className="p-1.5 rounded-lg text-[var(--color-danger)] bg-[var(--color-danger-bg)] hover:bg-[var(--color-danger)] hover:text-white transition-colors"
             title="Delete"
           >
             <Trash2 size={15} />
@@ -247,7 +248,7 @@ export default function ClassesTab() {
   };
 
   return (
-    <>
+<>
       {/* Controls */}
       <div className="p-4 flex flex-wrap items-center justify-between gap-3 border-b border-gray-100">
         <ClassFilters
@@ -267,12 +268,18 @@ export default function ClassesTab() {
           </Button>
         </div>
       </div>
-
+    
       {/* Table */}
-      <div className="px-2 pb-2">
+      <div className=" pb-2">
+       <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.1 }}
+      >
         <ResponsiveTable
           columns={columns}
           data={paginatedData}
+          animateRows={true}
           keyField="id"
           emptyMessage="No classes found"
           mobileActions={(row) => (
@@ -301,8 +308,9 @@ export default function ClassesTab() {
           totalItems={totalItems}
           itemsPerPage={ITEMS_PER_PAGE}
         />
+        </motion.div>
       </div>
-
+      
       {/* Drawer */}
       <Drawer
         open={isDrawerOpen}
@@ -408,6 +416,7 @@ export default function ClassesTab() {
         onConfirm={handleConfirmRoomAssignment}
         onCancel={handleCancelRoomAssignment}
       />
+      
     </>
   );
 }

@@ -1,21 +1,27 @@
+// src/modules/admin/pages/Userapprovals.jsx
+
 import { useState, useEffect, useMemo } from "react";
-import { CheckCircle, XCircle, Clock, TrendingUp, AlertCircle, Timer, ChevronLeft, ChevronRight } from "lucide-react";
+import { CheckCircle, XCircle, Clock, TrendingUp, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-// Reusable components
+import { motion } from "framer-motion";
+
+// ─── Reusable Components ──────────────────────────────────────────────
 import { PageHeader } from "../../../components/global/pageheader";
 import { SearchBar } from "../../../components/global/Searchbar";
 import { StatCard } from "../../../components/composite/Statcard";
-import { Table } from "../../../components/ui/table";
 import { StatusBadge } from "../../../components/composite/Statusbadge";
 import { Badge } from "../../../components/ui/Badge";
 import { Button } from "../../../components/ui/Button";
 import ResponsiveTable from "../components/ResponsiveTable";
-// Admin-scoped Drawer
 import Drawer from "../components/Drawer";
 
-import { fetchAllUsers, fetchApprovals, updateApprovalStatus } from "../../../store/admin/adminThunks";
+// ─── Animation Components ─────────────────────────────────────────────
+import { FadeIn, StaggerGroup, StaggerItem } from "../components/animations";
 
-// ─── helpers ────────────────────────────────────────────────────────────────
+// ─── Thunks ─────────────────────────────────────────────────────────────
+import { fetchAllUsers, updateApprovalStatus } from "../../../store/admin/adminThunks";
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
 const getInitials = (name) =>
   name
     .split(" ")
@@ -33,16 +39,19 @@ const formatDate = (iso) =>
 
 const ROLE_STYLES = {
   Student: {
-    avatar: "bg-[var(--color-student-light)] text-[var(--color-student-primary)]",
+    avatar: "bg-[var(--color-student-primary)] text-white",   // white on primary
     tone: "student",
+    borderColor: "border-[var(--color-student-primary)]",
   },
   Teacher: {
-    avatar: "bg-[var(--color-teacher-light)] text-[var(--color-teacher-primary)]",
+    avatar: "bg-[var(--color-teacher-primary)] text-white",
     tone: "teacher",
+    borderColor: "border-[var(--color-teacher-primary)]",
   },
   Parent: {
-    avatar: "bg-[var(--color-parent-light)] text-[var(--color-parent-primary)]",
+    avatar: "bg-[var(--color-parent-primary)] text-white",
     tone: "parent",
+    borderColor: "border-[var(--color-parent-primary)]",
   },
 };
 
@@ -109,20 +118,24 @@ const buildColumns = (onViewDetails) => [
     label: "Actions",
     render: (row) => (
       <div className="flex justify-start">
-        <Button
-          variant="outline"
-          size="sm"
-          tone="admin"
-          onClick={() => onViewDetails(row)}
-        >
-          {row.status === "Pending" ? "View Details" : "View"}
-        </Button>
+        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <Button
+            variant="outline"
+            size="sm"
+            tone="admin"
+            onClick={() => onViewDetails(row)}
+            className="shadow-sm hover:shadow"
+          >
+            {row.status === "Pending" ? "View Details" : "View"}
+          </Button>
+        </motion.div>
       </div>
     ),
     mobile: { role: "hidden" },
   },
 ];
 
+// ─── Drawer Row ──────────────────────────────────────────────────────────────
 function DrawerRow({ label, value }) {
   return (
     <div className="flex flex-col gap-0.5">
@@ -134,7 +147,6 @@ function DrawerRow({ label, value }) {
   );
 }
 
-// ─── Drawer content ──────────────────────────────────────────────────────────
 function UserDrawerContent({ user }) {
   const style = ROLE_STYLES[user.role_name] ?? ROLE_STYLES.Student;
 
@@ -157,10 +169,8 @@ function UserDrawerContent({ user }) {
         </div>
       </div>
 
-      {/* Divider */}
       <hr className="border-gray-100" />
 
-      {/* Account info */}
       <div className="space-y-5">
         <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-widest">
           Account Info
@@ -176,40 +186,34 @@ function UserDrawerContent({ user }) {
             />
           }
         />
-        {/* Roll number & Registration number removed – backend auto-generates */}
       </div>
     </div>
   );
 }
 
-// ─── Main Page ───────────────────────────────────────────────────────────────
+// ─── Main Component ──────────────────────────────────────────────────────────
 export default function UserApprovals() {
   const dispatch = useDispatch();
-  const {users: approvals, loading, updating, error } = useSelector((state) => state.admin);
+  const { users: approvals, loading, updating, error } = useSelector((state) => state.admin);
   const [activeTab, setActiveTab] = useState("All");
   const [search, setSearch] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // ─── Fetch Approvals on Page Load ──────────────────────────────────
   useEffect(() => {
     dispatch(fetchAllUsers());
   }, [dispatch]);
 
-  // ─── Handle Approve ──────────────────────────────────────────────
   const handleApprove = (id) => {
-    const payload = { userId: id, action: "approve" };
-    dispatch(updateApprovalStatus(payload));
+    dispatch(updateApprovalStatus({ userId: id, action: "approve" }));
     setSelectedUser(null);
   };
 
-  // ─── Handle Reject ───────────────────────────────────────────────
   const handleReject = (id) => {
     dispatch(updateApprovalStatus({ userId: id, action: "reject" }));
     setSelectedUser(null);
   };
 
-  // ─── Stats ──────────────────────────────────────────────────────────
   const stats = useMemo(
     () => ({
       total: approvals.length,
@@ -220,38 +224,28 @@ export default function UserApprovals() {
     [approvals]
   );
 
-  // ─── Filtering ──────────────────────────────────────────────────────
   const filtered = useMemo(() => {
     let list = approvals;
     if (activeTab !== "All") {
-      const statusMap = {
-        Pending: "Pending",
-        Approved: "Active",
-        Rejected: "Rejected",
-      };
+      const statusMap = { Pending: "Pending", Approved: "Active", Rejected: "Rejected" };
       const backendStatus = statusMap[activeTab];
-      if (backendStatus) {
-        list = list.filter((r) => r.status === backendStatus);
-      }
+      if (backendStatus) list = list.filter((r) => r.status === backendStatus);
     }
     if (search.trim()) {
+      const q = search.toLowerCase();
       list = list.filter(
         (r) =>
-          r.full_name.toLowerCase().includes(search.toLowerCase()) ||
-          r.email.toLowerCase().includes(search.toLowerCase()) ||
-          r.role_name?.toLowerCase().includes(search.toLowerCase())
+          r.full_name.toLowerCase().includes(q) ||
+          r.email.toLowerCase().includes(q) ||
+          r.role_name?.toLowerCase().includes(q)
       );
     }
     return list;
   }, [approvals, activeTab, search]);
 
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
-  const paginated = filtered.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+  const paginated = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
-  // Reset page on filter change
   useEffect(() => {
     setCurrentPage(1);
   }, [activeTab, search]);
@@ -259,162 +253,171 @@ export default function UserApprovals() {
   const columns = buildColumns(setSelectedUser);
 
   return (
-    <div className="p-6 md:p-0 flex flex-col gap-7 min-h-screen bg-[var(--color-surface-dim)]">
+    <div className="p-6 md:p-0 flex flex-col gap-7 min-h-screen bg-gradient-to-br from-[var(--color-surface-dim)] via-[var(--color-surface-dim)] to-[var(--color-admin-light)]">
 
       {/* ── Page Header ── */}
-      <PageHeader
-        title="User Approvals"
-        subtitle="Review and manage registration requests"
-        breadcrumbs={["Admin", "User Approvals"]}
-        action={
-          <SearchBar
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onSearch={(val) => setSearch(val)}
-            placeholder="Search by name, email, role…"
-            tone="admin"
-            size="md"
-          />
-        }
-      />
+      <FadeIn y={16} delay={0.1}>
+        <PageHeader
+          title="User Approvals"
+          subtitle="Review and manage registration requests"
+          breadcrumbs={["Admin", "User Approvals"]}
+          action={
+            <SearchBar
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onSearch={(val) => setSearch(val)}
+              placeholder="Search by name, email, role…"
+              tone="admin"
+              size="md"
+            />
+          }
+        />
+      </FadeIn>
 
       {/* ── Stat Cards ── */}
-      <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          label="Total Requests"
-          value={stats.total.toLocaleString()}
-          tone="admin"
-          footerText="+12% this month"
-          footerColor="success"
-          footerIcon={<TrendingUp size={13} />}
-        />
-        <StatCard
-          label="Pending"
-          value={stats.pending}
-          tone="student"
-          footerText="Awaiting review"
-          footerColor="warning"
-          footerIcon={<Clock size={13} />}
-        />
-        <StatCard
-          label="Approved"
-          value={stats.approved}
-          tone="teacher"
-          footerText="Active accounts"
-          footerColor="success"
-          footerIcon={<CheckCircle size={13} />}
-        />
-        <StatCard
-          label="Rejected"
-          value={stats.rejected}
-          tone="parent"
-          footerText="Inactive requests"
-          footerColor="danger"
-          footerIcon={<XCircle size={13} />}
-        />
-      </section>
+      <StaggerGroup as="section" className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StaggerItem className="rounded-xl overflow-hidden border-t-4 border-t-[var(--color-admin-primary)] transition-transform duration-300 hover:-translate-y-1">
+          <StatCard
+            label="Total Requests"
+            value={stats.total.toLocaleString()}
+            tone="admin"
+            footerText="+12% this month"
+            footerColor="success"
+            footerIcon={<TrendingUp size={13} />}
+          />
+        </StaggerItem>
+        <StaggerItem className="rounded-xl overflow-hidden border-t-4 border-t-[var(--color-student-primary)] transition-transform duration-300 hover:-translate-y-1">
+          <StatCard
+            label="Pending"
+            value={stats.pending}
+            tone="student"
+            footerText="Awaiting review"
+            footerColor="warning"
+            footerIcon={<Clock size={13} />}
+          />
+        </StaggerItem>
+        <StaggerItem className="rounded-xl overflow-hidden border-t-4 border-t-[var(--color-teacher-primary)] transition-transform duration-300 hover:-translate-y-1">
+          <StatCard
+            label="Approved"
+            value={stats.approved}
+            tone="teacher"
+            footerText="Active accounts"
+            footerColor="success"
+            footerIcon={<CheckCircle size={13} />}
+          />
+        </StaggerItem>
+        <StaggerItem className="rounded-xl overflow-hidden border-t-4 border-t-[var(--color-parent-primary)] transition-transform duration-300 hover:-translate-y-1">
+          <StatCard
+            label="Rejected"
+            value={stats.rejected}
+            tone="parent"
+            footerText="Inactive requests"
+            footerColor="danger"
+            footerIcon={<XCircle size={13} />}
+          />
+        </StaggerItem>
+      </StaggerGroup>
 
       {/* ── Tabs + Table ── */}
-      <div className="flex flex-col">
-        <nav className="flex border-b border-gray-200 overflow-x-auto scrollbar-hide">
-          {TABS.map((tab) => {
-            const count =
-              tab === "Pending"
-                ? stats.pending
-                : tab === "Approved"
-                ? stats.approved
-                : tab === "Rejected"
-                ? stats.rejected
-                : null;
-
-            return (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-6 py-3 text-sm font-medium whitespace-nowrap transition-colors border-b-2 -mb-px flex items-center gap-2 ${
-                  activeTab === tab
-                    ? "border-[var(--color-admin-primary)] text-[var(--color-admin-primary)]"
-                    : "border-transparent text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
-                }`}
-              >
-                {tab}
-                {count !== null && (
-                  <span
-                    className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${
-                      tab === "Pending"
-                        ? "bg-amber-100 text-amber-700"
-                        : tab === "Approved"
-                        ? "bg-[var(--color-success-bg)] text-[var(--color-success-text)]"
-                        : "bg-[var(--color-danger-bg)] text-[var(--color-danger-text)]"
-                    }`}
-                  >
-                    {count}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </nav>
-
-        <div className="bg-white rounded-b-xl rounded-tr-xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] border border-gray-100 border-t-0 overflow-hidden">
-          <ResponsiveTable
-            columns={columns}
-            data={paginated}
-            keyField="id"
-            emptyMessage="No requests found."
-            mobileActions={(row) => (
-              <Button
-                variant="outline"
-                size="sm"
-                tone="admin"
-                fullWidth
-                onClick={() => setSelectedUser(row)}
-              >
-                {row.status === "Pending" ? "View Details" : "View"}
-              </Button>
-            )}
-          />
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="px-5 py-4 border-t border-gray-100 bg-gray-50/50 flex items-center justify-between">
-              <span className="text-sm text-[var(--color-text-secondary)]">
-                Showing {Math.min((currentPage - 1) * ITEMS_PER_PAGE + 1, filtered.length)}–
-                {Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)} of {filtered.length} requests
-              </span>
-              <div className="flex items-center gap-1">
+      <FadeIn>
+        <div className="flex flex-col">
+          <nav className="flex gap-1 border-b border-gray-200 overflow-x-auto scrollbar-hide py-1">
+            {TABS.map((tab) => {
+              const count =
+                tab === "Pending"
+                  ? stats.pending
+                  : tab === "Approved"
+                  ? stats.approved
+                  : tab === "Rejected"
+                  ? stats.rejected
+                  : null;
+              return (
                 <button
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="p-1.5 rounded-lg border border-gray-200 hover:bg-white disabled:opacity-30 transition-colors"
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-5 py-2 text-sm font-medium rounded-full transition-all duration-200 ${
+                    activeTab === tab
+                      ? "bg-[var(--color-admin-primary)] text-white shadow-md shadow-[var(--color-admin-primary)]/30"
+                      : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-gray-100/50"
+                  }`}
                 >
-                  <ChevronLeft size={16} />
+                  {tab}
+                  {count !== null && (
+                    <span
+                      className={`ml-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                        activeTab === tab
+                          ? "bg-white/20 text-white"
+                          : "bg-gray-200 text-gray-600"
+                      }`}
+                    >
+                      {count}
+                    </span>
+                  )}
                 </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              );
+            })}
+          </nav>
+
+          <div className="bg-white rounded-b-xl rounded-tr-xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] border border-gray-100 border-t-0 overflow-hidden">
+            <ResponsiveTable
+              columns={columns}
+              data={paginated}
+              keyField="id"
+              emptyMessage="No requests found."
+              mobileActions={(row) => (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  tone="admin"
+                  fullWidth
+                  onClick={() => setSelectedUser(row)}
+                  className="shadow-sm hover:shadow"
+                >
+                  {row.status === "Pending" ? "View Details" : "View"}
+                </Button>
+              )}
+            />
+
+            {totalPages > 1 && (
+              <div className="px-5 py-4 border-t border-gray-100 bg-gray-50/50 flex items-center justify-between">
+                <span className="text-sm text-[var(--color-text-secondary)]">
+                  Showing {Math.min((currentPage - 1) * ITEMS_PER_PAGE + 1, filtered.length)}–
+                  {Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)} of {filtered.length} requests
+                </span>
+                <div className="flex items-center gap-1">
                   <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`w-8 h-8 rounded-lg text-sm font-semibold transition-colors ${
-                      currentPage === page
-                        ? "bg-[var(--color-admin-primary)] text-white"
-                        : "hover:bg-gray-100 text-[var(--color-text-primary)]"
-                    }`}
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="p-1.5 rounded-lg border border-gray-200 hover:bg-white disabled:opacity-30 transition-colors"
                   >
-                    {page}
+                    <ChevronLeft size={16} />
                   </button>
-                ))}
-                <button
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                  className="p-1.5 rounded-lg border border-gray-200 hover:bg-white disabled:opacity-30 transition-colors"
-                >
-                  <ChevronRight size={16} />
-                </button>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`w-8 h-8 rounded-lg text-sm font-semibold transition-colors ${
+                        currentPage === page
+                          ? "bg-[var(--color-admin-primary)] text-white"
+                          : "hover:bg-gray-100 text-[var(--color-text-primary)]"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="p-1.5 rounded-lg border border-gray-200 hover:bg-white disabled:opacity-30 transition-colors"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
+      </FadeIn>
 
       {/* ── Drawer ── */}
       <Drawer
@@ -424,24 +427,30 @@ export default function UserApprovals() {
         footer={
           selectedUser?.status === "Pending" ? (
             <div className="grid grid-cols-2 gap-3">
-              <Button
-                variant="outline"
-                tone="admin"
-                fullWidth
-                leftIcon={<XCircle size={16} />}
-                onClick={() => handleReject(selectedUser.id)}
-              >
-                Reject
-              </Button>
-              <Button
-                variant="primary"
-                tone="admin"
-                fullWidth
-                leftIcon={<CheckCircle size={16} />}
-                onClick={() => handleApprove(selectedUser.id)}
-              >
-                Approve
-              </Button>
+              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.95 }}>
+                <Button
+                  variant="outline"
+                  tone="admin"
+                  fullWidth
+                  leftIcon={<XCircle size={16} />}
+                  onClick={() => handleReject(selectedUser.id)}
+                  className="shadow-sm hover:shadow"
+                >
+                  Reject
+                </Button>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.95 }}>
+                <Button
+                  variant="primary"
+                  tone="admin"
+                  fullWidth
+                  leftIcon={<CheckCircle size={16} />}
+                  onClick={() => handleApprove(selectedUser.id)}
+                  className="shadow-sm hover:shadow"
+                >
+                  Approve
+                </Button>
+              </motion.div>
             </div>
           ) : null
         }

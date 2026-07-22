@@ -16,7 +16,8 @@ import { useBehaviorActions } from "./hooks/useBehaviorActions";
 import BehaviorStats from "./components/BehaviorStats";
 import BehaviorFilters from "./components/BehaviorFilters";
 import BehaviorTable from "./components/BehaviorTable";
-
+import { motion } from "framer-motion";
+import { FadeIn } from "../../components/animations";
 import {
   getInitials,
   formatDate,
@@ -83,12 +84,13 @@ export default function BehaviorLogs() {
           </button>
         </div>
       )}
-
+       
       {/* Page Header */}
+      <FadeIn y={10} duration={0.5}>
       <PageHeader
         title="Behavior Management"
         subtitle="Reviewing disciplinary reports submitted by faculty."
-        breadcrumbs={["Dashboard", "Admin", "Behavior Logs"]}
+        breadcrumbs={[ "Admin", "Behavior Logs"]}
         action={
           <SearchBar
             value={search}
@@ -100,13 +102,15 @@ export default function BehaviorLogs() {
           />
         }
       />
-
+       </FadeIn>
+       <FadeIn y={15} delay={0.1}>
       {/* Stats + Pie + Recent Logs */}
       <BehaviorStats
         logs={filteredByDate} 
         recentLogs={recentLogs}
         onViewDetail={handleView}
       />
+       </FadeIn>
 
       {/* Filters */}
       <BehaviorFilters
@@ -118,6 +122,7 @@ export default function BehaviorLogs() {
       />
 
       {/* Table */}
+       <FadeIn y={15} delay={0.3}>
       <BehaviorTable
         data={paginatedData}
         currentPage={currentPage}
@@ -127,7 +132,7 @@ export default function BehaviorLogs() {
         onPageChange={goToPage}
         onView={handleView}
       />
-
+      </FadeIn>
       {/* ─── Drawer ─── */}
       <Drawer
         open={isDrawerOpen}
